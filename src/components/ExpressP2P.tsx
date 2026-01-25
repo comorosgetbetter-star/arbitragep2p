@@ -3,16 +3,14 @@ import { Zap, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 
-// Exchange rate: 1 USD = 1 USDT (direct purchase, no investment language)
-const exchangeRate = 1.0;
-
+// Bonus rates: tiered system where larger amounts get slightly better rates
 const packages = [
-  { usd: 50, usdt: 50 },
-  { usd: 100, usdt: 100 },
-  { usd: 150, usdt: 150 },
-  { usd: 500, usdt: 500 },
-  { usd: 1000, usdt: 1000 },
-  { usd: 5000, usdt: 5000 },
+  { usd: 50, usdt: 60 },
+  { usd: 100, usdt: 121 },
+  { usd: 150, usdt: 182 },
+  { usd: 500, usdt: 609 },
+  { usd: 1000, usdt: 1219 },
+  { usd: 5000, usdt: 6097 },
 ];
 
 export const ExpressP2P = () => {
@@ -85,7 +83,7 @@ export const ExpressP2P = () => {
         </div>
 
         <p className="text-xs text-muted-foreground text-center mt-6">
-          Exchange rate: 1 USD = {exchangeRate} USDT • Updated in real-time
+          Bonus rates applied • Larger amounts receive better rates
         </p>
       </div>
     </section>

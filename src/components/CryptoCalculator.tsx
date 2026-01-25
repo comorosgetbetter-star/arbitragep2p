@@ -4,9 +4,32 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 
-// Same exchange rate as packages
-const exchangeRate = 1.0;
 const MIN_AMOUNT = 50;
+
+// Tiered bonus rate calculation - matches Express P2P packages
+const calculateUsdtReceived = (usdAmount: number): number => {
+  if (usdAmount <= 0) return 0;
+  
+  // Rate tiers based on package data
+  const tiers = [
+    { usd: 50, rate: 1.2 },      // 60/50
+    { usd: 100, rate: 1.21 },    // 121/100
+    { usd: 150, rate: 1.2133 },  // 182/150
+    { usd: 500, rate: 1.218 },   // 609/500
+    { usd: 1000, rate: 1.219 },  // 1219/1000
+    { usd: 5000, rate: 1.2194 }, // 6097/5000
+  ];
+  
+  // Find applicable rate (use highest tier that amount qualifies for)
+  let applicableRate = tiers[0].rate;
+  for (const tier of tiers) {
+    if (usdAmount >= tier.usd) {
+      applicableRate = tier.rate;
+    }
+  }
+  
+  return usdAmount * applicableRate;
+};
 
 export const CryptoCalculator = () => {
   const [amount, setAmount] = useState<string>('100');
@@ -15,11 +38,12 @@ export const CryptoCalculator = () => {
   
   const calculations = useMemo(() => {
     const numAmount = parseFloat(amount) || 0;
-    const usdtReceived = numAmount * exchangeRate;
+    const usdtReceived = calculateUsdtReceived(numAmount);
     
     return {
       usdtReceived: usdtReceived.toFixed(2),
       isValid: numAmount >= MIN_AMOUNT,
+      bonusPercent: numAmount > 0 ? (((usdtReceived / numAmount) - 1) * 100).toFixed(1) : '0',
     };
   }, [amount]);
 
@@ -40,10 +64,10 @@ export const CryptoCalculator = () => {
       return;
     }
     
-    // Store custom package
+    // Store custom package with bonus rate
     sessionStorage.setItem('selectedPackage', JSON.stringify({ 
       usd: numAmount, 
-      usdt: numAmount * exchangeRate,
+      usdt: calculateUsdtReceived(numAmount),
       isCustom: true 
     }));
     
@@ -154,7 +178,7 @@ export const CryptoCalculator = () => {
             </div>
 
             <p className="text-xs text-muted-foreground text-center mt-4">
-              Rate: 1 USD = {exchangeRate} USDT • Same rate as all packages
+              Current bonus: +{calculations.bonusPercent}% • Same rates as Express P2P packages
             </p>
           </div>
         </div>
