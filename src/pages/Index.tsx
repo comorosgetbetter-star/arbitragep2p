@@ -32,8 +32,8 @@ const Index = () => {
         <HeroSection />
         <LivePriceTicker />
         <ExpressP2P />
-        <PlatformDescription />
         <CryptoCalculator />
+        <PlatformDescription />
         <FAQ />
       </main>
       

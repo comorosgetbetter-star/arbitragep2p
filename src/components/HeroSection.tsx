@@ -37,11 +37,21 @@ export const HeroSection = () => {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12 animate-fade-in-up" style={{ animationDelay: '300ms' }}>
-            <Button variant="glow" size="xl" className="group w-full sm:w-auto">
+            <Button 
+              variant="glow" 
+              size="xl" 
+              className="group w-full sm:w-auto"
+              onClick={() => document.getElementById('rates')?.scrollIntoView({ behavior: 'smooth' })}
+            >
               Start Trading
               <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
             </Button>
-            <Button variant="outline" size="xl" className="w-full sm:w-auto">
+            <Button 
+              variant="outline" 
+              size="xl" 
+              className="w-full sm:w-auto"
+              onClick={() => document.getElementById('calculator')?.scrollIntoView({ behavior: 'smooth' })}
+            >
               View Rates
             </Button>
           </div>
