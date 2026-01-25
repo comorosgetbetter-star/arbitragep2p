@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import { Header } from '@/components/Header';
 import { HeroSection } from '@/components/HeroSection';
 import { LivePriceTicker } from '@/components/LivePriceTicker';
-import { ExchangeRates } from '@/components/ExchangeRates';
+import { ExpressP2P } from '@/components/ExpressP2P';
 import { PlatformDescription } from '@/components/PlatformDescription';
-import { TradeCalculator } from '@/components/TradeCalculator';
+import { CryptoCalculator } from '@/components/CryptoCalculator';
 import { FAQ } from '@/components/FAQ';
 import { Footer } from '@/components/Footer';
 
@@ -31,9 +31,9 @@ const Index = () => {
       <main>
         <HeroSection />
         <LivePriceTicker />
-        <ExchangeRates />
+        <ExpressP2P />
         <PlatformDescription />
-        <TradeCalculator />
+        <CryptoCalculator />
         <FAQ />
       </main>
       
