@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 
 const MIN_AMOUNT = 50;
+const MAX_AMOUNT = 25000;
 
 // Tiered bonus rate calculation - matches Express P2P packages
 const calculateUsdtReceived = (usdAmount: number): number => {
@@ -42,7 +43,7 @@ export const CryptoCalculator = () => {
     
     return {
       usdtReceived: usdtReceived.toFixed(2),
-      isValid: numAmount >= MIN_AMOUNT,
+      isValid: numAmount >= MIN_AMOUNT && numAmount <= MAX_AMOUNT,
       bonusPercent: numAmount > 0 ? (((usdtReceived / numAmount) - 1) * 100).toFixed(1) : '0',
     };
   }, [amount]);
@@ -52,6 +53,8 @@ export const CryptoCalculator = () => {
     const numValue = parseFloat(value) || 0;
     if (numValue > 0 && numValue < MIN_AMOUNT) {
       setError(`Minimum amount is $${MIN_AMOUNT}`);
+    } else if (numValue > MAX_AMOUNT) {
+      setError(`Maximum amount is $${MAX_AMOUNT.toLocaleString()}`);
     } else {
       setError('');
     }
@@ -163,7 +166,7 @@ export const CryptoCalculator = () => {
                 <span className="font-medium">Create Your Own Package</span>
               </div>
               <p className="text-sm text-muted-foreground mb-4">
-                Minimum purchase: ${MIN_AMOUNT} • No maximum limit
+                Minimum: ${MIN_AMOUNT} • Maximum: ${MAX_AMOUNT.toLocaleString()}
               </p>
               
               <Button 
