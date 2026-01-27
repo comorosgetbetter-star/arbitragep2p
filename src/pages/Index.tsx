@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react';
 import { Header } from '@/components/Header';
 import { HeroSection } from '@/components/HeroSection';
 import { LivePriceTicker } from '@/components/LivePriceTicker';
+import { TrustIndicators } from '@/components/TrustIndicators';
 import { ExpressP2P } from '@/components/ExpressP2P';
 import { PlatformDescription } from '@/components/PlatformDescription';
 import { CryptoCalculator } from '@/components/CryptoCalculator';
+import { Testimonials } from '@/components/Testimonials';
 import { FAQ } from '@/components/FAQ';
 import { Footer } from '@/components/Footer';
 
@@ -31,8 +33,10 @@ const Index = () => {
       <main>
         <HeroSection />
         <LivePriceTicker />
+        <TrustIndicators />
         <ExpressP2P />
         <CryptoCalculator />
+        <Testimonials />
         <PlatformDescription />
         <FAQ />
       </main>

@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { ArrowUpRight, History, Shield, Copy, Check, ChevronRight } from 'lucide-react';
+import { ArrowUpRight, History, Shield, Copy, Check, ChevronRight, Plus, Wallet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
 interface WalletDropdownProps {
   isOpen: boolean;
   onClose: () => void;
+  onAddFunds: () => void;
 }
 
 const networks = [
@@ -14,20 +15,18 @@ const networks = [
   { id: 'bep20', name: 'BEP20', chain: 'BSC' },
 ];
 
-const transactions = [
-  { id: 1, type: 'buy', amount: 500, date: '2024-01-15', status: 'completed' },
-  { id: 2, type: 'withdraw', amount: 250, date: '2024-01-14', status: 'completed' },
-  { id: 3, type: 'buy', amount: 1000, date: '2024-01-12', status: 'completed' },
-];
+// Wallet starts at zero - no fake transactions
+const transactions: { id: number; type: string; amount: number; date: string; status: string }[] = [];
 
-export const WalletDropdown = ({ isOpen, onClose }: WalletDropdownProps) => {
+export const WalletDropdown = ({ isOpen, onClose, onAddFunds }: WalletDropdownProps) => {
   const [view, setView] = useState<'main' | 'withdraw'>('main');
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [walletAddress, setWalletAddress] = useState('');
   const [selectedNetwork, setSelectedNetwork] = useState('trc20');
   const [copied, setCopied] = useState(false);
 
-  const balance = 2547.50;
+  // Wallet balance starts at zero
+  const balance = 0;
 
   const handleCopy = () => {
     setCopied(true);
@@ -63,14 +62,26 @@ export const WalletDropdown = ({ isOpen, onClose }: WalletDropdownProps) => {
             </div>
 
             {/* Actions */}
-            <div className="p-4 border-b border-border/30">
+            <div className="p-4 grid grid-cols-2 gap-3 border-b border-border/30">
               <Button 
                 variant="glow" 
                 className="w-full"
+                onClick={() => {
+                  onClose();
+                  onAddFunds();
+                }}
+              >
+                <Plus className="h-4 w-4" />
+                Add Funds
+              </Button>
+              <Button 
+                variant="outline" 
+                className="w-full"
                 onClick={() => setView('withdraw')}
+                disabled={balance === 0}
               >
                 <ArrowUpRight className="h-4 w-4" />
-                Withdraw USDT
+                Withdraw
               </Button>
             </div>
 
@@ -83,25 +94,37 @@ export const WalletDropdown = ({ isOpen, onClose }: WalletDropdownProps) => {
                 </span>
               </div>
               
-              <div className="space-y-2">
-                {transactions.map((tx) => (
-                  <div 
-                    key={tx.id}
-                    className="flex items-center justify-between p-3 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors"
-                  >
-                    <div>
-                      <p className="text-sm font-medium capitalize">{tx.type}</p>
-                      <p className="text-xs text-muted-foreground">{tx.date}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className={`text-sm font-medium ${tx.type === 'buy' ? 'text-success' : 'text-foreground'}`}>
-                        {tx.type === 'buy' ? '+' : '-'}{tx.amount} USDT
-                      </p>
-                      <p className="text-xs text-success capitalize">{tx.status}</p>
-                    </div>
+              {transactions.length === 0 ? (
+                <div className="text-center py-6">
+                  <div className="w-12 h-12 rounded-xl bg-muted/50 flex items-center justify-center mx-auto mb-3">
+                    <Wallet className="h-6 w-6 text-muted-foreground" />
                   </div>
-                ))}
-              </div>
+                  <p className="text-sm text-muted-foreground">No transactions yet</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Add funds to get started
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {transactions.map((tx) => (
+                    <div 
+                      key={tx.id}
+                      className="flex items-center justify-between p-3 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors"
+                    >
+                      <div>
+                        <p className="text-sm font-medium capitalize">{tx.type}</p>
+                        <p className="text-xs text-muted-foreground">{tx.date}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className={`text-sm font-medium ${tx.type === 'buy' ? 'text-success' : 'text-foreground'}`}>
+                          {tx.type === 'buy' ? '+' : '-'}{tx.amount} USDT
+                        </p>
+                        <p className="text-xs text-success capitalize">{tx.status}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </>
         ) : (
