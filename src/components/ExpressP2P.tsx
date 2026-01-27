@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Zap, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
+import { WhyUsdt } from './WhyUsdt';
 
 // Bonus rates: tiered system where larger amounts get slightly better rates
 const packages = [
@@ -85,6 +86,9 @@ export const ExpressP2P = () => {
         <p className="text-xs text-muted-foreground text-center mt-6">
           Bonus rates applied • Larger amounts receive better rates
         </p>
+
+        {/* Why USDT Accordion */}
+        <WhyUsdt />
       </div>
     </section>
   );
