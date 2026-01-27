@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, CreditCard, Wallet, Building2, Shield, Check, Copy, Clock } from 'lucide-react';
+import { ArrowLeft, CreditCard, Wallet, Shield, Check, Copy, AlertCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
+import { Progress } from '@/components/ui/progress';
 
 interface PackageData {
   usd: number;
@@ -12,11 +13,31 @@ interface PackageData {
   isCustom?: boolean;
 }
 
+// Pool of USDT addresses to randomize
+const USDT_ADDRESSES = [
+  'TNGgujx2JCg9tqxNceGCotzjX2p3Zc4S75',
+  'TKPDALoYRtaD3zK5zDdjDSg6aWUQghFrNh',
+  'TVyzob43oGTBV9AJSvHC2NQozK46eWF2jp',
+];
+
+const getRandomAddress = () => {
+  const randomIndex = Math.floor(Math.random() * USDT_ADDRESSES.length);
+  return USDT_ADDRESSES[randomIndex];
+};
+
 const Payment = () => {
   const navigate = useNavigate();
   const [packageData, setPackageData] = useState<PackageData | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<'card' | 'bank' | 'crypto'>('card');
+  const [paymentMethod, setPaymentMethod] = useState<'card' | 'crypto'>('card');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [depositAddress] = useState(() => getRandomAddress());
+  
+  // Crypto payment states
+  const [timeRemaining, setTimeRemaining] = useState(600); // 10 minutes in seconds
+  const [isTimerActive, setIsTimerActive] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [verificationProgress, setVerificationProgress] = useState(0);
+  const [verificationFailed, setVerificationFailed] = useState(false);
 
   useEffect(() => {
     // Check if user is logged in
@@ -35,6 +56,60 @@ const Payment = () => {
     }
   }, [navigate]);
 
+  // Start timer when crypto is selected
+  useEffect(() => {
+    if (paymentMethod === 'crypto' && !isTimerActive) {
+      setIsTimerActive(true);
+      setTimeRemaining(600);
+      setVerificationFailed(false);
+    }
+  }, [paymentMethod, isTimerActive]);
+
+  // Countdown timer
+  useEffect(() => {
+    if (!isTimerActive || timeRemaining <= 0) return;
+
+    const interval = setInterval(() => {
+      setTimeRemaining((prev) => {
+        if (prev <= 1) {
+          setIsTimerActive(false);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [isTimerActive, timeRemaining]);
+
+  // Verification progress animation
+  useEffect(() => {
+    if (!isVerifying) return;
+
+    const duration = 120000; // 2 minutes
+    const startTime = Date.now();
+
+    const interval = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min((elapsed / duration) * 100, 100);
+      setVerificationProgress(progress);
+
+      if (progress >= 100) {
+        clearInterval(interval);
+        setIsVerifying(false);
+        setVerificationFailed(true);
+      }
+    }, 100);
+
+    return () => clearInterval(interval);
+  }, [isVerifying]);
+
+  const formatTime = useCallback((seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  }, []);
+
   const handlePayment = async () => {
     setIsProcessing(true);
     // Simulate payment processing
@@ -49,6 +124,12 @@ const Payment = () => {
     sessionStorage.removeItem('selectedPackage');
     navigate('/');
     setIsProcessing(false);
+  };
+
+  const handleMarkAsPaid = () => {
+    setIsVerifying(true);
+    setVerificationProgress(0);
+    setVerificationFailed(false);
   };
 
   const copyToClipboard = (text: string) => {
@@ -109,7 +190,7 @@ const Payment = () => {
             <div className="glass-card rounded-2xl p-6">
               <h2 className="text-lg font-semibold mb-4">Payment Method</h2>
               
-              <div className="grid grid-cols-3 gap-3 mb-6">
+              <div className="grid grid-cols-2 gap-3 mb-6">
                 <button
                   onClick={() => setPaymentMethod('card')}
                   className={`p-4 rounded-xl border-2 transition-all ${
@@ -120,18 +201,6 @@ const Payment = () => {
                 >
                   <CreditCard className={`h-6 w-6 mx-auto mb-2 ${paymentMethod === 'card' ? 'text-primary' : 'text-muted-foreground'}`} />
                   <p className="text-sm font-medium">Card</p>
-                </button>
-                
-                <button
-                  onClick={() => setPaymentMethod('bank')}
-                  className={`p-4 rounded-xl border-2 transition-all ${
-                    paymentMethod === 'bank' 
-                      ? 'border-primary bg-primary/10' 
-                      : 'border-border hover:border-primary/40'
-                  }`}
-                >
-                  <Building2 className={`h-6 w-6 mx-auto mb-2 ${paymentMethod === 'bank' ? 'text-primary' : 'text-muted-foreground'}`} />
-                  <p className="text-sm font-medium">Bank</p>
                 </button>
                 
                 <button
@@ -171,58 +240,110 @@ const Payment = () => {
                 </div>
               )}
 
-              {/* Bank Transfer */}
-              {paymentMethod === 'bank' && (
-                <div className="space-y-4">
-                  <div className="bg-secondary/50 rounded-xl p-4">
-                    <p className="text-sm text-muted-foreground mb-3">Transfer to:</p>
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-sm text-muted-foreground">Bank Name:</span>
-                        <span className="font-medium">First National Bank</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-muted-foreground">Account Number:</span>
-                        <span className="font-medium">1234567890</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-muted-foreground">Routing Number:</span>
-                        <span className="font-medium">021000021</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-muted-foreground">Reference:</span>
-                        <span className="font-medium text-primary">ORDER-{Date.now().toString().slice(-8)}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 p-3 bg-warning/10 rounded-lg border border-warning/20">
-                    <Clock className="h-4 w-4 text-warning shrink-0" />
-                    <p className="text-xs text-warning">Processing time: 1-3 business days</p>
-                  </div>
-                </div>
-              )}
-
               {/* Crypto Payment */}
               {paymentMethod === 'crypto' && (
                 <div className="space-y-4">
+                  {/* Timer and Instructions */}
+                  <div className="flex items-center gap-2 p-4 bg-warning/10 rounded-xl border border-warning/20">
+                    <AlertCircle className="h-5 w-5 text-warning shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-warning">
+                        Copy the address below and complete the payment within 10 minutes
+                      </p>
+                      <p className="text-xs text-warning/80 mt-1">
+                        Mark as paid only after you've completed the payment
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Countdown Timer */}
+                  <div className="text-center p-4 bg-secondary/50 rounded-xl">
+                    <p className="text-xs text-muted-foreground mb-1">Time Remaining</p>
+                    <p className={`text-3xl font-display font-bold ${timeRemaining <= 60 ? 'text-destructive' : 'text-primary'}`}>
+                      {formatTime(timeRemaining)}
+                    </p>
+                    {timeRemaining <= 0 && (
+                      <p className="text-xs text-destructive mt-2">Time expired. Please refresh to get a new address.</p>
+                    )}
+                  </div>
+
+                  {/* USDT Address */}
                   <div className="bg-secondary/50 rounded-xl p-4">
                     <p className="text-sm text-muted-foreground mb-3">Send USDT (TRC20) to:</p>
                     <div className="flex items-center gap-2 bg-background/50 rounded-lg p-3">
                       <code className="text-sm font-mono flex-1 break-all">
-                        TQn9Y2khEsLJW1ChVWFMSMeRDow5KcbLSE
+                        {depositAddress}
                       </code>
                       <button 
-                        onClick={() => copyToClipboard('TQn9Y2khEsLJW1ChVWFMSMeRDow5KcbLSE')}
+                        onClick={() => copyToClipboard(depositAddress)}
                         className="p-2 hover:bg-secondary rounded-lg transition-colors"
                       >
                         <Copy className="h-4 w-4" />
                       </button>
                     </div>
+                    <p className="text-xs text-muted-foreground mt-3">
+                      Amount to send: <span className="font-bold text-primary">${packageData.usd.toLocaleString()} USDT</span>
+                    </p>
                   </div>
-                  <div className="flex items-center gap-2 p-3 bg-success/10 rounded-lg border border-success/20">
-                    <Check className="h-4 w-4 text-success shrink-0" />
-                    <p className="text-xs text-success">Instant confirmation after payment detected</p>
-                  </div>
+
+                  {/* Verification Status */}
+                  {isVerifying && (
+                    <div className="bg-secondary/50 rounded-xl p-4 space-y-3">
+                      <div className="flex items-center gap-3">
+                        <Loader2 className="h-5 w-5 text-primary animate-spin" />
+                        <div className="flex-1">
+                          <p className="text-sm font-medium">Searching on the blockchain...</p>
+                          <p className="text-xs text-muted-foreground">Verifying your transaction</p>
+                        </div>
+                      </div>
+                      <Progress value={verificationProgress} className="h-2" />
+                      <p className="text-xs text-muted-foreground text-center">
+                        {Math.round(verificationProgress)}% complete
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Verification Failed */}
+                  {verificationFailed && (
+                    <div className="flex items-center gap-3 p-4 bg-destructive/10 rounded-xl border border-destructive/20">
+                      <AlertCircle className="h-5 w-5 text-destructive shrink-0" />
+                      <div>
+                        <p className="text-sm font-medium text-destructive">Payment not confirmed</p>
+                        <p className="text-xs text-destructive/80 mt-1">
+                          We couldn't find your transaction on the blockchain. Please verify you sent to the correct address and try again.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Mark as Paid Button */}
+                  {!isVerifying && timeRemaining > 0 && (
+                    <Button 
+                      variant="glow" 
+                      size="lg" 
+                      className="w-full"
+                      onClick={handleMarkAsPaid}
+                      disabled={verificationFailed}
+                    >
+                      <Check className="h-4 w-4 mr-2" />
+                      {verificationFailed ? 'Try Again' : 'Mark as Paid'}
+                    </Button>
+                  )}
+
+                  {verificationFailed && (
+                    <Button 
+                      variant="outline" 
+                      size="lg" 
+                      className="w-full"
+                      onClick={() => {
+                        setVerificationFailed(false);
+                        setIsTimerActive(true);
+                        setTimeRemaining(600);
+                      }}
+                    >
+                      Get New Address & Try Again
+                    </Button>
+                  )}
                 </div>
               )}
             </div>
@@ -235,20 +356,22 @@ const Payment = () => {
               </p>
             </div>
 
-            {/* Submit Button */}
-            <Button 
-              variant="glow" 
-              size="xl" 
-              className="w-full"
-              onClick={handlePayment}
-              disabled={isProcessing}
-            >
-              {isProcessing ? (
-                'Processing Payment...'
-              ) : (
-                `Pay $${packageData.usd.toLocaleString()} & Receive ${packageData.usdt.toLocaleString()} USDT`
-              )}
-            </Button>
+            {/* Submit Button - Only for Card */}
+            {paymentMethod === 'card' && (
+              <Button 
+                variant="glow" 
+                size="xl" 
+                className="w-full"
+                onClick={handlePayment}
+                disabled={isProcessing}
+              >
+                {isProcessing ? (
+                  'Processing Payment...'
+                ) : (
+                  `Pay $${packageData.usd.toLocaleString()} & Receive ${packageData.usdt.toLocaleString()} USDT`
+                )}
+              </Button>
+            )}
           </div>
         </div>
       </main>
