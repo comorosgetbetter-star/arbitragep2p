@@ -290,6 +290,15 @@ const CreateAccount = () => {
             <p className="text-xs text-muted-foreground text-center">
               By creating an account, you agree to our Terms of Service and Privacy Policy.
             </p>
+
+            <div className="text-center pt-4 border-t border-border/50">
+              <p className="text-sm text-muted-foreground">
+                Already have an account?{' '}
+                <Link to="/login" className="text-primary hover:underline font-medium">
+                  Sign in
+                </Link>
+              </p>
+            </div>
           </form>
         </div>
       </main>
