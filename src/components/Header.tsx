@@ -3,6 +3,7 @@ import { Wallet, Menu, X, Sun, Moon, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { WalletDropdown } from './WalletDropdown';
 import { AddFundsModal } from './AddFundsModal';
+import { AccountDropdown } from './AccountDropdown';
 
 interface HeaderProps {
   isDark: boolean;
@@ -66,6 +67,8 @@ export const Header = ({ isDark, toggleTheme }: HeaderProps) => {
             >
               {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
             </Button>
+
+            <AccountDropdown />
 
             <div className="relative">
               <Button
