@@ -12,6 +12,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useCountryDetection } from '@/hooks/useCountryDetection';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import { z } from 'zod';
 
 const accountSchema = z.object({
@@ -28,6 +30,7 @@ const accountSchema = z.object({
 
 const CreateAccount = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const { country: detectedCountry, countries, isLoading: countryLoading } = useCountryDetection();
   
   const [formData, setFormData] = useState({
@@ -62,26 +65,55 @@ const CreateAccount = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setErrors({});
     
     try {
+      // Validate form data
       const validatedData = accountSchema.parse(formData);
       
-      // Simulate account creation (replace with real API call)
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Store user session
-      sessionStorage.setItem('user', JSON.stringify({
-        name: validatedData.fullName,
+      // Sign up with Supabase
+      const { data, error } = await supabase.auth.signUp({
         email: validatedData.email,
-        country: validatedData.country,
-      }));
-      
-      // Redirect to payment if package was selected
-      const selectedPackage = sessionStorage.getItem('selectedPackage');
-      if (selectedPackage) {
-        navigate('/payment');
-      } else {
-        navigate('/');
+        password: validatedData.password,
+        options: {
+          emailRedirectTo: window.location.origin,
+          data: {
+            full_name: validatedData.fullName,
+            phone: validatedData.phone,
+            country: validatedData.country,
+          },
+        },
+      });
+
+      if (error) {
+        toast({
+          title: "Registration Failed",
+          description: error.message,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (data.user) {
+        toast({
+          title: "Account Created!",
+          description: "Please check your email to verify your account.",
+        });
+        
+        // Store for session (temporary until email verified)
+        sessionStorage.setItem('user', JSON.stringify({
+          name: validatedData.fullName,
+          email: validatedData.email,
+          country: validatedData.country,
+        }));
+        
+        // Redirect to payment if package was selected
+        const selectedPackage = sessionStorage.getItem('selectedPackage');
+        if (selectedPackage) {
+          navigate('/payment');
+        } else {
+          navigate('/');
+        }
       }
     } catch (error) {
       if (error instanceof z.ZodError) {
