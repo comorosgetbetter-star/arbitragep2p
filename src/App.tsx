@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { TradeSessionBadge } from "@/components/TradeSessionBadge";
 import Index from "./pages/Index";
 import CreateAccount from "./pages/CreateAccount";
 import Login from "./pages/Login";
@@ -18,6 +19,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <TradeSessionBadge />
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/create-account" element={<CreateAccount />} />

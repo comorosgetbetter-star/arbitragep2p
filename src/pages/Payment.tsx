@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
 import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
+import { useTradeSession } from '@/hooks/useTradeSession';
 
 interface PackageData {
   usd: number;
@@ -31,6 +32,7 @@ const Payment = () => {
   const [packageData, setPackageData] = useState<PackageData | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'crypto'>('card');
   const [depositAddress] = useState(() => getRandomAddress());
+  const { session: tradeSession, clearSession, getRemainingTime } = useTradeSession();
   
   // Crypto payment states
   const [timeRemaining, setTimeRemaining] = useState(600); // 10 minutes in seconds
@@ -52,17 +54,22 @@ const Payment = () => {
         return;
       }
 
-      // Get selected package
+      // Get selected package from trade session
       const storedPackage = sessionStorage.getItem('selectedPackage');
       if (storedPackage) {
         setPackageData(JSON.parse(storedPackage));
+        // Sync timer with remaining session time
+        const remaining = getRemainingTime();
+        if (remaining > 0) {
+          setTimeRemaining(remaining);
+        }
       } else {
         navigate('/');
       }
     };
     
     checkAuth();
-  }, [navigate]);
+  }, [navigate, getRemainingTime]);
 
   // Start timer when crypto is selected
   useEffect(() => {
@@ -73,7 +80,7 @@ const Payment = () => {
     }
   }, [paymentMethod, isTimerActive]);
 
-  // Countdown timer
+  // Countdown timer - synced with trade session
   useEffect(() => {
     if (!isTimerActive || timeRemaining <= 0) return;
 
@@ -81,6 +88,7 @@ const Payment = () => {
       setTimeRemaining((prev) => {
         if (prev <= 1) {
           setIsTimerActive(false);
+          clearSession(); // Clear session when timer expires
           return 0;
         }
         return prev - 1;
@@ -88,7 +96,7 @@ const Payment = () => {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [isTimerActive, timeRemaining]);
+  }, [isTimerActive, timeRemaining, clearSession]);
 
   // Verification progress animation
   useEffect(() => {

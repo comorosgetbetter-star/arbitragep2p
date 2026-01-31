@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Zap, Check } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { WhyUsdt } from './WhyUsdt';
+import { TradeConflictModal } from './TradeConflictModal';
 import { supabase } from '@/integrations/supabase/client';
+import { useTradeSession, TradeSession } from '@/hooks/useTradeSession';
 import type { User } from '@supabase/supabase-js';
 
 // Bonus rates: tiered system where larger amounts get slightly better rates
@@ -19,7 +20,11 @@ const packages = [
 export const ExpressP2P = () => {
   const [selectedPackage, setSelectedPackage] = useState<number | null>(null);
   const [user, setUser] = useState<User | null>(null);
+  const [showConflictModal, setShowConflictModal] = useState(false);
+  const [pendingPackage, setPendingPackage] = useState<{ usd: number; usdt: number } | null>(null);
+  const [existingSession, setExistingSession] = useState<TradeSession | null>(null);
   const navigate = useNavigate();
+  const { startSession, clearSession, getStoredSession } = useTradeSession();
 
   useEffect(() => {
     // Get initial session
@@ -35,16 +40,42 @@ export const ExpressP2P = () => {
     return () => subscription.unsubscribe();
   }, []);
 
-  const handleSelectPackage = (usd: number, usdt: number) => {
-    setSelectedPackage(usd);
-    // Store selected package in sessionStorage for payment flow
-    sessionStorage.setItem('selectedPackage', JSON.stringify({ usd, usdt }));
-    // Check if user is authenticated via Supabase
+  const proceedWithPackage = (usd: number, usdt: number) => {
+    startSession(usd, usdt);
     if (user) {
       navigate('/payment');
     } else {
       navigate('/create-account');
     }
+  };
+
+  const handleSelectPackage = (usd: number, usdt: number) => {
+    setSelectedPackage(usd);
+    
+    // Check for existing active session
+    const existing = getStoredSession();
+    
+    if (existing) {
+      // Show conflict modal
+      setExistingSession(existing);
+      setPendingPackage({ usd, usdt });
+      setShowConflictModal(true);
+    } else {
+      proceedWithPackage(usd, usdt);
+    }
+  };
+
+  const handleResumeExisting = () => {
+    setShowConflictModal(false);
+    navigate('/payment');
+  };
+
+  const handleStartNew = () => {
+    if (pendingPackage) {
+      clearSession();
+      proceedWithPackage(pendingPackage.usd, pendingPackage.usdt);
+    }
+    setShowConflictModal(false);
   };
 
   return (
@@ -106,6 +137,15 @@ export const ExpressP2P = () => {
         {/* Why USDT Accordion */}
         <WhyUsdt />
       </div>
+
+      {/* Trade Conflict Modal */}
+      <TradeConflictModal
+        isOpen={showConflictModal}
+        onClose={() => setShowConflictModal(false)}
+        existingSession={existingSession}
+        onResume={handleResumeExisting}
+        onStartNew={handleStartNew}
+      />
     </section>
   );
 };
