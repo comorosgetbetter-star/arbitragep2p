@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
 import { Progress } from '@/components/ui/progress';
+import { supabase } from '@/integrations/supabase/client';
 
 interface PackageData {
   usd: number;
@@ -29,7 +30,6 @@ const Payment = () => {
   const navigate = useNavigate();
   const [packageData, setPackageData] = useState<PackageData | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'crypto'>('card');
-  const [isProcessing, setIsProcessing] = useState(false);
   const [depositAddress] = useState(() => getRandomAddress());
   
   // Crypto payment states
@@ -38,22 +38,30 @@ const Payment = () => {
   const [isVerifying, setIsVerifying] = useState(false);
   const [verificationProgress, setVerificationProgress] = useState(0);
   const [verificationFailed, setVerificationFailed] = useState(false);
+  
+  // Card payment states
+  const [isCardProcessing, setIsCardProcessing] = useState(false);
+  const [cardPaymentFailed, setCardPaymentFailed] = useState(false);
 
   useEffect(() => {
-    // Check if user is logged in
-    const user = sessionStorage.getItem('user');
-    if (!user) {
-      navigate('/create-account');
-      return;
-    }
+    // Check if user is logged in via Supabase auth
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        navigate('/create-account');
+        return;
+      }
 
-    // Get selected package
-    const storedPackage = sessionStorage.getItem('selectedPackage');
-    if (storedPackage) {
-      setPackageData(JSON.parse(storedPackage));
-    } else {
-      navigate('/');
-    }
+      // Get selected package
+      const storedPackage = sessionStorage.getItem('selectedPackage');
+      if (storedPackage) {
+        setPackageData(JSON.parse(storedPackage));
+      } else {
+        navigate('/');
+      }
+    };
+    
+    checkAuth();
   }, [navigate]);
 
   // Start timer when crypto is selected
@@ -111,19 +119,20 @@ const Payment = () => {
   }, []);
 
   const handlePayment = async () => {
-    setIsProcessing(true);
-    // Simulate payment processing
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    setIsCardProcessing(true);
+    setCardPaymentFailed(false);
+    
+    // Simulate payment processing for 10 seconds then show error
+    await new Promise(resolve => setTimeout(resolve, 10000));
+    
+    setIsCardProcessing(false);
+    setCardPaymentFailed(true);
     
     toast({
-      title: "Payment Successful!",
-      description: `You have purchased ${packageData?.usdt} USDT successfully.`,
+      title: "Payment Failed",
+      description: "Something went wrong. Please try again.",
+      variant: "destructive",
     });
-    
-    // Clear selected package and redirect
-    sessionStorage.removeItem('selectedPackage');
-    navigate('/');
-    setIsProcessing(false);
   };
 
   const handleMarkAsPaid = () => {
@@ -219,24 +228,49 @@ const Payment = () => {
               {/* Card Payment Form */}
               {paymentMethod === 'card' && (
                 <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>Card Number</Label>
-                    <Input placeholder="1234 5678 9012 3456" />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Expiry Date</Label>
-                      <Input placeholder="MM/YY" />
+                  {isCardProcessing ? (
+                    <div className="bg-secondary/50 rounded-xl p-8 text-center space-y-4">
+                      <Loader2 className="h-12 w-12 text-primary animate-spin mx-auto" />
+                      <div>
+                        <p className="text-lg font-medium">Processing your payment...</p>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Please wait while we verify your transaction
+                        </p>
+                      </div>
                     </div>
-                    <div className="space-y-2">
-                      <Label>CVV</Label>
-                      <Input placeholder="123" type="password" />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Cardholder Name</Label>
-                    <Input placeholder="John Doe" />
-                  </div>
+                  ) : (
+                    <>
+                      {cardPaymentFailed && (
+                        <div className="flex items-center gap-3 p-4 bg-destructive/10 rounded-xl border border-destructive/20 mb-4">
+                          <AlertCircle className="h-5 w-5 text-destructive shrink-0" />
+                          <div>
+                            <p className="text-sm font-medium text-destructive">Something went wrong</p>
+                            <p className="text-xs text-destructive/80 mt-1">
+                              We couldn't process your payment. Please check your card details and try again.
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                      <div className="space-y-2">
+                        <Label>Card Number</Label>
+                        <Input placeholder="1234 5678 9012 3456" disabled={isCardProcessing} />
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Expiry Date</Label>
+                          <Input placeholder="MM/YY" disabled={isCardProcessing} />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>CVV</Label>
+                          <Input placeholder="123" type="password" disabled={isCardProcessing} />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Cardholder Name</Label>
+                        <Input placeholder="John Doe" disabled={isCardProcessing} />
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
 
@@ -357,19 +391,18 @@ const Payment = () => {
             </div>
 
             {/* Submit Button - Only for Card */}
-            {paymentMethod === 'card' && (
+            {paymentMethod === 'card' && !isCardProcessing && (
               <Button 
                 variant="glow" 
                 size="xl" 
                 className="w-full"
                 onClick={handlePayment}
-                disabled={isProcessing}
+                disabled={isCardProcessing}
               >
-                {isProcessing ? (
-                  'Processing Payment...'
-                ) : (
-                  `Pay $${packageData.usd.toLocaleString()} & Receive ${packageData.usdt.toLocaleString()} USDT`
-                )}
+                {cardPaymentFailed 
+                  ? 'Try Again'
+                  : `Pay $${packageData.usd.toLocaleString()} & Receive ${packageData.usdt.toLocaleString()} USDT`
+                }
               </Button>
             )}
           </div>
