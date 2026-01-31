@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Zap, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { WhyUsdt } from './WhyUsdt';
+import { supabase } from '@/integrations/supabase/client';
+import type { User } from '@supabase/supabase-js';
 
 // Bonus rates: tiered system where larger amounts get slightly better rates
 const packages = [
@@ -16,15 +18,29 @@ const packages = [
 
 export const ExpressP2P = () => {
   const [selectedPackage, setSelectedPackage] = useState<number | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const handleSelectPackage = (usd: number, usdt: number) => {
     setSelectedPackage(usd);
     // Store selected package in sessionStorage for payment flow
     sessionStorage.setItem('selectedPackage', JSON.stringify({ usd, usdt }));
-    // Check if user is logged in (for now, redirect to create account)
-    const isLoggedIn = sessionStorage.getItem('user');
-    if (isLoggedIn) {
+    // Check if user is authenticated via Supabase
+    if (user) {
       navigate('/payment');
     } else {
       navigate('/create-account');
