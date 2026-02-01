@@ -34,9 +34,12 @@ const Payment = () => {
   const [depositAddress] = useState(() => getRandomAddress());
   const { session: tradeSession, clearSession, getRemainingTime } = useTradeSession();
   
-  // Crypto payment states
-  const [timeRemaining, setTimeRemaining] = useState(600); // 10 minutes in seconds
-  const [isTimerActive, setIsTimerActive] = useState(false);
+  // Crypto payment states - initialize from trade session
+  const [timeRemaining, setTimeRemaining] = useState(() => {
+    const remaining = getRemainingTime();
+    return remaining > 0 ? remaining : 600;
+  });
+  const [isTimerActive, setIsTimerActive] = useState(true); // Start immediately if session exists
   const [isVerifying, setIsVerifying] = useState(false);
   const [verificationProgress, setVerificationProgress] = useState(0);
   const [verificationFailed, setVerificationFailed] = useState(false);
@@ -58,10 +61,11 @@ const Payment = () => {
       const storedPackage = sessionStorage.getItem('selectedPackage');
       if (storedPackage) {
         setPackageData(JSON.parse(storedPackage));
-        // Sync timer with remaining session time
+        // Sync timer with remaining session time immediately
         const remaining = getRemainingTime();
         if (remaining > 0) {
           setTimeRemaining(remaining);
+          setIsTimerActive(true);
         }
       } else {
         navigate('/');
@@ -71,14 +75,16 @@ const Payment = () => {
     checkAuth();
   }, [navigate, getRemainingTime]);
 
-  // Start timer when crypto is selected
+  // Start timer when crypto is selected - use remaining time from session
   useEffect(() => {
     if (paymentMethod === 'crypto' && !isTimerActive) {
+      const remaining = getRemainingTime();
       setIsTimerActive(true);
-      setTimeRemaining(600);
+      // Only use remaining time if there's an active session, otherwise fresh 600
+      setTimeRemaining(remaining > 0 ? remaining : 600);
       setVerificationFailed(false);
     }
-  }, [paymentMethod, isTimerActive]);
+  }, [paymentMethod, isTimerActive, getRemainingTime]);
 
   // Countdown timer - synced with trade session
   useEffect(() => {
