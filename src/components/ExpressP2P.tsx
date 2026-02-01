@@ -45,7 +45,7 @@ export const ExpressP2P = () => {
     if (user) {
       navigate('/payment');
     } else {
-      navigate('/create-account');
+      navigate('/login');
     }
   };
 

@@ -3,6 +3,8 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Clock, X, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTradeSession } from '@/hooks/useTradeSession';
+import { supabase } from '@/integrations/supabase/client';
+import type { User } from '@supabase/supabase-js';
 
 export const TradeSessionBadge = () => {
   const navigate = useNavigate();
@@ -10,6 +12,20 @@ export const TradeSessionBadge = () => {
   const { session, getRemainingTime, clearSession } = useTradeSession();
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [isDismissed, setIsDismissed] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+
+  // Listen for auth state changes
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   // Update timer every second
   useEffect(() => {
@@ -37,10 +53,11 @@ export const TradeSessionBadge = () => {
 
   // Don't show if:
   // - No active session
+  // - User is not logged in
   // - Already on payment page
   // - User dismissed it
   // - Session expired
-  if (!session || location.pathname === '/payment' || isDismissed || timeRemaining <= 0) {
+  if (!session || !user || location.pathname === '/payment' || isDismissed || timeRemaining <= 0) {
     return null;
   }
 
@@ -60,38 +77,38 @@ export const TradeSessionBadge = () => {
 
   return (
     <div className="fixed bottom-4 left-4 z-50 animate-fade-in">
-      <div className="glass-card rounded-2xl p-4 shadow-lg border border-primary/20 max-w-xs">
-        <div className="flex items-start gap-3">
-          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-            <Clock className="h-5 w-5 text-primary" />
+      <div className="glass-card rounded-xl p-3 shadow-lg border border-primary/20 max-w-[220px]">
+        <div className="flex items-start gap-2">
+          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+            <Clock className="h-4 w-4 text-primary" />
           </div>
           
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium mb-1">Trade in Progress</p>
-            <p className="text-xs text-muted-foreground mb-2">
+            <p className="text-xs font-medium mb-0.5">Trade in Progress</p>
+            <p className="text-[10px] text-muted-foreground mb-1">
               ${session.usd.toLocaleString()} → {session.usdt.toLocaleString()} USDT
             </p>
             
-            <div className="flex items-center gap-2 mb-3">
-              <span className={`text-xs font-mono ${timeRemaining <= 60 ? 'text-destructive' : 'text-primary'}`}>
-                {formatTime(timeRemaining)} remaining
+            <div className="flex items-center gap-1 mb-2">
+              <span className={`text-[10px] font-mono ${timeRemaining <= 60 ? 'text-destructive' : 'text-primary'}`}>
+                {formatTime(timeRemaining)} left
               </span>
             </div>
             
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
               <Button 
                 size="sm" 
                 variant="default"
-                className="text-xs h-7"
+                className="text-[10px] h-6 px-2"
                 onClick={handleResume}
               >
                 Resume
-                <ArrowRight className="h-3 w-3 ml-1" />
+                <ArrowRight className="h-2.5 w-2.5 ml-1" />
               </Button>
               <Button
                 size="sm"
                 variant="ghost"
-                className="text-xs h-7 text-muted-foreground"
+                className="h-6 w-6 p-0 text-muted-foreground"
                 onClick={handleDismiss}
               >
                 <X className="h-3 w-3" />
