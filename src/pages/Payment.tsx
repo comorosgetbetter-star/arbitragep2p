@@ -34,12 +34,21 @@ const Payment = () => {
   const [depositAddress] = useState(() => getRandomAddress());
   const { session: tradeSession, clearSession, getRemainingTime } = useTradeSession();
   
-  // Crypto payment states - initialize from trade session
+  // Crypto payment states - initialize from trade session storage directly
   const [timeRemaining, setTimeRemaining] = useState(() => {
-    const remaining = getRemainingTime();
-    return remaining > 0 ? remaining : 600;
+    const stored = sessionStorage.getItem('activeTradeSession');
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        const remaining = Math.max(0, Math.floor((parsed.expiresAt - Date.now()) / 1000));
+        return remaining > 0 ? remaining : 600;
+      } catch {
+        return 600;
+      }
+    }
+    return 600;
   });
-  const [isTimerActive, setIsTimerActive] = useState(true); // Start immediately if session exists
+  const [isTimerActive, setIsTimerActive] = useState(true);
   const [isVerifying, setIsVerifying] = useState(false);
   const [verificationProgress, setVerificationProgress] = useState(0);
   const [verificationFailed, setVerificationFailed] = useState(false);
