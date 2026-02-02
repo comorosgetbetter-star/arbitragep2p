@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Clock, X, ArrowRight } from 'lucide-react';
+import { Clock, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTradeSession } from '@/hooks/useTradeSession';
 import { supabase } from '@/integrations/supabase/client';
@@ -76,44 +76,39 @@ export const TradeSessionBadge = () => {
   };
 
   return (
-    <div className="fixed bottom-4 left-4 z-50 animate-fade-in">
-      <div className="glass-card rounded-xl p-3 shadow-lg border border-primary/20 max-w-[220px]">
-        <div className="flex items-start gap-2">
-          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-            <Clock className="h-4 w-4 text-primary" />
+    <div className="fixed bottom-3 left-3 z-50 animate-fade-in">
+      <div className="glass-card rounded-lg p-2 shadow-md border border-primary/20 max-w-[180px]">
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+            <Clock className="h-3 w-3 text-primary" />
           </div>
           
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-medium mb-0.5">Trade in Progress</p>
-            <p className="text-[10px] text-muted-foreground mb-1">
-              ${session.usd.toLocaleString()} → {session.usdt.toLocaleString()} USDT
+            <p className="text-[9px] font-medium leading-tight">
+              ${session.usd} → {session.usdt} USDT
             </p>
-            
-            <div className="flex items-center gap-1 mb-2">
-              <span className={`text-[10px] font-mono ${timeRemaining <= 60 ? 'text-destructive' : 'text-primary'}`}>
-                {formatTime(timeRemaining)} left
-              </span>
-            </div>
-            
-            <div className="flex items-center gap-1">
-              <Button 
-                size="sm" 
-                variant="default"
-                className="text-[10px] h-6 px-2"
-                onClick={handleResume}
-              >
-                Resume
-                <ArrowRight className="h-2.5 w-2.5 ml-1" />
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                className="h-6 w-6 p-0 text-muted-foreground"
-                onClick={handleDismiss}
-              >
-                <X className="h-3 w-3" />
-              </Button>
-            </div>
+            <span className={`text-[9px] font-mono ${timeRemaining <= 60 ? 'text-destructive' : 'text-primary'}`}>
+              {formatTime(timeRemaining)}
+            </span>
+          </div>
+          
+          <div className="flex items-center gap-0.5">
+            <Button 
+              size="sm" 
+              variant="default"
+              className="text-[9px] h-5 px-1.5 rounded"
+              onClick={handleResume}
+            >
+              Resume
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-5 w-5 p-0 text-muted-foreground"
+              onClick={handleDismiss}
+            >
+              <X className="h-2.5 w-2.5" />
+            </Button>
           </div>
         </div>
       </div>
