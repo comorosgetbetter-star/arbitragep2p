@@ -27,12 +27,71 @@ const getRandomAddress = () => {
   return USDT_ADDRESSES[randomIndex];
 };
 
+type PaymentMethod = 'card' | 'crypto';
+
+type TradePaymentState = {
+  paymentMethod: PaymentMethod;
+  depositAddress: string;
+  isVerifying: boolean;
+  verificationProgress: number;
+  verificationFailed: boolean;
+};
+
+const PAYMENT_STATE_PREFIX = 'tradePaymentState:';
+
+const readActiveTradeSessionId = (): string | null => {
+  const stored = sessionStorage.getItem('activeTradeSession');
+  if (!stored) return null;
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const raw: any = JSON.parse(stored);
+    if (typeof raw?.id === 'string' && raw.id.length > 0) return raw.id;
+    if (typeof raw?.startedAt === 'number') return String(raw.startedAt);
+    return null;
+  } catch {
+    return null;
+  }
+};
+
+const paymentStateKey = (sessionId: string) => `${PAYMENT_STATE_PREFIX}${sessionId}`;
+
+const readPaymentState = (sessionId: string): TradePaymentState | null => {
+  const stored = sessionStorage.getItem(paymentStateKey(sessionId));
+  if (!stored) return null;
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const raw: any = JSON.parse(stored);
+    const paymentMethod: PaymentMethod = raw?.paymentMethod === 'crypto' ? 'crypto' : 'card';
+    const depositAddress = typeof raw?.depositAddress === 'string' && raw.depositAddress.length > 0
+      ? raw.depositAddress
+      : getRandomAddress();
+
+    return {
+      paymentMethod,
+      depositAddress,
+      isVerifying: !!raw?.isVerifying,
+      verificationProgress: typeof raw?.verificationProgress === 'number' ? raw.verificationProgress : 0,
+      verificationFailed: !!raw?.verificationFailed,
+    };
+  } catch {
+    return null;
+  }
+};
+
 const Payment = () => {
   const navigate = useNavigate();
   const [packageData, setPackageData] = useState<PackageData | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<'card' | 'crypto'>('card');
-  const [depositAddress] = useState(() => getRandomAddress());
   const { session: tradeSession, clearSession, getRemainingTime } = useTradeSession();
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(() => {
+    const sid = readActiveTradeSessionId();
+    if (!sid) return 'card';
+    return readPaymentState(sid)?.paymentMethod ?? 'card';
+  });
+  const [depositAddress, setDepositAddress] = useState<string>(() => {
+    const sid = readActiveTradeSessionId();
+    if (!sid) return getRandomAddress();
+    return readPaymentState(sid)?.depositAddress ?? getRandomAddress();
+  });
   
   // Crypto payment states - initialize from trade session storage directly
   const [timeRemaining, setTimeRemaining] = useState(() => {
@@ -41,17 +100,29 @@ const Payment = () => {
       try {
         const parsed = JSON.parse(stored);
         const remaining = Math.max(0, Math.floor((parsed.expiresAt - Date.now()) / 1000));
-        return remaining > 0 ? remaining : 600;
+        return remaining;
       } catch {
-        return 600;
+        return 0;
       }
     }
-    return 600;
+    return 0;
   });
   const [isTimerActive, setIsTimerActive] = useState(true);
-  const [isVerifying, setIsVerifying] = useState(false);
-  const [verificationProgress, setVerificationProgress] = useState(0);
-  const [verificationFailed, setVerificationFailed] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(() => {
+    const sid = readActiveTradeSessionId();
+    if (!sid) return false;
+    return readPaymentState(sid)?.isVerifying ?? false;
+  });
+  const [verificationProgress, setVerificationProgress] = useState(() => {
+    const sid = readActiveTradeSessionId();
+    if (!sid) return 0;
+    return readPaymentState(sid)?.verificationProgress ?? 0;
+  });
+  const [verificationFailed, setVerificationFailed] = useState(() => {
+    const sid = readActiveTradeSessionId();
+    if (!sid) return false;
+    return readPaymentState(sid)?.verificationFailed ?? false;
+  });
   
   // Card payment states
   const [isCardProcessing, setIsCardProcessing] = useState(false);
@@ -70,11 +141,29 @@ const Payment = () => {
       const storedPackage = sessionStorage.getItem('selectedPackage');
       if (storedPackage) {
         setPackageData(JSON.parse(storedPackage));
-        // Sync timer with remaining session time immediately
+        // If there's no active session anymore, don't show a fresh payment flow.
         const remaining = getRemainingTime();
-        if (remaining > 0) {
-          setTimeRemaining(remaining);
-          setIsTimerActive(true);
+        if (remaining <= 0) {
+          clearSession();
+          navigate('/');
+          return;
+        }
+
+        // Sync timer with remaining session time immediately
+        setTimeRemaining(remaining);
+        setIsTimerActive(true);
+
+        // Restore the exact payment step (method + address + verification flags)
+        const sid = readActiveTradeSessionId();
+        if (sid) {
+          const restored = readPaymentState(sid);
+          if (restored) {
+            setPaymentMethod(restored.paymentMethod);
+            setDepositAddress(restored.depositAddress);
+            setIsVerifying(restored.isVerifying);
+            setVerificationProgress(restored.verificationProgress);
+            setVerificationFailed(restored.verificationFailed);
+          }
         }
       } else {
         navigate('/');
@@ -82,7 +171,23 @@ const Payment = () => {
     };
     
     checkAuth();
-  }, [navigate, getRemainingTime]);
+  }, [navigate, getRemainingTime, clearSession]);
+
+  // Persist payment step state (so Resume restores the exact view and address)
+  useEffect(() => {
+    const sid = tradeSession?.id ?? readActiveTradeSessionId();
+    if (!sid) return;
+
+    const snapshot: TradePaymentState = {
+      paymentMethod,
+      depositAddress,
+      isVerifying,
+      verificationProgress,
+      verificationFailed,
+    };
+
+    sessionStorage.setItem(paymentStateKey(sid), JSON.stringify(snapshot));
+  }, [tradeSession?.id, paymentMethod, depositAddress, isVerifying, verificationProgress, verificationFailed]);
 
   // Reset verification state when switching to crypto - DO NOT reset timer
   useEffect(() => {
@@ -391,7 +496,8 @@ const Payment = () => {
                       onClick={() => {
                         setVerificationFailed(false);
                         setIsTimerActive(true);
-                        setTimeRemaining(600);
+                        // Keep the original trade timer; don't restart a fresh 10 minutes.
+                        setTimeRemaining(getRemainingTime());
                       }}
                     >
                       Get New Address & Try Again
