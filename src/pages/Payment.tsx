@@ -84,16 +84,12 @@ const Payment = () => {
     checkAuth();
   }, [navigate, getRemainingTime]);
 
-  // Start timer when crypto is selected - use remaining time from session
+  // Reset verification state when switching to crypto - DO NOT reset timer
   useEffect(() => {
-    if (paymentMethod === 'crypto' && !isTimerActive) {
-      const remaining = getRemainingTime();
-      setIsTimerActive(true);
-      // Only use remaining time if there's an active session, otherwise fresh 600
-      setTimeRemaining(remaining > 0 ? remaining : 600);
+    if (paymentMethod === 'crypto') {
       setVerificationFailed(false);
     }
-  }, [paymentMethod, isTimerActive, getRemainingTime]);
+  }, [paymentMethod]);
 
   // Countdown timer - synced with trade session
   useEffect(() => {
