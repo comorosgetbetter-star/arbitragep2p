@@ -77,7 +77,7 @@ export const TradeSessionBadge = () => {
 
   return (
     <div className="fixed bottom-3 left-3 z-50 animate-fade-in">
-      <div className="glass-card rounded-lg p-2 shadow-md border border-primary/20 max-w-[180px]">
+      <div className="glass-card rounded-lg p-1.5 shadow-md border border-primary/20 max-w-[160px]">
         <div className="flex items-center gap-2">
           <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
             <Clock className="h-3 w-3 text-primary" />
@@ -96,15 +96,15 @@ export const TradeSessionBadge = () => {
             <Button 
               size="sm" 
               variant="default"
-              className="text-[9px] h-5 px-1.5 rounded"
+              className="text-[8px] h-4 px-1.5 rounded"
               onClick={handleResume}
             >
-              Resume
+              Continue
             </Button>
             <Button
               size="sm"
               variant="ghost"
-              className="h-5 w-5 p-0 text-muted-foreground"
+              className="h-4 w-4 p-0 text-muted-foreground"
               onClick={handleDismiss}
             >
               <X className="h-2.5 w-2.5" />

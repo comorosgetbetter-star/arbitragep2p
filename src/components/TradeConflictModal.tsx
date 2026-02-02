@@ -60,13 +60,13 @@ export const TradeConflictModal = ({
           </AlertDialogCancel>
           <AlertDialogAction
             onClick={onStartNew}
-            className="sm:w-auto bg-secondary text-secondary-foreground hover:bg-secondary/80"
+            className="sm:w-auto h-8 px-3 text-xs bg-secondary text-secondary-foreground hover:bg-secondary/80"
           >
             Start New Trade
           </AlertDialogAction>
           <AlertDialogAction
             onClick={onResume}
-            className="sm:w-auto"
+            className="sm:w-auto h-8 px-3 text-xs"
           >
             Resume Existing Trade
           </AlertDialogAction>
