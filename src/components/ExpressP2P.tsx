@@ -5,6 +5,7 @@ import { WhyUsdt } from './WhyUsdt';
 import { TradeConflictModal } from './TradeConflictModal';
 import { supabase } from '@/integrations/supabase/client';
 import { useTradeSession, TradeSession } from '@/hooks/useTradeSession';
+import { toast } from '@/components/ui/sonner';
 import type { User } from '@supabase/supabase-js';
 
 // Bonus rates: tiered system where larger amounts get slightly better rates
@@ -42,6 +43,9 @@ export const ExpressP2P = () => {
 
   const proceedWithPackage = (usd: number, usdt: number) => {
     startSession(usd, usdt, false, user?.id);
+    toast.success('Trade started!', {
+      description: `$${usd} → ${usdt} USDT`,
+    });
     if (user) {
       navigate('/payment');
     } else {
