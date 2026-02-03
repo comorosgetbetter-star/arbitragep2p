@@ -1,18 +1,23 @@
 import { useState, useEffect, useCallback } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import {
+  TRADE_SESSION_KEY,
+  SELECTED_PACKAGE_KEY,
+  TRADE_SESSION_CHANGED_EVENT,
+  notifyTradeSessionChange,
+  clearTradeStorage,
+} from '@/lib/tradeSessionStorage';
 
 export interface TradeSession {
   id: string;
   usd: number;
   usdt: number;
   isCustom?: boolean;
+  userId?: string;
   startedAt: number; // timestamp
   expiresAt: number; // timestamp
 }
-
-const TRADE_SESSION_KEY = 'activeTradeSession';
 const SESSION_DURATION = 10 * 60 * 1000; // 10 minutes in ms
-
-const TRADE_SESSION_CHANGED_EVENT = 'trade-session-changed';
 
 const generateSessionId = (now: number) => {
   // crypto.randomUUID is supported in modern browsers; fallback kept for safety.
@@ -39,6 +44,7 @@ const readSessionFromStorage = (): TradeSession | null => {
     const expiresAt = typeof raw.expiresAt === 'number' ? raw.expiresAt : startedAt;
     const usd = typeof raw.usd === 'number' ? raw.usd : 0;
     const usdt = typeof raw.usdt === 'number' ? raw.usdt : 0;
+    const userId = typeof raw.userId === 'string' && raw.userId.length > 0 ? raw.userId : undefined;
 
     // Backward compatibility: older sessions may not have an id.
     const id = typeof raw.id === 'string' && raw.id.length > 0 ? raw.id : String(startedAt);
@@ -48,6 +54,7 @@ const readSessionFromStorage = (): TradeSession | null => {
       usd,
       usdt,
       isCustom: !!raw.isCustom,
+      userId,
       startedAt,
       expiresAt,
     };
@@ -62,13 +69,62 @@ const readSessionFromStorage = (): TradeSession | null => {
   }
 };
 
-const notifySessionChange = () => {
-  window.dispatchEvent(new Event(TRADE_SESSION_CHANGED_EVENT));
-};
+const notifySessionChange = () => notifyTradeSessionChange();
 
 export const useTradeSession = () => {
   // Initialize synchronously from sessionStorage so UI (badge) appears immediately.
   const [session, setSession] = useState<TradeSession | null>(() => readSessionFromStorage());
+
+  // Keep trade session strictly tied to a verified login lifecycle.
+  // - On SIGNED_OUT: purge all trade storage so logged-out users never see/continue prior trades.
+  // - On SIGNED_IN: bind anonymous (pre-login) sessions to the signed-in user without restarting the timer.
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, authSession) => {
+      if (event === 'SIGNED_OUT') {
+        clearTradeStorage();
+        setSession(null);
+        return;
+      }
+
+      if (event === 'SIGNED_IN' && authSession?.user) {
+        const stored = readSessionFromStorage();
+        if (!stored) return;
+
+        // If a stored session belongs to a different user, purge it.
+        if (stored.userId && stored.userId !== authSession.user.id) {
+          clearTradeStorage();
+          setSession(null);
+          return;
+        }
+
+        // Bind anonymous sessions (created pre-login) to the signed-in user.
+        if (!stored.userId) {
+          const bound: TradeSession = { ...stored, userId: authSession.user.id };
+          sessionStorage.setItem(TRADE_SESSION_KEY, JSON.stringify(bound));
+
+          // Keep selectedPackage consistent for payment restore logic.
+          const selected = sessionStorage.getItem(SELECTED_PACKAGE_KEY);
+          if (selected) {
+            try {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const pkg: any = JSON.parse(selected);
+              if (pkg && typeof pkg === 'object' && !pkg.sessionId) {
+                pkg.sessionId = bound.id;
+                sessionStorage.setItem(SELECTED_PACKAGE_KEY, JSON.stringify(pkg));
+              }
+            } catch {
+              // ignore
+            }
+          }
+
+          setSession(bound);
+          notifySessionChange();
+        }
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   // Load session from storage on mount
   useEffect(() => {
@@ -79,9 +135,7 @@ export const useTradeSession = () => {
     }
 
     // Session expired or invalid, clear it.
-    sessionStorage.removeItem(TRADE_SESSION_KEY);
-    sessionStorage.removeItem('selectedPackage');
-    notifySessionChange();
+    clearTradeStorage();
   }, []);
 
   // Keep multiple hook instances in sync (badge, payment page, etc.)
@@ -97,19 +151,20 @@ export const useTradeSession = () => {
   }, []);
 
   // Start a new trade session
-  const startSession = useCallback((usd: number, usdt: number, isCustom?: boolean) => {
+  const startSession = useCallback((usd: number, usdt: number, isCustom?: boolean, userId?: string) => {
     const now = Date.now();
     const newSession: TradeSession = {
       id: generateSessionId(now),
       usd,
       usdt,
       isCustom,
+      userId,
       startedAt: now,
       expiresAt: now + SESSION_DURATION,
     };
     
     sessionStorage.setItem(TRADE_SESSION_KEY, JSON.stringify(newSession));
-    sessionStorage.setItem('selectedPackage', JSON.stringify({ usd, usdt, isCustom, sessionId: newSession.id }));
+    sessionStorage.setItem(SELECTED_PACKAGE_KEY, JSON.stringify({ usd, usdt, isCustom, sessionId: newSession.id }));
     setSession(newSession);
     notifySessionChange();
     
@@ -118,10 +173,8 @@ export const useTradeSession = () => {
 
   // Clear the current session
   const clearSession = useCallback(() => {
-    sessionStorage.removeItem(TRADE_SESSION_KEY);
-    sessionStorage.removeItem('selectedPackage');
+    clearTradeStorage();
     setSession(null);
-    notifySessionChange();
   }, []);
 
   // Check if session is still valid

@@ -3,6 +3,8 @@ import { Calculator, ArrowRight, Plus } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { useTradeSession } from '@/hooks/useTradeSession';
 
 const MIN_AMOUNT = 50;
 const MAX_AMOUNT = 25000;
@@ -36,6 +38,7 @@ export const CryptoCalculator = () => {
   const [amount, setAmount] = useState<string>('100');
   const [error, setError] = useState<string>('');
   const navigate = useNavigate();
+  const { startSession } = useTradeSession();
   
   const calculations = useMemo(() => {
     const numAmount = parseFloat(amount) || 0;
@@ -60,27 +63,18 @@ export const CryptoCalculator = () => {
     }
   };
 
-  const handleCreatePackage = () => {
+  const handleCreatePackage = async () => {
     const numAmount = parseFloat(amount) || 0;
     if (numAmount < MIN_AMOUNT) {
       setError(`Minimum amount is $${MIN_AMOUNT}`);
       return;
     }
-    
-    // Store custom package with bonus rate
-    sessionStorage.setItem('selectedPackage', JSON.stringify({ 
-      usd: numAmount, 
-      usdt: calculateUsdtReceived(numAmount),
-      isCustom: true 
-    }));
-    
-    // Check if user is logged in
-    const isLoggedIn = sessionStorage.getItem('user');
-    if (isLoggedIn) {
-      navigate('/payment');
-    } else {
-      navigate('/create-account');
-    }
+
+    // Always create/update the trade session so the flow can be resumed after auth.
+    const { data: { session } } = await supabase.auth.getSession();
+    startSession(numAmount, calculateUsdtReceived(numAmount), true, session?.user.id);
+
+    navigate(session ? '/payment' : '/login');
   };
 
   return (

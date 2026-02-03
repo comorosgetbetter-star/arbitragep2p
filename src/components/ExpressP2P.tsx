@@ -41,7 +41,7 @@ export const ExpressP2P = () => {
   }, []);
 
   const proceedWithPackage = (usd: number, usdt: number) => {
-    startSession(usd, usdt);
+    startSession(usd, usdt, false, user?.id);
     if (user) {
       navigate('/payment');
     } else {
@@ -51,9 +51,24 @@ export const ExpressP2P = () => {
 
   const handleSelectPackage = (usd: number, usdt: number) => {
     setSelectedPackage(usd);
+
+    // If the user is logged out, never reference any previous trade state.
+    // Start a fresh flow (which will gate to login) and avoid showing the conflict modal.
+    if (!user) {
+      clearSession();
+      proceedWithPackage(usd, usdt);
+      return;
+    }
     
     // Check for existing active session
     const existing = getStoredSession();
+
+    // Safety: if an old session exists but is tied to a different user, purge it.
+    if (existing?.userId && existing.userId !== user.id) {
+      clearSession();
+      proceedWithPackage(usd, usdt);
+      return;
+    }
     
     if (existing) {
       // Show conflict modal
