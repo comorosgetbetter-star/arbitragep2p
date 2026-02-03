@@ -8,6 +8,7 @@ import { toast } from '@/hooks/use-toast';
 import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
 import { useTradeSession } from '@/hooks/useTradeSession';
+import { PAYMENT_STATE_PREFIX, TRADE_SESSION_KEY } from '@/lib/tradeSessionStorage';
 
 interface PackageData {
   usd: number;
@@ -37,10 +38,8 @@ type TradePaymentState = {
   verificationFailed: boolean;
 };
 
-const PAYMENT_STATE_PREFIX = 'tradePaymentState:';
-
 const readActiveTradeSessionId = (): string | null => {
-  const stored = sessionStorage.getItem('activeTradeSession');
+  const stored = sessionStorage.getItem(TRADE_SESSION_KEY);
   if (!stored) return null;
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -95,7 +94,7 @@ const Payment = () => {
   
   // Crypto payment states - initialize from trade session storage directly
   const [timeRemaining, setTimeRemaining] = useState(() => {
-    const stored = sessionStorage.getItem('activeTradeSession');
+    const stored = sessionStorage.getItem(TRADE_SESSION_KEY);
     if (stored) {
       try {
         const parsed = JSON.parse(stored);
@@ -133,7 +132,7 @@ const Payment = () => {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        navigate('/create-account');
+        navigate('/login');
         return;
       }
 

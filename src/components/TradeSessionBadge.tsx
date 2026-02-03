@@ -96,7 +96,7 @@ export const TradeSessionBadge = () => {
             <Button 
               size="sm" 
               variant="default"
-              className="text-[8px] h-4 px-1.5 rounded"
+              className="text-[7px] h-3.5 px-1 rounded"
               onClick={handleResume}
             >
               Continue
@@ -104,7 +104,7 @@ export const TradeSessionBadge = () => {
             <Button
               size="sm"
               variant="ghost"
-              className="h-4 w-4 p-0 text-muted-foreground"
+              className="h-3.5 w-3.5 p-0 text-muted-foreground"
               onClick={handleDismiss}
             >
               <X className="h-2.5 w-2.5" />
