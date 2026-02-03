@@ -83,8 +83,8 @@ const Payment = () => {
   const { session: tradeSession, clearSession, getRemainingTime } = useTradeSession();
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(() => {
     const sid = readActiveTradeSessionId();
-    if (!sid) return 'card';
-    return readPaymentState(sid)?.paymentMethod ?? 'card';
+    if (!sid) return 'crypto';
+    return readPaymentState(sid)?.paymentMethod ?? 'crypto';
   });
   const [depositAddress, setDepositAddress] = useState<string>(() => {
     const sid = readActiveTradeSessionId();
