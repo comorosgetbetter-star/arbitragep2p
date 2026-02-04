@@ -76,27 +76,32 @@ export const TradeSessionBadge = () => {
   };
 
   return (
-    <div className="fixed bottom-3 left-3 z-50 animate-fade-in">
-      <div className="glass-card rounded-lg p-1.5 shadow-md border border-primary/20 max-w-[160px]">
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-            <Clock className="h-3 w-3 text-primary" />
+    <div className="fixed bottom-4 left-4 z-50 animate-slide-up">
+      <div className="glass-card rounded-xl p-3 shadow-lg border border-primary/30 backdrop-blur-xl transition-all duration-300 hover:shadow-xl hover:border-primary/50">
+        <div className="flex items-center gap-3">
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-colors ${
+            timeRemaining <= 60 ? 'bg-destructive/20' : 'bg-primary/20'
+          }`}>
+            <Clock className={`h-4 w-4 ${timeRemaining <= 60 ? 'text-destructive' : 'text-primary'}`} />
           </div>
           
           <div className="flex-1 min-w-0">
-            <p className="text-[9px] font-medium leading-tight">
-              ${session.usd} → {session.usdt} USDT
+            <p className="text-xs font-medium text-foreground">
+              ${session.usd.toLocaleString()} → {session.usdt.toLocaleString()} USDT
             </p>
-            <span className={`text-[9px] font-mono ${timeRemaining <= 60 ? 'text-destructive' : 'text-primary'}`}>
-              {formatTime(timeRemaining)}
-            </span>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <span className={`text-xs font-mono font-semibold ${timeRemaining <= 60 ? 'text-destructive' : 'text-primary'}`}>
+                {formatTime(timeRemaining)}
+              </span>
+              <span className="text-[10px] text-muted-foreground">remaining</span>
+            </div>
           </div>
           
-          <div className="flex items-center gap-0.5">
+          <div className="flex items-center gap-1.5">
             <Button 
               size="sm" 
               variant="default"
-              className="text-[7px] h-3.5 px-1 rounded"
+              className="text-xs h-7 px-3 rounded-lg font-medium shadow-sm"
               onClick={handleResume}
             >
               Continue
@@ -104,10 +109,10 @@ export const TradeSessionBadge = () => {
             <Button
               size="sm"
               variant="ghost"
-              className="h-3.5 w-3.5 p-0 text-muted-foreground"
+              className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground rounded-lg"
               onClick={handleDismiss}
             >
-              <X className="h-2.5 w-2.5" />
+              <X className="h-3.5 w-3.5" />
             </Button>
           </div>
         </div>
