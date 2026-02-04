@@ -119,14 +119,18 @@ export const ExpressP2P = () => {
             <button 
               key={pkg.usd}
               onClick={() => handleSelectPackage(pkg.usd, pkg.usdt)}
-              className={`glass-card rounded-2xl p-5 text-center transition-all duration-300 group animate-fade-in-up cursor-pointer border-2 ${
+              className={`glass-card rounded-2xl p-5 text-center transition-all duration-300 group animate-fade-in-up cursor-pointer border-2 hover:scale-[1.02] active:scale-[0.98] ${
                 selectedPackage === pkg.usd 
-                  ? 'border-primary bg-primary/10' 
-                  : 'border-transparent hover:border-primary/40'
+                  ? 'border-primary bg-primary/10 shadow-lg' 
+                  : 'border-transparent hover:border-primary/40 hover:shadow-md'
               }`}
               style={{ animationDelay: `${index * 50}ms` }}
             >
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3 group-hover:bg-primary/20 transition-colors">
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center mx-auto mb-3 transition-all duration-300 ${
+                selectedPackage === pkg.usd
+                  ? 'bg-primary/20 scale-110'
+                  : 'bg-primary/10 group-hover:bg-primary/20 group-hover:scale-105'
+              }`}>
                 {selectedPackage === pkg.usd ? (
                   <Check className="h-5 w-5 text-primary" />
                 ) : (
@@ -135,14 +139,14 @@ export const ExpressP2P = () => {
               </div>
               
               <p className="text-xs text-muted-foreground mb-1">Pay</p>
-              <p className="text-lg font-display font-bold mb-2">
+              <p className="text-lg font-display font-bold mb-2 transition-colors group-hover:text-foreground">
                 ${pkg.usd.toLocaleString()}
               </p>
               
-              <div className="h-px bg-border my-3" />
+              <div className="h-px bg-border my-3 transition-colors group-hover:bg-border/70" />
               
               <p className="text-xs text-muted-foreground mb-1">Receive</p>
-              <p className="text-xl font-display font-bold text-primary">
+              <p className="text-xl font-display font-bold text-primary transition-transform group-hover:scale-105">
                 {pkg.usdt.toLocaleString()} USDT
               </p>
             </button>

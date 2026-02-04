@@ -19,10 +19,17 @@ export const AccountDropdown = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    // Set up listener BEFORE getSession to avoid race conditions
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
+      
+      // On logout, ensure trade state is purged
+      if (event === 'SIGNED_OUT') {
+        clearTradeStorage();
+      }
     });
 
+    // Get initial session state
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
     });

@@ -277,20 +277,20 @@ const Payment = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background animate-fade-in">
       {/* Header */}
-      <header className="border-b border-border/50 bg-card/50 backdrop-blur-xl sticky top-0 z-50">
+      <header className="border-b border-border/50 bg-card/50 backdrop-blur-xl sticky top-0 z-50 transition-colors">
         <div className="container mx-auto px-4 h-16 flex items-center">
-          <Link to="/" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
-            <ArrowLeft className="h-4 w-4" />
-            <span className="text-sm">Back to Home</span>
+          <Link to="/" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors group">
+            <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
+            <span className="text-sm font-medium">Back to Home</span>
           </Link>
         </div>
       </header>
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-12">
-        <div className="max-w-2xl mx-auto">
+        <div className="max-w-2xl mx-auto animate-slide-up">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-display font-bold mb-2">Complete Payment</h1>
             <p className="text-muted-foreground">

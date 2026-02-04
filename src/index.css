@@ -120,8 +120,12 @@
 
 @layer components {
   .glass-card {
-    @apply bg-card/80 backdrop-blur-xl border border-border/50 shadow-lg;
+    @apply bg-card/80 backdrop-blur-xl border border-border/50 shadow-lg transition-all duration-300;
     background: var(--gradient-card);
+  }
+
+  .glass-card:hover {
+    @apply border-border/70;
   }
 
   .glow-effect {
@@ -160,6 +164,21 @@
     );
     background-size: 200% 100%;
     animation: shimmer 2s infinite;
+  }
+
+  /* Smooth page transitions */
+  .page-transition {
+    @apply animate-fade-in;
+  }
+
+  /* Interactive elements */
+  .interactive-card {
+    @apply transition-all duration-200 hover:scale-[1.02] active:scale-[0.98];
+  }
+
+  /* Focus ring improvements */
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background;
   }
 }
 

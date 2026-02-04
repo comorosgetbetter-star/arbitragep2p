@@ -54,19 +54,19 @@ export const TradeConflictModal = ({
             </div>
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogFooter className="flex-col sm:flex-row gap-2">
-          <AlertDialogCancel onClick={onClose} className="sm:w-auto">
+        <AlertDialogFooter className="flex-col sm:flex-row gap-2 pt-2">
+          <AlertDialogCancel onClick={onClose} className="sm:w-auto h-10">
             Cancel
           </AlertDialogCancel>
           <AlertDialogAction
             onClick={onStartNew}
-            className="sm:w-auto h-8 px-3 text-xs bg-secondary text-secondary-foreground hover:bg-secondary/80"
+            className="sm:w-auto h-10 bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors"
           >
             Start New Trade
           </AlertDialogAction>
           <AlertDialogAction
             onClick={onResume}
-            className="sm:w-auto h-8 px-3 text-xs"
+            className="sm:w-auto h-10 transition-colors"
           >
             Resume Existing Trade
           </AlertDialogAction>
