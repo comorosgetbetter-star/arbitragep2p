@@ -3,6 +3,7 @@ import { Zap, Check } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { WhyUsdt } from './WhyUsdt';
 import { TradeConflictModal } from './TradeConflictModal';
+import { TradeConfirmationModal } from './TradeConfirmationModal';
 import { supabase } from '@/integrations/supabase/client';
 import { useTradeSession, TradeSession } from '@/hooks/useTradeSession';
 import { toast } from '@/components/ui/sonner';
@@ -22,6 +23,7 @@ export const ExpressP2P = () => {
   const [selectedPackage, setSelectedPackage] = useState<number | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [showConflictModal, setShowConflictModal] = useState(false);
+  const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const [pendingPackage, setPendingPackage] = useState<{ usd: number; usdt: number } | null>(null);
   const [existingSession, setExistingSession] = useState<TradeSession | null>(null);
   const navigate = useNavigate();
@@ -55,12 +57,14 @@ export const ExpressP2P = () => {
 
   const handleSelectPackage = (usd: number, usdt: number) => {
     setSelectedPackage(usd);
+    setPendingPackage({ usd, usdt });
 
     // If the user is logged out, never reference any previous trade state.
     // Start a fresh flow (which will gate to login) and avoid showing the conflict modal.
     if (!user) {
       clearSession();
-      proceedWithPackage(usd, usdt);
+      // Show confirmation modal first
+      setShowConfirmationModal(true);
       return;
     }
     
@@ -70,17 +74,25 @@ export const ExpressP2P = () => {
     // Safety: if an old session exists but is tied to a different user, purge it.
     if (existing?.userId && existing.userId !== user.id) {
       clearSession();
-      proceedWithPackage(usd, usdt);
+      // Show confirmation modal first
+      setShowConfirmationModal(true);
       return;
     }
     
     if (existing) {
       // Show conflict modal
       setExistingSession(existing);
-      setPendingPackage({ usd, usdt });
       setShowConflictModal(true);
     } else {
-      proceedWithPackage(usd, usdt);
+      // Show confirmation modal first
+      setShowConfirmationModal(true);
+    }
+  };
+
+  const handleConfirmTrade = () => {
+    if (pendingPackage) {
+      setShowConfirmationModal(false);
+      proceedWithPackage(pendingPackage.usd, pendingPackage.usdt);
     }
   };
 
@@ -160,6 +172,18 @@ export const ExpressP2P = () => {
         {/* Why USDT Accordion */}
         <WhyUsdt />
       </div>
+
+      {/* Trade Confirmation Modal */}
+      <TradeConfirmationModal
+        isOpen={showConfirmationModal}
+        onClose={() => {
+          setShowConfirmationModal(false);
+          setSelectedPackage(null);
+        }}
+        onConfirm={handleConfirmTrade}
+        usd={pendingPackage?.usd || 0}
+        usdt={pendingPackage?.usdt || 0}
+      />
 
       {/* Trade Conflict Modal */}
       <TradeConflictModal
