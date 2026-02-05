@@ -22,7 +22,7 @@ import signature2 from '@/assets/signature-2.png';
            View Operating License
          </Button>
        </DialogTrigger>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto p-0 border-0">
+      <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto p-0 border-0">
         {/* PDF-like document container */}
         <div 
           className="relative bg-white shadow-2xl"
@@ -137,7 +137,7 @@ import signature2 from '@/assets/signature-2.png';
                 <div>
                   <p className="text-[#1a1a2e]/50 text-xs uppercase tracking-wider mb-1">Valid Until</p>
                   <p className="font-semibold text-[#1a1a2e]" style={{ fontFamily: "'Times New Roman', Georgia, serif" }}>
-                    January 14, 2026
+                    January 14, 2032
                   </p>
                 </div>
                 <div>
