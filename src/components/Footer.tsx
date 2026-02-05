@@ -1,4 +1,5 @@
 import { Shield, Lock, Zap } from 'lucide-react';
+import { AuthorizationLetter } from './AuthorizationLetter';
 
 export const Footer = () => {
   return (
@@ -47,6 +48,11 @@ export const Footer = () => {
 
         {/* Disclaimer */}
         <div className="mt-8 pt-6 border-t border-border/30">
+          {/* Authorization Button */}
+          <div className="flex justify-center mb-6">
+            <AuthorizationLetter />
+          </div>
+          
           <p className="text-xs text-muted-foreground text-center max-w-3xl mx-auto">
             <strong>Risk Disclaimer:</strong> Cryptocurrency trading involves substantial risk of loss and is not suitable for every investor. 
             Past performance does not guarantee future results. Please trade responsibly and only invest what you can afford to lose.
