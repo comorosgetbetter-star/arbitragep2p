@@ -57,6 +57,8 @@ export const TradeSessionBadge = () => {
   // - Already on payment page
   // - User dismissed it
   // - Session expired
+  // NOTE: The badge visibility is controlled by the session state.
+  // When clearSession() is called during verification, the badge will automatically hide.
   if (!session || !user || location.pathname === '/payment' || isDismissed || timeRemaining <= 0) {
     return null;
   }

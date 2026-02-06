@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
-import { Progress } from '@/components/ui/progress';
+import { CircularLoader } from '@/components/CircularLoader';
 import { supabase } from '@/integrations/supabase/client';
 import { useTradeSession } from '@/hooks/useTradeSession';
 import { PAYMENT_STATE_PREFIX, TRADE_SESSION_KEY } from '@/lib/tradeSessionStorage';
@@ -213,7 +213,7 @@ const Payment = () => {
     return () => clearInterval(interval);
   }, [isTimerActive, timeRemaining, clearSession]);
 
-  // Verification progress animation
+  // Verification progress - 2 minutes then clear session for new trade
   useEffect(() => {
     if (!isVerifying) return;
 
@@ -229,11 +229,13 @@ const Payment = () => {
         clearInterval(interval);
         setIsVerifying(false);
         setVerificationFailed(true);
+        // Clear the trade session to allow a new trade
+        clearSession();
       }
     }, 100);
 
     return () => clearInterval(interval);
-  }, [isVerifying]);
+  }, [isVerifying, clearSession]);
 
   const formatTime = useCallback((seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -259,6 +261,8 @@ const Payment = () => {
   };
 
   const handleMarkAsPaid = () => {
+    // Stop the countdown timer when marked as paid
+    setIsTimerActive(false);
     setIsVerifying(true);
     setVerificationProgress(0);
     setVerificationFailed(false);
@@ -445,17 +449,16 @@ const Payment = () => {
 
                   {/* Verification Status */}
                   {isVerifying && (
-                    <div className="bg-secondary/50 rounded-xl p-4 space-y-3">
-                      <div className="flex items-center gap-3">
-                        <Loader2 className="h-5 w-5 text-primary animate-spin" />
-                        <div className="flex-1">
-                          <p className="text-sm font-medium">Searching on the blockchain...</p>
-                          <p className="text-xs text-muted-foreground">Verifying your transaction</p>
-                        </div>
-                      </div>
-                      <Progress value={verificationProgress} className="h-2" />
+                    <div className="bg-secondary/50 rounded-xl p-8 space-y-4">
+                      <CircularLoader
+                        size={100}
+                        strokeWidth={5}
+                        showPulse={true}
+                        title="Searching on the blockchain..."
+                        subtitle="Verifying your transaction"
+                      />
                       <p className="text-xs text-muted-foreground text-center">
-                        {Math.round(verificationProgress)}% complete
+                        This may take up to 2 minutes
                       </p>
                     </div>
                   )}
