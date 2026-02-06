@@ -1,10 +1,14 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Calculator, ArrowRight, Plus } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { useTradeSession } from '@/hooks/useTradeSession';
+import { useTradeSession, TradeSession } from '@/hooks/useTradeSession';
+import { TradeConfirmationModal } from './TradeConfirmationModal';
+import { TradeConflictModal } from './TradeConflictModal';
+import { toast } from '@/components/ui/sonner';
+import type { User } from '@supabase/supabase-js';
 
 const MIN_AMOUNT = 50;
 const MAX_AMOUNT = 25000;
@@ -37,8 +41,27 @@ const calculateUsdtReceived = (usdAmount: number): number => {
 export const CryptoCalculator = () => {
   const [amount, setAmount] = useState<string>('100');
   const [error, setError] = useState<string>('');
+  const [user, setUser] = useState<User | null>(null);
+  const [showConfirmationModal, setShowConfirmationModal] = useState(false);
+  const [showConflictModal, setShowConflictModal] = useState(false);
+  const [pendingPackage, setPendingPackage] = useState<{ usd: number; usdt: number } | null>(null);
+  const [existingSession, setExistingSession] = useState<TradeSession | null>(null);
   const navigate = useNavigate();
-  const { startSession } = useTradeSession();
+  const { startSession, clearSession, getStoredSession } = useTradeSession();
+
+  useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
   
   const calculations = useMemo(() => {
     const numAmount = parseFloat(amount) || 0;
@@ -46,6 +69,7 @@ export const CryptoCalculator = () => {
     
     return {
       usdtReceived: usdtReceived.toFixed(2),
+      usdtReceivedNum: usdtReceived,
       isValid: numAmount >= MIN_AMOUNT && numAmount <= MAX_AMOUNT,
       bonusPercent: numAmount > 0 ? (((usdtReceived / numAmount) - 1) * 100).toFixed(1) : '0',
     };
@@ -63,18 +87,73 @@ export const CryptoCalculator = () => {
     }
   };
 
-  const handleCreatePackage = async () => {
+  const proceedWithPackage = (usd: number, usdt: number) => {
+    startSession(usd, usdt, true, user?.id);
+    toast.success('Trade started!', {
+      description: `$${usd} → ${usdt.toFixed(2)} USDT`,
+    });
+    if (user) {
+      navigate('/payment');
+    } else {
+      navigate('/login');
+    }
+  };
+
+  const handleCreatePackage = () => {
     const numAmount = parseFloat(amount) || 0;
     if (numAmount < MIN_AMOUNT) {
       setError(`Minimum amount is $${MIN_AMOUNT}`);
       return;
     }
 
-    // Always create/update the trade session so the flow can be resumed after auth.
-    const { data: { session } } = await supabase.auth.getSession();
-    startSession(numAmount, calculateUsdtReceived(numAmount), true, session?.user.id);
+    const usdt = calculateUsdtReceived(numAmount);
+    setPendingPackage({ usd: numAmount, usdt });
 
-    navigate(session ? '/payment' : '/login');
+    // If the user is logged out, never reference any previous trade state.
+    if (!user) {
+      clearSession();
+      setShowConfirmationModal(true);
+      return;
+    }
+
+    // Check for existing active session
+    const existing = getStoredSession();
+
+    // Safety: if an old session exists but is tied to a different user, purge it.
+    if (existing?.userId && existing.userId !== user.id) {
+      clearSession();
+      setShowConfirmationModal(true);
+      return;
+    }
+
+    if (existing) {
+      // Show conflict modal
+      setExistingSession(existing);
+      setShowConflictModal(true);
+    } else {
+      // Show confirmation modal first
+      setShowConfirmationModal(true);
+    }
+  };
+
+  const handleConfirmTrade = () => {
+    if (pendingPackage) {
+      setShowConfirmationModal(false);
+      proceedWithPackage(pendingPackage.usd, pendingPackage.usdt);
+    }
+  };
+
+  const handleResumeExisting = () => {
+    setShowConflictModal(false);
+    navigate('/payment');
+  };
+
+  const handleStartNew = () => {
+    if (pendingPackage) {
+      clearSession();
+      proceedWithPackage(pendingPackage.usd, pendingPackage.usdt);
+    }
+    setShowConflictModal(false);
   };
 
   return (
@@ -180,6 +259,24 @@ export const CryptoCalculator = () => {
           </div>
         </div>
       </div>
+
+      {/* Trade Confirmation Modal */}
+      <TradeConfirmationModal
+        isOpen={showConfirmationModal}
+        onClose={() => setShowConfirmationModal(false)}
+        onConfirm={handleConfirmTrade}
+        usd={pendingPackage?.usd || 0}
+        usdt={pendingPackage?.usdt || 0}
+      />
+
+      {/* Trade Conflict Modal */}
+      <TradeConflictModal
+        isOpen={showConflictModal}
+        onClose={() => setShowConflictModal(false)}
+        existingSession={existingSession}
+        onResume={handleResumeExisting}
+        onStartNew={handleStartNew}
+      />
     </section>
   );
 };
