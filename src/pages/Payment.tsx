@@ -213,7 +213,7 @@ const Payment = () => {
     return () => clearInterval(interval);
   }, [isTimerActive, timeRemaining, clearSession]);
 
-  // Verification progress - 2 minutes then clear session for new trade
+  // Verification progress - 2 minutes then show failure (stay on page, let user decide)
   useEffect(() => {
     if (!isVerifying) return;
 
@@ -491,19 +491,24 @@ const Payment = () => {
                   )}
 
                   {verificationFailed && (
-                    <Button 
-                      variant="outline" 
-                      size="lg" 
-                      className="w-full"
-                      onClick={() => {
-                        setVerificationFailed(false);
-                        setIsTimerActive(true);
-                        // Keep the original trade timer; don't restart a fresh 10 minutes.
-                        setTimeRemaining(getRemainingTime());
-                      }}
-                    >
-                      Get New Address & Try Again
-                    </Button>
+                    <div className="flex flex-col gap-3">
+                      <Button 
+                        variant="glow" 
+                        size="lg" 
+                        className="w-full"
+                        onClick={() => navigate('/')}
+                      >
+                        Start New Trade
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="lg" 
+                        className="w-full"
+                        onClick={() => navigate('/')}
+                      >
+                        Go Back to Home
+                      </Button>
+                    </div>
                   )}
                 </div>
               )}
