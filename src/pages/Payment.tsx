@@ -140,7 +140,28 @@ const Payment = () => {
       const storedPackage = sessionStorage.getItem('selectedPackage');
       if (storedPackage) {
         setPackageData(JSON.parse(storedPackage));
-        // If there's no active session anymore, don't show a fresh payment flow.
+        
+        // Check for existing payment state first (user may have already verified)
+        const sid = readActiveTradeSessionId();
+        if (sid) {
+          const restored = readPaymentState(sid);
+          if (restored) {
+            setPaymentMethod(restored.paymentMethod);
+            setDepositAddress(restored.depositAddress);
+            setIsVerifying(restored.isVerifying);
+            setVerificationProgress(restored.verificationProgress);
+            setVerificationFailed(restored.verificationFailed);
+            
+            // If verification already failed, don't redirect - let user decide
+            if (restored.verificationFailed) {
+              setTimeRemaining(0);
+              setIsTimerActive(false);
+              return;
+            }
+          }
+        }
+        
+        // If there's no active session anymore and not in failed state, redirect
         const remaining = getRemainingTime();
         if (remaining <= 0) {
           clearSession();
@@ -151,26 +172,15 @@ const Payment = () => {
         // Sync timer with remaining session time immediately
         setTimeRemaining(remaining);
         setIsTimerActive(true);
-
-        // Restore the exact payment step (method + address + verification flags)
-        const sid = readActiveTradeSessionId();
-        if (sid) {
-          const restored = readPaymentState(sid);
-          if (restored) {
-            setPaymentMethod(restored.paymentMethod);
-            setDepositAddress(restored.depositAddress);
-            setIsVerifying(restored.isVerifying);
-            setVerificationProgress(restored.verificationProgress);
-            setVerificationFailed(restored.verificationFailed);
-          }
-        }
       } else {
         navigate('/');
       }
     };
     
+    // Only run on mount, not on every state change
     checkAuth();
-  }, [navigate, getRemainingTime, clearSession]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [navigate]);
 
   // Persist payment step state (so Resume restores the exact view and address)
   useEffect(() => {
