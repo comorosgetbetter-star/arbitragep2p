@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Zap, ArrowRight, Shield, Clock, CheckCircle2 } from 'lucide-react';
+import { Zap, ArrowRight, Shield, Clock, CheckCircle2, LogIn } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import type { User } from '@supabase/supabase-js';
 
 interface TradeConfirmationModalProps {
   isOpen: boolean;
@@ -19,6 +21,19 @@ export const TradeConfirmationModal = ({
   usdt,
 }: TradeConfirmationModalProps) => {
   const [isProcessing, setIsProcessing] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const handleConfirm = () => {
     setIsProcessing(true);
@@ -30,6 +45,7 @@ export const TradeConfirmationModal = ({
   };
 
   const bonusPercentage = ((usdt - usd) / usd * 100).toFixed(1);
+  const isLoggedIn = !!user;
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && !isProcessing && onClose()}>
@@ -39,14 +55,20 @@ export const TradeConfirmationModal = ({
           <DialogHeader>
             <div className="flex items-center gap-3 mb-2">
               <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
-                <Zap className="h-6 w-6 text-primary" />
+                {isLoggedIn ? (
+                  <Zap className="h-6 w-6 text-primary" />
+                ) : (
+                  <LogIn className="h-6 w-6 text-primary" />
+                )}
               </div>
               <div>
                 <DialogTitle className="text-xl font-display">
-                  Start Trade Request
+                  {isLoggedIn ? 'Confirm Your Trade' : 'Sign In Required'}
                 </DialogTitle>
                 <DialogDescription className="text-muted-foreground">
-                  Review your order details
+                  {isLoggedIn 
+                    ? 'Review your order details below' 
+                    : 'Create an account or sign in to continue'}
                 </DialogDescription>
               </div>
             </div>
@@ -76,20 +98,39 @@ export const TradeConfirmationModal = ({
             </div>
           </div>
 
-          {/* Info Points */}
+          {/* Info Points - Contextual based on auth state */}
           <div className="space-y-2 mb-6">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Clock className="h-4 w-4 text-primary" />
-              <span>10-minute session timer starts after confirmation</span>
-            </div>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Shield className="h-4 w-4 text-primary" />
-              <span>Secure P2P transaction with escrow protection</span>
-            </div>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <CheckCircle2 className="h-4 w-4 text-primary" />
-              <span>Bonus rate locked at current market price</span>
-            </div>
+            {isLoggedIn ? (
+              <>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Clock className="h-4 w-4 text-primary" />
+                  <span>10-minute session timer starts after confirmation</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Shield className="h-4 w-4 text-primary" />
+                  <span>Secure P2P transaction with escrow protection</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <CheckCircle2 className="h-4 w-4 text-primary" />
+                  <span>Bonus rate locked at current market price</span>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <LogIn className="h-4 w-4 text-primary" />
+                  <span>Sign in or create a free account to proceed</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Shield className="h-4 w-4 text-primary" />
+                  <span>Your trade details will be saved securely</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <CheckCircle2 className="h-4 w-4 text-primary" />
+                  <span>Complete your trade right after signing in</span>
+                </div>
+              </>
+            )}
           </div>
 
           {/* Action Buttons */}
@@ -112,17 +153,24 @@ export const TradeConfirmationModal = ({
                   <span className="h-4 w-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
                   Processing...
                 </>
-              ) : (
+              ) : isLoggedIn ? (
                 <>
                   <CheckCircle2 className="h-4 w-4" />
                   Confirm Trade
+                </>
+              ) : (
+                <>
+                  <LogIn className="h-4 w-4" />
+                  Sign In to Continue
                 </>
               )}
             </Button>
           </div>
 
           <p className="text-[10px] text-center text-muted-foreground mt-4">
-            By confirming, you agree to our Terms of Service and Trading Policy
+            {isLoggedIn 
+              ? 'By confirming, you agree to our Terms of Service and Trading Policy'
+              : 'By continuing, you agree to our Terms of Service and Privacy Policy'}
           </p>
         </div>
       </DialogContent>
