@@ -45,6 +45,7 @@ export const WalletDropdown = ({ isOpen, onClose, onAddFunds }: WalletDropdownPr
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [supportCategory, setSupportCategory] = useState('Withdrawal Problems');
+  const [hasOpenTicket, setHasOpenTicket] = useState(false);
   const [supportMessage, setSupportMessage] = useState('');
   const [isSubmittingTicket, setIsSubmittingTicket] = useState(false);
 
@@ -52,7 +53,7 @@ export const WalletDropdown = ({ isOpen, onClose, onAddFunds }: WalletDropdownPr
     if (!isOpen || !user) return;
 
     const fetchData = async () => {
-      const [balanceRes, withdrawalsRes] = await Promise.all([
+      const [balanceRes, withdrawalsRes, ticketRes] = await Promise.all([
         supabase
           .from('user_balances')
           .select('usdt_balance')
@@ -64,10 +65,17 @@ export const WalletDropdown = ({ isOpen, onClose, onAddFunds }: WalletDropdownPr
           .eq('user_id', user.id)
           .order('created_at', { ascending: false })
           .limit(10),
+        supabase
+          .from('support_tickets')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('category', 'Withdrawal Problems')
+          .limit(1),
       ]);
 
       if (balanceRes.data) setBalance(Number(balanceRes.data.usdt_balance));
       if (withdrawalsRes.data) setWithdrawals(withdrawalsRes.data);
+      setHasOpenTicket(!!(ticketRes.data && ticketRes.data.length > 0));
     };
 
     fetchData();
@@ -185,6 +193,7 @@ export const WalletDropdown = ({ isOpen, onClose, onAddFunds }: WalletDropdownPr
 
       toast.success('Support ticket submitted successfully');
       setSupportMessage('');
+      setHasOpenTicket(true);
       setView('main');
     } catch (error) {
       console.error('Ticket error:', error);
@@ -293,7 +302,7 @@ export const WalletDropdown = ({ isOpen, onClose, onAddFunds }: WalletDropdownPr
                         }`}>
                           {getStatusLabel(w.status)}
                         </p>
-                        {w.status === 'failed' && (
+                        {w.status === 'failed' && !hasOpenTicket && (
                           <button
                             onClick={() => {
                               setSupportCategory('Withdrawal Problems');
