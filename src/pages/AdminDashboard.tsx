@@ -16,7 +16,9 @@ import {
   ArrowUpRight,
   CheckCircle2,
   XCircle,
-  Clock
+  Clock,
+  MessageSquare,
+  Send
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -78,11 +80,33 @@ interface WithdrawalRequest {
   user_name?: string;
 }
 
+interface SupportTicket {
+  id: string;
+  user_id: string;
+  category: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  user_email?: string;
+  user_name?: string;
+  last_message?: string;
+}
+
+interface TicketMessage {
+  id: string;
+  ticket_id: string;
+  sender_id: string;
+  message: string;
+  is_admin: boolean;
+  created_at: string;
+}
+
 const AdminDashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [members, setMembers] = useState<Member[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [withdrawals, setWithdrawals] = useState<WithdrawalRequest[]>([]);
+  const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [adjustmentAmount, setAdjustmentAmount] = useState('');
@@ -90,6 +114,10 @@ const AdminDashboard = () => {
   const [adjustmentType, setAdjustmentType] = useState<'add' | 'subtract'>('add');
   const [isAdjustDialogOpen, setIsAdjustDialogOpen] = useState(false);
   const [isAdjusting, setIsAdjusting] = useState(false);
+  const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
+  const [ticketMessages, setTicketMessages] = useState<TicketMessage[]>([]);
+  const [replyMessage, setReplyMessage] = useState('');
+  const [isSendingReply, setIsSendingReply] = useState(false);
   const [stats, setStats] = useState({
     totalMembers: 0,
     totalTrades: 0,
@@ -116,6 +144,31 @@ const AdminDashboard = () => {
 
     return () => { supabase.removeChannel(channel); };
   }, [members]);
+
+  // Subscribe to ticket changes in realtime
+  useEffect(() => {
+    const channel = supabase
+      .channel('admin-tickets')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'support_tickets',
+      }, () => {
+        fetchTickets();
+      })
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'ticket_messages',
+      }, (payload) => {
+        if (selectedTicket && (payload.new as TicketMessage).ticket_id === selectedTicket.id) {
+          fetchTicketMessages(selectedTicket.id);
+        }
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [members, selectedTicket]);
 
   const checkAdminAccess = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -161,10 +214,49 @@ const AdminDashboard = () => {
     }
   };
 
+  const fetchTickets = async () => {
+    const { data } = await supabase
+      .from('support_tickets')
+      .select('*')
+      .order('updated_at', { ascending: false })
+      .limit(50);
+
+    if (data) {
+      // Get latest message for each ticket
+      const ticketIds = data.map(t => t.id);
+      const { data: messages } = await supabase
+        .from('ticket_messages')
+        .select('*')
+        .in('ticket_id', ticketIds)
+        .order('created_at', { ascending: false });
+
+      const enriched: SupportTicket[] = data.map(t => {
+        const member = members.find(m => m.user_id === t.user_id);
+        const lastMsg = messages?.find(m => m.ticket_id === t.id);
+        return {
+          ...t,
+          user_email: member?.email || 'Unknown',
+          user_name: member?.full_name || 'Unknown',
+          last_message: lastMsg?.message || '',
+        };
+      });
+      setTickets(enriched);
+    }
+  };
+
+  const fetchTicketMessages = async (ticketId: string) => {
+    const { data } = await supabase
+      .from('ticket_messages')
+      .select('*')
+      .eq('ticket_id', ticketId)
+      .order('created_at', { ascending: true });
+
+    if (data) setTicketMessages(data);
+  };
+
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      // Fetch all profiles with balances and trade counts
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('*')
@@ -172,17 +264,14 @@ const AdminDashboard = () => {
 
       if (profilesError) throw profilesError;
 
-      // Fetch balances
       const { data: balances } = await supabase
         .from('user_balances')
         .select('user_id, usdt_balance');
 
-      // Fetch trade counts per user
       const { data: trades } = await supabase
         .from('trades')
         .select('user_id, status');
 
-      // Combine data
       const membersData: Member[] = (profiles || []).map(profile => {
         const balance = balances?.find(b => b.user_id === profile.user_id);
         const userTrades = trades?.filter(t => t.user_id === profile.user_id && t.status === 'completed') || [];
@@ -196,7 +285,6 @@ const AdminDashboard = () => {
 
       setMembers(membersData);
       
-      // Calculate stats
       const completedTrades = trades?.filter(t => t.status === 'completed') || [];
       setStats({
         totalMembers: membersData.length,
@@ -204,14 +292,12 @@ const AdminDashboard = () => {
         totalVolume: balances?.reduce((sum, b) => sum + Number(b.usdt_balance), 0) || 0,
       });
 
-      // Fetch audit logs
       const { data: logs } = await supabase
         .from('admin_audit_logs')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(100);
 
-      // Enrich logs with user emails
       if (logs) {
         const enrichedLogs = logs.map((log) => {
           const adminProfile = profiles?.find(p => p.user_id === log.admin_id);
@@ -246,6 +332,36 @@ const AdminDashboard = () => {
           };
         });
         setWithdrawals(enrichedWithdrawals);
+      }
+
+      // Fetch tickets
+      const { data: ticketData } = await supabase
+        .from('support_tickets')
+        .select('*')
+        .order('updated_at', { ascending: false })
+        .limit(50);
+
+      if (ticketData) {
+        const ticketIds = ticketData.map(t => t.id);
+        const { data: ticketMsgs } = ticketIds.length > 0
+          ? await supabase
+              .from('ticket_messages')
+              .select('*')
+              .in('ticket_id', ticketIds)
+              .order('created_at', { ascending: false })
+          : { data: [] };
+
+        const enrichedTickets: SupportTicket[] = ticketData.map(t => {
+          const member = membersData.find(m => m.user_id === t.user_id);
+          const lastMsg = ticketMsgs?.find(m => m.ticket_id === t.id);
+          return {
+            ...t,
+            user_email: member?.email || 'Unknown',
+            user_name: member?.full_name || 'Unknown',
+            last_message: lastMsg?.message || '',
+          };
+        });
+        setTickets(enrichedTickets);
       }
 
     } catch (error) {
@@ -316,7 +432,6 @@ const AdminDashboard = () => {
 
   const handleApproveWithdrawal = async (withdrawal: WithdrawalRequest) => {
     try {
-      // First deduct from user balance
       const { error: rpcError } = await supabase.rpc('adjust_user_balance', {
         _target_user_id: withdrawal.user_id,
         _adjustment: -withdrawal.amount,
@@ -324,7 +439,6 @@ const AdminDashboard = () => {
       });
       if (rpcError) throw rpcError;
 
-      // Then mark withdrawal as approved
       const { error } = await supabase
         .from('withdrawals')
         .update({ status: 'approved', resolved_at: new Date().toISOString() })
@@ -355,6 +469,58 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleOpenTicket = async (ticket: SupportTicket) => {
+    setSelectedTicket(ticket);
+    await fetchTicketMessages(ticket.id);
+  };
+
+  const handleReplyToTicket = async () => {
+    if (!selectedTicket || !replyMessage.trim()) return;
+
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+
+    setIsSendingReply(true);
+    try {
+      const { error } = await supabase.from('ticket_messages').insert({
+        ticket_id: selectedTicket.id,
+        sender_id: session.user.id,
+        message: replyMessage.trim(),
+        is_admin: true,
+      });
+
+      if (error) throw error;
+
+      setReplyMessage('');
+      await fetchTicketMessages(selectedTicket.id);
+    } catch (error) {
+      console.error('Reply error:', error);
+      toast.error('Failed to send reply');
+    } finally {
+      setIsSendingReply(false);
+    }
+  };
+
+  const handleCloseTicket = async () => {
+    if (!selectedTicket) return;
+
+    try {
+      const { error } = await supabase
+        .from('support_tickets')
+        .update({ status: 'closed', closed_at: new Date().toISOString() })
+        .eq('id', selectedTicket.id);
+
+      if (error) throw error;
+
+      toast.success('Ticket closed');
+      setSelectedTicket(null);
+      fetchTickets();
+    } catch (error) {
+      console.error('Close ticket error:', error);
+      toast.error('Failed to close ticket');
+    }
+  };
+
   const filteredMembers = members.filter(member =>
     member.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     member.email.toLowerCase().includes(searchQuery.toLowerCase())
@@ -377,6 +543,7 @@ const AdminDashboard = () => {
   };
 
   const pendingWithdrawals = withdrawals.filter(w => w.status === 'pending');
+  const openTickets = tickets.filter(t => t.status === 'open');
 
   const getTimeRemaining = (expiresAt: string) => {
     const diff = new Date(expiresAt).getTime() - Date.now();
@@ -417,6 +584,11 @@ const AdminDashboard = () => {
             {pendingWithdrawals.length > 0 && (
               <Badge variant="destructive" className="animate-pulse">
                 {pendingWithdrawals.length} Pending
+              </Badge>
+            )}
+            {openTickets.length > 0 && (
+              <Badge className="bg-primary/20 text-primary animate-pulse">
+                {openTickets.length} Tickets
               </Badge>
             )}
             <Button variant="ghost" size="sm" onClick={fetchData}>
@@ -487,12 +659,22 @@ const AdminDashboard = () => {
                 </span>
               )}
             </TabsTrigger>
+            <TabsTrigger value="tickets" className="gap-2 relative">
+              <MessageSquare className="w-4 h-4" />
+              Tickets
+              {openTickets.length > 0 && (
+                <span className="ml-1 bg-primary text-primary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                  {openTickets.length}
+                </span>
+              )}
+            </TabsTrigger>
             <TabsTrigger value="audit" className="gap-2">
               <History className="w-4 h-4" />
               Audit Logs
             </TabsTrigger>
           </TabsList>
 
+          {/* Members Tab */}
           <TabsContent value="members" className="space-y-4">
             <Card className="border-border/50 bg-card/80">
               <CardHeader>
@@ -587,6 +769,7 @@ const AdminDashboard = () => {
             </Card>
           </TabsContent>
 
+          {/* Withdrawals Tab */}
           <TabsContent value="withdrawals" className="space-y-4">
             <Card className="border-border/50 bg-card/80">
               <CardHeader>
@@ -689,6 +872,160 @@ const AdminDashboard = () => {
             </Card>
           </TabsContent>
 
+          {/* Tickets Tab */}
+          <TabsContent value="tickets" className="space-y-4">
+            <Card className="border-border/50 bg-card/80">
+              <CardHeader>
+                <CardTitle>Support Tickets</CardTitle>
+                <CardDescription>
+                  View, reply to, and close support tickets from users
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {selectedTicket ? (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <button
+                        onClick={() => { setSelectedTicket(null); setTicketMessages([]); }}
+                        className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1"
+                      >
+                        ← Back to tickets
+                      </button>
+                      <div className="flex items-center gap-2">
+                        <Badge className={
+                          selectedTicket.status === 'open' ? 'bg-warning/20 text-warning' : 'bg-muted text-muted-foreground'
+                        }>
+                          {selectedTicket.status}
+                        </Badge>
+                        {selectedTicket.status === 'open' && (
+                          <Button variant="outline" size="sm" onClick={handleCloseTicket}>
+                            Close Ticket
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="rounded-lg border border-border/50 p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <div>
+                          <p className="font-medium">{selectedTicket.user_name}</p>
+                          <p className="text-sm text-muted-foreground">{selectedTicket.user_email}</p>
+                        </div>
+                        <Badge variant="secondary">{selectedTicket.category}</Badge>
+                      </div>
+
+                      <div className="space-y-3 max-h-96 overflow-y-auto mb-4">
+                        {ticketMessages.map((msg) => (
+                          <div
+                            key={msg.id}
+                            className={`p-3 rounded-lg ${
+                              msg.is_admin
+                                ? 'bg-primary/10 border border-primary/20 ml-6'
+                                : 'bg-secondary/50 mr-6'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-xs font-medium">
+                                {msg.is_admin ? 'Admin' : selectedTicket.user_name}
+                              </span>
+                              <span className="text-xs text-muted-foreground">
+                                {formatDate(msg.created_at)}
+                              </span>
+                            </div>
+                            <p className="text-sm">{msg.message}</p>
+                          </div>
+                        ))}
+                      </div>
+
+                      {selectedTicket.status === 'open' && (
+                        <div className="flex gap-2">
+                          <Input
+                            placeholder="Type your reply..."
+                            value={replyMessage}
+                            onChange={(e) => setReplyMessage(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleReplyToTicket()}
+                            className="flex-1"
+                          />
+                          <Button
+                            variant="glow"
+                            size="icon"
+                            disabled={!replyMessage.trim() || isSendingReply}
+                            onClick={handleReplyToTicket}
+                          >
+                            <Send className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="rounded-lg border border-border/50 overflow-hidden">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-muted/30">
+                          <TableHead>User</TableHead>
+                          <TableHead>Category</TableHead>
+                          <TableHead>Last Message</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Date</TableHead>
+                          <TableHead className="text-center">Action</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {tickets.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                              No support tickets
+                            </TableCell>
+                          </TableRow>
+                        ) : (
+                          tickets.map((ticket) => (
+                            <TableRow key={ticket.id} className={ticket.status === 'open' ? 'bg-primary/5' : ''}>
+                              <TableCell>
+                                <div>
+                                  <p className="font-medium text-sm">{ticket.user_name}</p>
+                                  <p className="text-xs text-muted-foreground">{ticket.user_email}</p>
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <Badge variant="secondary">{ticket.category}</Badge>
+                              </TableCell>
+                              <TableCell>
+                                <p className="text-sm text-muted-foreground truncate max-w-[200px]">
+                                  {ticket.last_message || '—'}
+                                </p>
+                              </TableCell>
+                              <TableCell>
+                                <Badge className={
+                                  ticket.status === 'open' ? 'bg-warning/20 text-warning' : 'bg-muted text-muted-foreground'
+                                }>
+                                  {ticket.status}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="text-sm">
+                                {formatDate(ticket.created_at)}
+                              </TableCell>
+                              <TableCell className="text-center">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleOpenTicket(ticket)}
+                                >
+                                  <MessageSquare className="w-4 h-4" />
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Audit Logs Tab */}
           <TabsContent value="audit" className="space-y-4">
             <Card className="border-border/50 bg-card/80">
               <CardHeader>
