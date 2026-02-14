@@ -56,7 +56,7 @@ export const PlatformDescription = () => {
         </div>
 
         <div className="text-center">
-          <Button variant="glow" size="xl" className="group">
+          <Button variant="glow" size="xl" className="group" onClick={() => document.getElementById('rates')?.scrollIntoView({ behavior: 'smooth' })}>
             Start Trading Now
             <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
           </Button>
