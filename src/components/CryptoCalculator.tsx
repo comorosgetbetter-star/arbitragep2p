@@ -169,7 +169,7 @@ export const CryptoCalculator = () => {
 
           <div className="glass-card rounded-2xl p-6 sm:p-8">
             {/* Input Section */}
-            <div className="mb-8">
+            <div className="mb-6">
               <label className="text-sm text-muted-foreground block mb-2">
                 Amount in USD
               </label>
@@ -206,50 +206,32 @@ export const CryptoCalculator = () => {
               </div>
             </div>
 
-            {/* Flow Diagram */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-              <div className="glass-card rounded-xl p-4 text-center border-border/50">
-                <p className="text-xs text-muted-foreground mb-1">You Pay</p>
-                <p className="text-xl font-display font-bold">${parseFloat(amount || '0').toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground">USD</p>
+            {/* Inline Result */}
+            {calculations.isValid && (
+              <div className="rounded-xl bg-secondary/50 border border-border/50 p-4 mb-5">
+                <p className="text-sm text-muted-foreground mb-1">You'll receive</p>
+                <p className="text-2xl font-display font-bold text-primary">
+                  {calculations.usdtReceived} USDT
+                  <span className="text-sm font-normal text-success ml-2">
+                    +{calculations.bonusPercent}% bonus
+                  </span>
+                </p>
               </div>
-              
-              <div className="flex items-center justify-center">
-                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                  <ArrowRight className="h-5 w-5 text-primary" />
-                </div>
-              </div>
-              
-              <div className="glass-card rounded-xl p-4 text-center border-primary/30 border">
-                <p className="text-xs text-muted-foreground mb-1">You Receive</p>
-                <p className="text-xl font-display font-bold text-primary">{calculations.usdtReceived}</p>
-                <p className="text-xs text-muted-foreground">USDT</p>
-              </div>
-            </div>
+            )}
 
-            {/* Create Custom Package */}
-            <div className="bg-secondary/50 rounded-xl p-5 border border-border/50">
-              <div className="flex items-center gap-2 mb-3">
-                <Plus className="h-5 w-5 text-primary" />
-                <span className="font-medium">Create Your Own Package</span>
-              </div>
-              <p className="text-sm text-muted-foreground mb-4">
-                Minimum: ${MIN_AMOUNT} • Maximum: ${MAX_AMOUNT.toLocaleString()}
-              </p>
-              
-              <Button 
-                variant="glow" 
-                className="w-full" 
-                size="lg"
-                onClick={handleCreatePackage}
-                disabled={!calculations.isValid}
-              >
-                Buy {calculations.usdtReceived} USDT for ${parseFloat(amount || '0').toLocaleString()}
-              </Button>
-            </div>
+            {/* Buy Button */}
+            <Button 
+              variant="glow" 
+              className="w-full" 
+              size="lg"
+              onClick={handleCreatePackage}
+              disabled={!calculations.isValid}
+            >
+              Buy {calculations.usdtReceived} USDT for ${parseFloat(amount || '0').toLocaleString()}
+            </Button>
 
             <p className="text-xs text-muted-foreground text-center mt-4">
-              Current bonus: +{calculations.bonusPercent}% • Same rates as Express P2P packages
+              Min: ${MIN_AMOUNT} • Max: ${MAX_AMOUNT.toLocaleString()} • Same rates as Express P2P
             </p>
           </div>
         </div>
