@@ -30,7 +30,7 @@ export const TradeConfirmationModal = ({
     }, 800);
   };
 
-  const bonusPercentage = ((usdt - usd) / usd * 100).toFixed(1);
+  const profitPercentage = ((usdt - usd) / usd * 100).toFixed(1);
   const isLoggedIn = !!user;
 
   return (
@@ -73,7 +73,7 @@ export const TradeConfirmationModal = ({
               
               <div className="flex flex-col items-center px-4">
                 <ArrowRight className="h-5 w-5 text-primary mb-1" />
-                <span className="text-[10px] text-primary font-semibold">+{bonusPercentage}%</span>
+                <span className="text-[10px] text-primary font-semibold">+{profitPercentage}%</span>
               </div>
               
               <div className="text-center flex-1">
@@ -98,7 +98,7 @@ export const TradeConfirmationModal = ({
                 </div>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <CheckCircle2 className="h-4 w-4 text-primary" />
-                  <span>Bonus rate locked at current market price</span>
+                  <span>Profit rate locked at current market price</span>
                 </div>
               </>
             ) : (

@@ -12,7 +12,7 @@ import { toast } from '@/components/ui/sonner';
 const MIN_AMOUNT = 50;
 const MAX_AMOUNT = 25000;
 
-// Tiered bonus rate calculation - matches Express P2P packages
+// Tiered profit rate calculation - matches Express P2P packages
 const calculateUsdtReceived = (usdAmount: number): number => {
   if (usdAmount <= 0) return 0;
   
@@ -70,7 +70,7 @@ export const CryptoCalculator = () => {
       usdtReceived: usdtReceived.toFixed(2),
       usdtReceivedNum: usdtReceived,
       isValid: numAmount >= MIN_AMOUNT && numAmount <= MAX_AMOUNT,
-      bonusPercent: numAmount > 0 ? (((usdtReceived / numAmount) - 1) * 100).toFixed(1) : '0',
+      profitPercent: numAmount > 0 ? (((usdtReceived / numAmount) - 1) * 100).toFixed(1) : '0',
     };
   }, [amount]);
 
@@ -213,7 +213,7 @@ export const CryptoCalculator = () => {
                 <p className="text-2xl font-display font-bold text-primary">
                   {calculations.usdtReceived} USDT
                   <span className="text-sm font-normal text-success ml-2">
-                    +{calculations.bonusPercent}% bonus
+                    +{calculations.profitPercent}% profit
                   </span>
                 </p>
               </div>

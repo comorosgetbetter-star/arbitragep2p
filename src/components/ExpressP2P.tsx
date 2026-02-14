@@ -10,7 +10,7 @@ import { toast } from '@/components/ui/sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
-// Bonus rates: tiered system where larger amounts get slightly better rates
+// Profit rates: tiered system where larger amounts get slightly better rates
 const packages = [
   { usd: 50, usdt: 60 },
   { usd: 100, usdt: 121 },
@@ -128,8 +128,8 @@ export const ExpressP2P = () => {
 
         <div className="flex flex-col gap-3 max-w-2xl mx-auto">
           {packages.map((pkg, index) => {
-            const bonus = pkg.usdt - pkg.usd;
-            const roi = ((bonus / pkg.usd) * 100).toFixed(1);
+            const profit = pkg.usdt - pkg.usd;
+            const roi = ((profit / pkg.usd) * 100).toFixed(1);
             const isPopular = pkg.usd === 1000;
 
             return (
@@ -171,12 +171,12 @@ export const ExpressP2P = () => {
                     </div>
                   </div>
 
-                  {/* Middle: Bonus & ROI */}
+                  {/* Middle: Profit & ROI */}
                   <div className="flex items-center gap-3 sm:gap-4">
                     <div className="text-left">
-                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Bonus</p>
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Profit</p>
                       <p className="font-display font-semibold text-success text-sm">
-                        +{bonus} USDT
+                        +{profit} USDT
                       </p>
                     </div>
 
@@ -202,7 +202,7 @@ export const ExpressP2P = () => {
         </div>
 
         <p className="text-xs text-muted-foreground text-center mt-6">
-          Bonus rates applied • Larger amounts receive better rates
+          Profit rates applied • Larger amounts receive better rates
         </p>
 
         {/* Why USDT Accordion */}
