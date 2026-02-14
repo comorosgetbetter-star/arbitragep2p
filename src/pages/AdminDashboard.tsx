@@ -18,8 +18,10 @@ import {
   XCircle,
   Clock,
   MessageSquare,
-  Send
+  Send,
+  MapPin
 } from 'lucide-react';
+import { AdminAddressManager } from '@/components/AdminAddressManager';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -621,13 +623,13 @@ const AdminDashboard = () => {
 
         {/* Main Tabs */}
         <Tabs defaultValue="members" className="space-y-3">
-          <TabsList className="w-full grid grid-cols-4 h-auto p-1 bg-card border border-border/50">
+          <TabsList className="w-full grid grid-cols-5 h-auto p-1 bg-card border border-border/50">
             <TabsTrigger value="members" className="flex flex-col items-center gap-0.5 py-2 text-[10px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-semibold">
-              <Users className="w-4 h-4" />
+              <Users className="w-3.5 h-3.5" />
               Members
             </TabsTrigger>
             <TabsTrigger value="withdrawals" className="flex flex-col items-center gap-0.5 py-2 text-[10px] data-[state=active]:bg-warning data-[state=active]:text-warning-foreground font-semibold relative">
-              <ArrowUpRight className="w-4 h-4" />
+              <ArrowUpRight className="w-3.5 h-3.5" />
               Withdraw
               {pendingWithdrawals.length > 0 && (
                 <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-[9px] rounded-full w-4 h-4 flex items-center justify-center">
@@ -636,7 +638,7 @@ const AdminDashboard = () => {
               )}
             </TabsTrigger>
             <TabsTrigger value="tickets" className="flex flex-col items-center gap-0.5 py-2 text-[10px] data-[state=active]:bg-success data-[state=active]:text-success-foreground font-semibold relative">
-              <MessageSquare className="w-4 h-4" />
+              <MessageSquare className="w-3.5 h-3.5" />
               Tickets
               {openTickets.length > 0 && (
                 <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[9px] rounded-full w-4 h-4 flex items-center justify-center">
@@ -644,8 +646,12 @@ const AdminDashboard = () => {
                 </span>
               )}
             </TabsTrigger>
+            <TabsTrigger value="addresses" className="flex flex-col items-center gap-0.5 py-2 text-[10px] data-[state=active]:bg-chart-4 data-[state=active]:text-white font-semibold">
+              <MapPin className="w-3.5 h-3.5" />
+              Addresses
+            </TabsTrigger>
             <TabsTrigger value="audit" className="flex flex-col items-center gap-0.5 py-2 text-[10px] data-[state=active]:bg-accent data-[state=active]:text-accent-foreground font-semibold">
-              <History className="w-4 h-4" />
+              <History className="w-3.5 h-3.5" />
               Logs
             </TabsTrigger>
           </TabsList>
@@ -918,6 +924,11 @@ const AdminDashboard = () => {
                 )}
               </div>
             )}
+          </TabsContent>
+
+          {/* Addresses Tab */}
+          <TabsContent value="addresses" className="space-y-3">
+            <AdminAddressManager />
           </TabsContent>
 
           {/* Audit Logs Tab */}

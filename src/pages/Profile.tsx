@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, User, Mail, Phone, Globe, MessageSquare, Send, ChevronRight, Clock } from 'lucide-react';
+import { ArrowLeft, User, Mail, Phone, Globe, MessageSquare, Send, ChevronRight, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { SupportTicketForm } from '@/components/SupportTicketForm';
 
 interface ProfileData {
   full_name: string;
@@ -37,6 +38,7 @@ const Profile = () => {
   const [messages, setMessages] = useState<TicketMessage[]>([]);
   const [replyText, setReplyText] = useState('');
   const [sending, setSending] = useState(false);
+  const [showNewTicket, setShowNewTicket] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
@@ -151,12 +153,42 @@ const Profile = () => {
 
         {/* Support Tickets Section */}
         <div className="glass-card rounded-2xl p-6">
-          <h2 className="text-lg font-display font-semibold flex items-center gap-2 mb-4">
-            <MessageSquare className="h-5 w-5 text-primary" />
-            Support Tickets
-          </h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-display font-semibold flex items-center gap-2">
+              <MessageSquare className="h-5 w-5 text-primary" />
+              Support Tickets
+            </h2>
+            {!selectedTicket && !showNewTicket && (
+              <Button size="sm" variant="default" onClick={() => setShowNewTicket(true)}>
+                <Plus className="h-4 w-4 mr-1" />
+                New
+              </Button>
+            )}
+          </div>
 
-          {selectedTicket ? (
+          {showNewTicket ? (
+            <div>
+              <button
+                onClick={() => setShowNewTicket(false)}
+                className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4"
+              >
+                <ChevronRight className="h-4 w-4 rotate-180" />
+                Back to tickets
+              </button>
+              <SupportTicketForm
+                inline
+                onClose={() => {
+                  setShowNewTicket(false);
+                  // Refresh tickets
+                  if (user) {
+                    supabase.from('support_tickets').select('id, category, status, created_at').eq('user_id', user.id).order('created_at', { ascending: false }).then(({ data }) => {
+                      if (data) setTickets(data);
+                    });
+                  }
+                }}
+              />
+            </div>
+          ) : selectedTicket ? (
             <div>
               <button
                 onClick={() => { setSelectedTicket(null); setMessages([]); }}
