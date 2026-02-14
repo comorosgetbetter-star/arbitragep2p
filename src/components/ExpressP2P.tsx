@@ -18,6 +18,8 @@ const packages = [
   { usd: 500, usdt: 609 },
   { usd: 1000, usdt: 1219 },
   { usd: 5000, usdt: 6097 },
+  { usd: 7000, usdt: 8540 },
+  { usd: 10000, usdt: 12200 },
 ];
 
 export const ExpressP2P = () => {
