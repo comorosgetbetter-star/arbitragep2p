@@ -1,33 +1,50 @@
+import { useState, useEffect } from 'react';
 import { Users, Shield, Globe, TrendingUp } from 'lucide-react';
 
-const stats = [
-  {
-    icon: Users,
-    value: '12,000+',
-    label: 'Active Users',
-    description: 'Trusted worldwide',
-  },
-  {
-    icon: TrendingUp,
-    value: '$2.5M+',
-    label: 'Volume Traded',
-    description: 'Monthly transactions',
-  },
-  {
-    icon: Globe,
-    value: '150+',
-    label: 'Countries',
-    description: 'Global access',
-  },
-  {
-    icon: Shield,
-    value: '99.9%',
-    label: 'Uptime',
-    description: 'Platform reliability',
-  },
-];
+const useAnimatedCounter = (baseValue: number, incrementInterval?: number) => {
+  const [count, setCount] = useState(baseValue);
+
+  useEffect(() => {
+    if (!incrementInterval) return;
+    const interval = setInterval(() => {
+      setCount(prev => prev + 1);
+    }, incrementInterval);
+    return () => clearInterval(interval);
+  }, [incrementInterval]);
+
+  return count;
+};
 
 export const TrustIndicators = () => {
+  const activeUsers = useAnimatedCounter(25000, 2000);
+
+  const stats = [
+    {
+      icon: Users,
+      value: `${activeUsers.toLocaleString()}+`,
+      label: 'Active Users',
+      description: 'Trusted worldwide',
+    },
+    {
+      icon: TrendingUp,
+      value: '$50M+',
+      label: 'Volume Traded',
+      description: 'Monthly transactions',
+    },
+    {
+      icon: Globe,
+      value: '150+',
+      label: 'Countries',
+      description: 'Global access',
+    },
+    {
+      icon: Shield,
+      value: '99.9%',
+      label: 'Uptime',
+      description: 'Platform reliability',
+    },
+  ];
+
   return (
     <section className="py-12 border-y border-border/30">
       <div className="container mx-auto px-4">
