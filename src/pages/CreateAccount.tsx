@@ -15,6 +15,8 @@ import { useCountryDetection } from '@/hooks/useCountryDetection';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { z } from 'zod';
+import SliderCaptcha from '@/components/SliderCaptcha';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const accountSchema = z.object({
   fullName: z.string().min(2, 'Name must be at least 2 characters').max(100),
@@ -46,6 +48,8 @@ const CreateAccount = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [captchaVerified, setCaptchaVerified] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   // Set detected country when loaded
   useEffect(() => {
@@ -276,7 +280,32 @@ const CreateAccount = () => {
               {errors.confirmPassword && <p className="text-sm text-destructive">{errors.confirmPassword}</p>}
             </div>
 
-            <Button type="submit" variant="glow" className="w-full" size="lg" disabled={isSubmitting}>
+            {/* Slider CAPTCHA */}
+            <SliderCaptcha onVerify={setCaptchaVerified} />
+
+            {/* Terms & Conditions */}
+            <div className="flex items-start gap-3">
+              <Checkbox
+                id="terms"
+                checked={acceptedTerms}
+                onCheckedChange={(checked) => setAcceptedTerms(checked === true)}
+                className="mt-0.5"
+              />
+              <label htmlFor="terms" className="text-sm text-muted-foreground leading-snug cursor-pointer select-none">
+                I agree to the{' '}
+                <span className="text-primary hover:underline font-medium">Terms of Service</span>
+                {' '}and{' '}
+                <span className="text-primary hover:underline font-medium">Privacy Policy</span>
+              </label>
+            </div>
+
+            <Button
+              type="submit"
+              variant="glow"
+              className="w-full"
+              size="lg"
+              disabled={isSubmitting || !captchaVerified || !acceptedTerms}
+            >
               {isSubmitting ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -286,10 +315,6 @@ const CreateAccount = () => {
                 'Create Account & Continue'
               )}
             </Button>
-
-            <p className="text-xs text-muted-foreground text-center">
-              By creating an account, you agree to our Terms of Service and Privacy Policy.
-            </p>
 
             <div className="text-center pt-4 border-t border-border/50">
               <p className="text-sm text-muted-foreground">
