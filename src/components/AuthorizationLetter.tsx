@@ -3,6 +3,7 @@ import { FileCheck } from 'lucide-react';
  import {
    Dialog,
    DialogContent,
+   DialogClose,
    DialogTrigger,
  } from '@/components/ui/dialog';
 import stampAuthorized from '@/assets/stamp-authorized.png';
@@ -22,7 +23,7 @@ import signature2 from '@/assets/signature-2.png';
            View Operating License
          </Button>
        </DialogTrigger>
-      <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto p-0 border-0">
+      <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto p-0 border-0 [&>button]:hidden">
         {/* PDF-like document container */}
         <div 
           className="relative bg-white shadow-2xl"
@@ -206,9 +207,18 @@ import signature2 from '@/assets/signature-2.png';
                 Unauthorized reproduction, alteration, or distribution of this certificate is strictly prohibited and may be subject to legal action.
               </p>
             </div>
+
+            {/* Close Button */}
+            <div className="mt-8 text-center">
+              <DialogClose asChild>
+                <Button variant="outline" className="px-8 border-[#1a1a2e]/30 text-[#1a1a2e] hover:bg-[#1a1a2e]/5">
+                  Close
+                </Button>
+              </DialogClose>
+            </div>
            </div>
-         </div>
-       </DialogContent>
+          </div>
+        </DialogContent>
      </Dialog>
    );
  };
