@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, User, Mail, Phone, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface ProfileData {
   full_name: string;
@@ -13,22 +14,23 @@ interface ProfileData {
 
 const Profile = () => {
   const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        navigate('/login');
-        return;
-      }
+    if (authLoading) return;
 
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+
+    const fetchProfile = async () => {
       const { data, error } = await supabase
         .from('profiles')
         .select('full_name, email, phone, country')
-        .eq('user_id', session.user.id)
+        .eq('user_id', user.id)
         .single();
 
       if (error) {
@@ -40,9 +42,9 @@ const Profile = () => {
     };
 
     fetchProfile();
-  }, [navigate]);
+  }, [user, authLoading, navigate]);
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>

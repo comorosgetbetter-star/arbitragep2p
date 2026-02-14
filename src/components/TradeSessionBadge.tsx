@@ -3,8 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Clock, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTradeSession } from '@/hooks/useTradeSession';
-import { supabase } from '@/integrations/supabase/client';
-import type { User } from '@supabase/supabase-js';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const TradeSessionBadge = () => {
   const navigate = useNavigate();
@@ -12,20 +11,7 @@ export const TradeSessionBadge = () => {
   const { session, getRemainingTime, clearSession } = useTradeSession();
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [isDismissed, setIsDismissed] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
-
-  // Listen for auth state changes
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+  const { user } = useAuth();
 
   // Update timer every second
   useEffect(() => {
