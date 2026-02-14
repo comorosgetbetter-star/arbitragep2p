@@ -293,9 +293,9 @@ const CreateAccount = () => {
               />
               <label htmlFor="terms" className="text-sm text-muted-foreground leading-snug cursor-pointer select-none">
                 I agree to the{' '}
-                <span className="text-primary hover:underline font-medium">Terms of Service</span>
+                <Link to="/terms" className="text-primary hover:underline font-medium" target="_blank">Terms of Service</Link>
                 {' '}and{' '}
-                <span className="text-primary hover:underline font-medium">Privacy Policy</span>
+                <Link to="/privacy" className="text-primary hover:underline font-medium" target="_blank">Privacy Policy</Link>
               </label>
             </div>
 
