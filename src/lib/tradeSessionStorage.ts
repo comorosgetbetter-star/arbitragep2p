@@ -15,14 +15,14 @@ export const notifyTradeSessionChange = () => {
 
 export const clearTradeStorage = () => {
   try {
-    sessionStorage.removeItem(TRADE_SESSION_KEY);
-    sessionStorage.removeItem(SELECTED_PACKAGE_KEY);
+    localStorage.removeItem(TRADE_SESSION_KEY);
+    localStorage.removeItem(SELECTED_PACKAGE_KEY);
 
     // Remove per-session payment state snapshots.
-    for (let i = sessionStorage.length - 1; i >= 0; i--) {
-      const key = sessionStorage.key(i);
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const key = localStorage.key(i);
       if (key && key.startsWith(PAYMENT_STATE_PREFIX)) {
-        sessionStorage.removeItem(key);
+        localStorage.removeItem(key);
       }
     }
   } finally {

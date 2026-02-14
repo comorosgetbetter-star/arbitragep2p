@@ -61,7 +61,7 @@ const Login = () => {
           description: "You have successfully logged in.",
         });
         
-        const selectedPackage = sessionStorage.getItem('selectedPackage');
+        const selectedPackage = localStorage.getItem('selectedPackage');
         if (selectedPackage) {
           navigate('/payment');
         } else {

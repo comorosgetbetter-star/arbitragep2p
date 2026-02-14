@@ -39,7 +39,7 @@ type TradePaymentState = {
 };
 
 const readActiveTradeSessionId = (): string | null => {
-  const stored = sessionStorage.getItem(TRADE_SESSION_KEY);
+  const stored = localStorage.getItem(TRADE_SESSION_KEY);
   if (!stored) return null;
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -55,7 +55,7 @@ const readActiveTradeSessionId = (): string | null => {
 const paymentStateKey = (sessionId: string) => `${PAYMENT_STATE_PREFIX}${sessionId}`;
 
 const readPaymentState = (sessionId: string): TradePaymentState | null => {
-  const stored = sessionStorage.getItem(paymentStateKey(sessionId));
+  const stored = localStorage.getItem(paymentStateKey(sessionId));
   if (!stored) return null;
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -94,7 +94,7 @@ const Payment = () => {
   
   // Crypto payment states - initialize from trade session storage directly
   const [timeRemaining, setTimeRemaining] = useState(() => {
-    const stored = sessionStorage.getItem(TRADE_SESSION_KEY);
+    const stored = localStorage.getItem(TRADE_SESSION_KEY);
     if (stored) {
       try {
         const parsed = JSON.parse(stored);
@@ -137,7 +137,7 @@ const Payment = () => {
       }
 
       // Get selected package from trade session
-      const storedPackage = sessionStorage.getItem('selectedPackage');
+      const storedPackage = localStorage.getItem('selectedPackage');
       if (storedPackage) {
         setPackageData(JSON.parse(storedPackage));
         
@@ -195,7 +195,7 @@ const Payment = () => {
       verificationFailed,
     };
 
-    sessionStorage.setItem(paymentStateKey(sid), JSON.stringify(snapshot));
+    localStorage.setItem(paymentStateKey(sid), JSON.stringify(snapshot));
   }, [tradeSession?.id, paymentMethod, depositAddress, isVerifying, verificationProgress, verificationFailed]);
 
   // Reset verification state when switching to crypto - DO NOT reset timer
