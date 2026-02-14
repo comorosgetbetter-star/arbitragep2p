@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { WalletDropdown } from './WalletDropdown';
 import { AddFundsModal } from './AddFundsModal';
 import { AccountDropdown } from './AccountDropdown';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface HeaderProps {
   isDark: boolean;
@@ -11,6 +12,7 @@ interface HeaderProps {
 }
 
 export const Header = ({ isDark, toggleTheme }: HeaderProps) => {
+  const { user } = useAuth();
   const [isWalletOpen, setIsWalletOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isAddFundsOpen, setIsAddFundsOpen] = useState(false);
@@ -47,15 +49,17 @@ export const Header = ({ isDark, toggleTheme }: HeaderProps) => {
           {/* Actions */}
           <div className="flex items-center gap-3">
             {/* Add Funds Button */}
-            <Button
-              variant="glow"
-              size="sm"
-              onClick={() => setIsAddFundsOpen(true)}
-              className="hidden sm:flex items-center gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              Add Funds
-            </Button>
+            {user && (
+              <Button
+                variant="glow"
+                size="sm"
+                onClick={() => setIsAddFundsOpen(true)}
+                className="hidden sm:flex items-center gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                Add Funds
+              </Button>
+            )}
 
             <Button
               variant="ghost"
@@ -129,18 +133,20 @@ export const Header = ({ isDark, toggleTheme }: HeaderProps) => {
               >
                 FAQ
               </a>
-              <Button
-                variant="glow"
-                size="sm"
-                onClick={() => {
-                  setIsMobileMenuOpen(false);
-                  setIsAddFundsOpen(true);
-                }}
-                className="justify-start gap-2"
-              >
-                <Plus className="h-4 w-4" />
-                Add Funds
-              </Button>
+              {user && (
+                <Button
+                  variant="glow"
+                  size="sm"
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    setIsAddFundsOpen(true);
+                  }}
+                  className="justify-start gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Funds
+                </Button>
+              )}
               <Button
                 variant="ghost"
                 size="sm"
