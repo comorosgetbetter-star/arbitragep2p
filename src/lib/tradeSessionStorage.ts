@@ -17,7 +17,6 @@ export const clearTradeStorage = () => {
   try {
     localStorage.removeItem(TRADE_SESSION_KEY);
     localStorage.removeItem(SELECTED_PACKAGE_KEY);
-    localStorage.removeItem('pendingTrade');
 
     // Remove per-session payment state snapshots.
     for (let i = localStorage.length - 1; i >= 0; i--) {
@@ -29,4 +28,9 @@ export const clearTradeStorage = () => {
   } finally {
     notifyTradeSessionChange();
   }
+};
+
+/** Clear pending trade intent (used on logout) */
+export const clearPendingTrade = () => {
+  localStorage.removeItem('pendingTrade');
 };

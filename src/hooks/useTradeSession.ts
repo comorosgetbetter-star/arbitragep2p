@@ -6,6 +6,7 @@ import {
   TRADE_SESSION_CHANGED_EVENT,
   notifyTradeSessionChange,
   clearTradeStorage,
+  clearPendingTrade,
 } from '@/lib/tradeSessionStorage';
 
 export interface TradeSession {
@@ -82,6 +83,7 @@ export const useTradeSession = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, authSession) => {
       if (event === 'SIGNED_OUT') {
         clearTradeStorage();
+        clearPendingTrade();
         setSession(null);
         return;
       }
