@@ -61,11 +61,18 @@ const Login = () => {
           description: "You have successfully logged in.",
         });
         
-        const selectedPackage = localStorage.getItem('selectedPackage');
-        if (selectedPackage) {
-          navigate('/payment');
-        } else {
+        // If there's a pending trade, go to home so the confirmation modal can appear
+        const pendingTrade = localStorage.getItem('pendingTrade');
+        if (pendingTrade) {
           navigate('/');
+        } else {
+          // Resume active session if one exists
+          const selectedPackage = localStorage.getItem('selectedPackage');
+          if (selectedPackage) {
+            navigate('/payment');
+          } else {
+            navigate('/');
+          }
         }
       }
     } catch (error) {

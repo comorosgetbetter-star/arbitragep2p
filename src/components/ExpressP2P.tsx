@@ -43,16 +43,34 @@ export const ExpressP2P = () => {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Check for pending trade after login
+  useEffect(() => {
+    if (!user) return;
+    const pending = localStorage.getItem('pendingTrade');
+    if (!pending) return;
+    try {
+      const data = JSON.parse(pending);
+      if (data.isCustom) return; // Let calculator handle custom trades
+      setPendingPackage({ usd: data.usd, usdt: data.usdt });
+      localStorage.removeItem('pendingTrade');
+      setShowConfirmationModal(true);
+    } catch {
+      localStorage.removeItem('pendingTrade');
+    }
+  }, [user]);
+
   const proceedWithPackage = (usd: number, usdt: number) => {
-    startSession(usd, usdt, false, user?.id);
+    if (!user) {
+      // Save pending trade for after login — don't start session yet
+      localStorage.setItem('pendingTrade', JSON.stringify({ usd, usdt, isCustom: false }));
+      navigate('/login');
+      return;
+    }
+    startSession(usd, usdt, false, user.id);
     toast.success('Trade started!', {
       description: `$${usd} → ${usdt} USDT`,
     });
-    if (user) {
-      navigate('/payment');
-    } else {
-      navigate('/login');
-    }
+    navigate('/payment');
   };
 
   const handleSelectPackage = (usd: number, usdt: number) => {
