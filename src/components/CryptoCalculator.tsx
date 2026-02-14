@@ -3,12 +3,11 @@ import { Calculator, ArrowRight, Plus } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { useTradeSession, TradeSession } from '@/hooks/useTradeSession';
 import { TradeConfirmationModal } from './TradeConfirmationModal';
 import { TradeConflictModal } from './TradeConflictModal';
 import { toast } from '@/components/ui/sonner';
-import type { User } from '@supabase/supabase-js';
 
 const MIN_AMOUNT = 50;
 const MAX_AMOUNT = 25000;
@@ -17,17 +16,15 @@ const MAX_AMOUNT = 25000;
 const calculateUsdtReceived = (usdAmount: number): number => {
   if (usdAmount <= 0) return 0;
   
-  // Rate tiers based on package data
   const tiers = [
-    { usd: 50, rate: 1.2 },      // 60/50
-    { usd: 100, rate: 1.21 },    // 121/100
-    { usd: 150, rate: 1.2133 },  // 182/150
-    { usd: 500, rate: 1.218 },   // 609/500
-    { usd: 1000, rate: 1.219 },  // 1219/1000
-    { usd: 5000, rate: 1.2194 }, // 6097/5000
+    { usd: 50, rate: 1.2 },
+    { usd: 100, rate: 1.21 },
+    { usd: 150, rate: 1.2133 },
+    { usd: 500, rate: 1.218 },
+    { usd: 1000, rate: 1.219 },
+    { usd: 5000, rate: 1.2194 },
   ];
   
-  // Find applicable rate (use highest tier that amount qualifies for)
   let applicableRate = tiers[0].rate;
   for (const tier of tiers) {
     if (usdAmount >= tier.usd) {
@@ -41,27 +38,13 @@ const calculateUsdtReceived = (usdAmount: number): number => {
 export const CryptoCalculator = () => {
   const [amount, setAmount] = useState<string>('100');
   const [error, setError] = useState<string>('');
-  const [user, setUser] = useState<User | null>(null);
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const [showConflictModal, setShowConflictModal] = useState(false);
   const [pendingPackage, setPendingPackage] = useState<{ usd: number; usdt: number } | null>(null);
   const [existingSession, setExistingSession] = useState<TradeSession | null>(null);
+  const { user } = useAuth();
   const navigate = useNavigate();
   const { startSession, clearSession, getStoredSession } = useTradeSession();
-
-  useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-    });
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
 
   // Check for pending custom trade after login
   useEffect(() => {
@@ -105,7 +88,6 @@ export const CryptoCalculator = () => {
 
   const proceedWithPackage = (usd: number, usdt: number) => {
     if (!user) {
-      // Save pending trade for after login — don't start session yet
       localStorage.setItem('pendingTrade', JSON.stringify({ usd, usdt, isCustom: true }));
       navigate('/login');
       return;
@@ -127,17 +109,14 @@ export const CryptoCalculator = () => {
     const usdt = calculateUsdtReceived(numAmount);
     setPendingPackage({ usd: numAmount, usdt });
 
-    // If the user is logged out, never reference any previous trade state.
     if (!user) {
       clearSession();
       setShowConfirmationModal(true);
       return;
     }
 
-    // Check for existing active session
     const existing = getStoredSession();
 
-    // Safety: if an old session exists but is tied to a different user, purge it.
     if (existing?.userId && existing.userId !== user.id) {
       clearSession();
       setShowConfirmationModal(true);
@@ -145,11 +124,9 @@ export const CryptoCalculator = () => {
     }
 
     if (existing) {
-      // Show conflict modal
       setExistingSession(existing);
       setShowConflictModal(true);
     } else {
-      // Show confirmation modal first
       setShowConfirmationModal(true);
     }
   };

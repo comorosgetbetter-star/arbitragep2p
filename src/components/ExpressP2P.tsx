@@ -4,10 +4,9 @@ import { useNavigate } from 'react-router-dom';
 import { WhyUsdt } from './WhyUsdt';
 import { TradeConflictModal } from './TradeConflictModal';
 import { TradeConfirmationModal } from './TradeConfirmationModal';
-import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { useTradeSession, TradeSession } from '@/hooks/useTradeSession';
 import { toast } from '@/components/ui/sonner';
-import type { User } from '@supabase/supabase-js';
 
 // Bonus rates: tiered system where larger amounts get slightly better rates
 const packages = [
@@ -21,27 +20,13 @@ const packages = [
 
 export const ExpressP2P = () => {
   const [selectedPackage, setSelectedPackage] = useState<number | null>(null);
-  const [user, setUser] = useState<User | null>(null);
   const [showConflictModal, setShowConflictModal] = useState(false);
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const [pendingPackage, setPendingPackage] = useState<{ usd: number; usdt: number } | null>(null);
   const [existingSession, setExistingSession] = useState<TradeSession | null>(null);
+  const { user } = useAuth();
   const navigate = useNavigate();
   const { startSession, clearSession, getStoredSession } = useTradeSession();
-
-  useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-    });
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
 
   // Check for pending trade after login
   useEffect(() => {
@@ -78,10 +63,8 @@ export const ExpressP2P = () => {
     setPendingPackage({ usd, usdt });
 
     // If the user is logged out, never reference any previous trade state.
-    // Start a fresh flow (which will gate to login) and avoid showing the conflict modal.
     if (!user) {
       clearSession();
-      // Show confirmation modal first
       setShowConfirmationModal(true);
       return;
     }
@@ -92,17 +75,14 @@ export const ExpressP2P = () => {
     // Safety: if an old session exists but is tied to a different user, purge it.
     if (existing?.userId && existing.userId !== user.id) {
       clearSession();
-      // Show confirmation modal first
       setShowConfirmationModal(true);
       return;
     }
     
     if (existing) {
-      // Show conflict modal
       setExistingSession(existing);
       setShowConflictModal(true);
     } else {
-      // Show confirmation modal first
       setShowConfirmationModal(true);
     }
   };

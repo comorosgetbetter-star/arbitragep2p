@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   TRADE_SESSION_KEY,
   SELECTED_PACKAGE_KEY,
@@ -75,36 +75,33 @@ const notifySessionChange = () => notifyTradeSessionChange();
 export const useTradeSession = () => {
   // Initialize synchronously from sessionStorage so UI (badge) appears immediately.
   const [session, setSession] = useState<TradeSession | null>(() => readSessionFromStorage());
+  const { user, loading } = useAuth();
+  // Track previous user to detect sign-out (user goes from non-null to null)
+  const [prevUser, setPrevUser] = useState<typeof user>(undefined as any);
 
-  // Keep trade session strictly tied to a verified login lifecycle.
-  // - On SIGNED_OUT: purge all trade storage so logged-out users never see/continue prior trades.
-  // - On SIGNED_IN: bind anonymous (pre-login) sessions to the signed-in user without restarting the timer.
+  // React to auth changes via shared context instead of independent listeners.
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, authSession) => {
-      if (event === 'SIGNED_OUT') {
-        clearTradeStorage();
-        clearPendingTrade();
-        setSession(null);
-        return;
-      }
+    // Don't act while auth is still loading — we'd wipe data prematurely.
+    if (loading) return;
 
-      if (event === 'SIGNED_IN' && authSession?.user) {
-        const stored = readSessionFromStorage();
-        if (!stored) return;
+    // Detect sign-out: user was previously set but is now null
+    if (!user && prevUser) {
+      clearTradeStorage();
+      clearPendingTrade();
+      setSession(null);
+    }
 
-        // If a stored session belongs to a different user, purge it.
-        if (stored.userId && stored.userId !== authSession.user.id) {
+    // User signed in — bind anonymous sessions to this user
+    if (user) {
+      const stored = readSessionFromStorage();
+      if (stored) {
+        if (stored.userId && stored.userId !== user.id) {
           clearTradeStorage();
           setSession(null);
-          return;
-        }
-
-        // Bind anonymous sessions (created pre-login) to the signed-in user.
-        if (!stored.userId) {
-          const bound: TradeSession = { ...stored, userId: authSession.user.id };
+        } else if (!stored.userId) {
+          const bound: TradeSession = { ...stored, userId: user.id };
           localStorage.setItem(TRADE_SESSION_KEY, JSON.stringify(bound));
 
-          // Keep selectedPackage consistent for payment restore logic.
           const selected = localStorage.getItem(SELECTED_PACKAGE_KEY);
           if (selected) {
             try {
@@ -123,10 +120,10 @@ export const useTradeSession = () => {
           notifySessionChange();
         }
       }
-    });
+    }
 
-    return () => subscription.unsubscribe();
-  }, []);
+    setPrevUser(user);
+  }, [user, loading]);
 
   // Load session from storage on mount
   useEffect(() => {

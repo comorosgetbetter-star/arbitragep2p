@@ -1,9 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Zap, ArrowRight, Shield, Clock, CheckCircle2, LogIn } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import type { User } from '@supabase/supabase-js';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface TradeConfirmationModalProps {
   isOpen: boolean;
@@ -21,23 +20,10 @@ export const TradeConfirmationModal = ({
   usdt,
 }: TradeConfirmationModalProps) => {
   const [isProcessing, setIsProcessing] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+  const { user } = useAuth();
 
   const handleConfirm = () => {
     setIsProcessing(true);
-    // Small delay for professional feel
     setTimeout(() => {
       setIsProcessing(false);
       onConfirm();
@@ -98,7 +84,7 @@ export const TradeConfirmationModal = ({
             </div>
           </div>
 
-          {/* Info Points - Contextual based on auth state */}
+          {/* Info Points */}
           <div className="space-y-2 mb-6">
             {isLoggedIn ? (
               <>

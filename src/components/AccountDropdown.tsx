@@ -1,4 +1,3 @@
-import { useState, useEffect } from 'react';
 import { User, LogOut, UserCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -11,32 +10,12 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import type { User as SupabaseUser } from '@supabase/supabase-js';
+import { useAuth } from '@/contexts/AuthContext';
 import { clearTradeStorage, clearPendingTrade } from '@/lib/tradeSessionStorage';
 
 export const AccountDropdown = () => {
-  const [user, setUser] = useState<SupabaseUser | null>(null);
+  const { user } = useAuth();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    // Set up listener BEFORE getSession to avoid race conditions
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setUser(session?.user ?? null);
-      
-      // On logout, ensure trade state is purged
-      if (event === 'SIGNED_OUT') {
-        clearTradeStorage();
-        clearPendingTrade();
-      }
-    });
-
-    // Get initial session state
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
 
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
