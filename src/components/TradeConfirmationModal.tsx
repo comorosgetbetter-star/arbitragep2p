@@ -36,6 +36,12 @@ export const TradeConfirmationModal = ({
   }, []);
 
   const handleConfirm = () => {
+    if (!user) {
+      // Redirect logged-out users to login
+      onClose();
+      window.location.href = '/login';
+      return;
+    }
     setIsProcessing(true);
     // Small delay for professional feel
     setTimeout(() => {

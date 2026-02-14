@@ -59,10 +59,10 @@ export const AccountDropdown = () => {
         variant="ghost"
         size="sm"
         onClick={() => navigate('/login')}
-        className="hidden sm:flex items-center gap-2"
+        className="flex items-center gap-2"
       >
         <User className="h-4 w-4" />
-        Sign In
+        <span className="hidden sm:inline">Sign In</span>
       </Button>
     );
   }
