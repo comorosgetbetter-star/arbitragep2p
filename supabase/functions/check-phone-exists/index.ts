@@ -2,7 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 Deno.serve(async (req) => {
@@ -13,7 +13,16 @@ Deno.serve(async (req) => {
   try {
     const { phone } = await req.json();
 
-    if (!phone || typeof phone !== "string") {
+    // Validate phone input
+    if (!phone || typeof phone !== "string" || phone.length < 7 || phone.length > 20) {
+      return new Response(JSON.stringify({ exists: false }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Sanitize: only allow digits, +, -, spaces, parens
+    const sanitizedPhone = phone.replace(/[^0-9+\-() ]/g, '').trim();
+    if (!sanitizedPhone || sanitizedPhone.length < 7) {
       return new Response(JSON.stringify({ exists: false }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -28,7 +37,7 @@ Deno.serve(async (req) => {
     const { data: profileMatch } = await supabaseAdmin
       .from("profiles")
       .select("id")
-      .eq("phone", phone)
+      .eq("phone", sanitizedPhone)
       .maybeSingle();
 
     if (profileMatch) {
@@ -50,7 +59,7 @@ Deno.serve(async (req) => {
     }
 
     const phoneExists = users?.some(
-      (user) => user.user_metadata?.phone === phone
+      (user) => user.user_metadata?.phone === sanitizedPhone
     );
 
     return new Response(JSON.stringify({ exists: !!phoneExists }), {

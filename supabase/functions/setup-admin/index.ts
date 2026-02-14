@@ -18,8 +18,17 @@ Deno.serve(async (req) => {
 
     const { email, password, setup_key } = await req.json()
 
-    // Simple setup key to prevent unauthorized access
-    if (setup_key !== 'INITIAL_ADMIN_SETUP_2024') {
+    // Validate inputs
+    if (!email || typeof email !== 'string' || email.length > 255 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return new Response(JSON.stringify({ error: 'Invalid email' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    }
+    if (!password || typeof password !== 'string' || password.length < 8 || password.length > 128) {
+      return new Response(JSON.stringify({ error: 'Invalid password' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    }
+
+    // Verify setup key from environment secret
+    const expectedKey = Deno.env.get('ADMIN_SETUP_KEY')
+    if (!expectedKey || !setup_key || setup_key !== expectedKey) {
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
