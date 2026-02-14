@@ -75,6 +75,19 @@ const CreateAccount = () => {
       // Validate form data
       const validatedData = accountSchema.parse(formData);
       
+      // Check if phone number already exists
+      const { data: existingPhone } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('phone', validatedData.phone)
+        .maybeSingle();
+
+      if (existingPhone) {
+        setErrors(prev => ({ ...prev, phone: 'This phone number is already registered' }));
+        setIsSubmitting(false);
+        return;
+      }
+
       // Sign up with Supabase
       const { data, error } = await supabase.auth.signUp({
         email: validatedData.email,
@@ -90,11 +103,15 @@ const CreateAccount = () => {
       });
 
       if (error) {
-        toast({
-          title: "Registration Failed",
-          description: error.message,
-          variant: "destructive",
-        });
+        if (error.message.toLowerCase().includes('already registered') || error.message.toLowerCase().includes('already been registered') || error.message.toLowerCase().includes('user already registered')) {
+          setErrors(prev => ({ ...prev, email: 'This email address is already registered' }));
+        } else {
+          toast({
+            title: "Registration Failed",
+            description: error.message,
+            variant: "destructive",
+          });
+        }
         return;
       }
 
