@@ -116,6 +116,12 @@ const CreateAccount = () => {
       }
 
       if (data.user) {
+        // Check for fake signup (duplicate email with confirmation enabled)
+        if (data.user.identities && data.user.identities.length === 0) {
+          setErrors(prev => ({ ...prev, email: 'This email address is already registered' }));
+          return;
+        }
+
         toast({
           title: "Account Created!",
           description: "Please check your email to verify your account.",
