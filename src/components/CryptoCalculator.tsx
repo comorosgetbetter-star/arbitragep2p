@@ -62,6 +62,22 @@ export const CryptoCalculator = () => {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // Check for pending custom trade after login
+  useEffect(() => {
+    if (!user) return;
+    const pending = localStorage.getItem('pendingTrade');
+    if (!pending) return;
+    try {
+      const data = JSON.parse(pending);
+      if (!data.isCustom) return; // Let ExpressP2P handle non-custom trades
+      setPendingPackage({ usd: data.usd, usdt: data.usdt });
+      localStorage.removeItem('pendingTrade');
+      setShowConfirmationModal(true);
+    } catch {
+      localStorage.removeItem('pendingTrade');
+    }
+  }, [user]);
   
   const calculations = useMemo(() => {
     const numAmount = parseFloat(amount) || 0;
@@ -88,15 +104,17 @@ export const CryptoCalculator = () => {
   };
 
   const proceedWithPackage = (usd: number, usdt: number) => {
-    startSession(usd, usdt, true, user?.id);
+    if (!user) {
+      // Save pending trade for after login — don't start session yet
+      localStorage.setItem('pendingTrade', JSON.stringify({ usd, usdt, isCustom: true }));
+      navigate('/login');
+      return;
+    }
+    startSession(usd, usdt, true, user.id);
     toast.success('Trade started!', {
       description: `$${usd} → ${usdt.toFixed(2)} USDT`,
     });
-    if (user) {
-      navigate('/payment');
-    } else {
-      navigate('/login');
-    }
+    navigate('/payment');
   };
 
   const handleCreatePackage = () => {

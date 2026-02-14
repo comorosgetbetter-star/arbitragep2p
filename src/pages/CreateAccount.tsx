@@ -111,12 +111,17 @@ const CreateAccount = () => {
           country: validatedData.country,
         }));
         
-        // Redirect to payment if package was selected
-        const selectedPackage = localStorage.getItem('selectedPackage');
-        if (selectedPackage) {
-          navigate('/payment');
-        } else {
+        // If there's a pending trade, go to home so the confirmation modal can appear
+        const pendingTrade = localStorage.getItem('pendingTrade');
+        if (pendingTrade) {
           navigate('/');
+        } else {
+          const selectedPackage = localStorage.getItem('selectedPackage');
+          if (selectedPackage) {
+            navigate('/payment');
+          } else {
+            navigate('/');
+          }
         }
       }
     } catch (error) {
