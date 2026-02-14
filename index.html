@@ -29,6 +29,32 @@
     <!--Start of Tawk.to Script-->
     <script type="text/javascript">
       var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
+
+      // Hide Tawk.to widget on admin pages
+      function checkAdminPage() {
+        var isAdmin = window.location.pathname.indexOf('/admin') === 0;
+        if (typeof Tawk_API.hideWidget === 'function' && typeof Tawk_API.showWidget === 'function') {
+          if (isAdmin) {
+            Tawk_API.hideWidget();
+          } else {
+            Tawk_API.showWidget();
+          }
+        }
+      }
+
+      Tawk_API.onLoad = function() {
+        checkAdminPage();
+        // Re-check on route changes (SPA)
+        var pushState = history.pushState;
+        history.pushState = function() {
+          pushState.apply(history, arguments);
+          setTimeout(checkAdminPage, 100);
+        };
+        window.addEventListener('popstate', function() {
+          setTimeout(checkAdminPage, 100);
+        });
+      };
+
       (function(){
         var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
         s1.async=true;
