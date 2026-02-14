@@ -22,7 +22,7 @@ export const Header = ({ isDark, toggleTheme }: HeaderProps) => {
           {/* Logo */}
           <div className="flex items-center gap-2">
             <img src="/logo.png" alt="ArbitrageP2P" className="w-10 h-10 rounded-xl" />
-            <span className="font-display font-bold text-xl hidden sm:block">
+            <span className="font-display font-bold text-base sm:text-xl">
               <span className="text-foreground">Arbitrage</span>
               <span className="text-primary">P2P</span>
             </span>
