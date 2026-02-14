@@ -12,7 +12,11 @@ import {
   Plus,
   Minus,
   History,
-  RefreshCw
+  RefreshCw,
+  ArrowUpRight,
+  CheckCircle2,
+  XCircle,
+  Clock
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -61,10 +65,24 @@ interface AuditLog {
   target_email?: string;
 }
 
+interface WithdrawalRequest {
+  id: string;
+  user_id: string;
+  amount: number;
+  wallet_address: string;
+  network: string;
+  status: string;
+  created_at: string;
+  expires_at: string;
+  user_email?: string;
+  user_name?: string;
+}
+
 const AdminDashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [members, setMembers] = useState<Member[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+  const [withdrawals, setWithdrawals] = useState<WithdrawalRequest[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [adjustmentAmount, setAdjustmentAmount] = useState('');
@@ -82,6 +100,22 @@ const AdminDashboard = () => {
   useEffect(() => {
     checkAdminAccess();
   }, []);
+
+  // Subscribe to withdrawal changes in realtime
+  useEffect(() => {
+    const channel = supabase
+      .channel('admin-withdrawals')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'withdrawals',
+      }, () => {
+        fetchWithdrawals();
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [members]);
 
   const checkAdminAccess = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -105,6 +139,26 @@ const AdminDashboard = () => {
     }
 
     fetchData();
+  };
+
+  const fetchWithdrawals = async () => {
+    const { data } = await supabase
+      .from('withdrawals')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(50);
+
+    if (data) {
+      const enriched = data.map(w => {
+        const member = members.find(m => m.user_id === w.user_id);
+        return {
+          ...w,
+          user_email: member?.email || 'Unknown',
+          user_name: member?.full_name || 'Unknown',
+        };
+      });
+      setWithdrawals(enriched);
+    }
   };
 
   const fetchData = async () => {
@@ -175,6 +229,25 @@ const AdminDashboard = () => {
         setAuditLogs(enrichedLogs);
       }
 
+      // Fetch withdrawals
+      const { data: withdrawalData } = await supabase
+        .from('withdrawals')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (withdrawalData) {
+        const enrichedWithdrawals = withdrawalData.map(w => {
+          const member = membersData.find(m => m.user_id === w.user_id);
+          return {
+            ...w,
+            user_email: member?.email || 'Unknown',
+            user_name: member?.full_name || 'Unknown',
+          };
+        });
+        setWithdrawals(enrichedWithdrawals);
+      }
+
     } catch (error) {
       console.error('Error fetching data:', error);
       toast.error('Failed to load data');
@@ -241,6 +314,47 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleApproveWithdrawal = async (withdrawal: WithdrawalRequest) => {
+    try {
+      // First deduct from user balance
+      const { error: rpcError } = await supabase.rpc('adjust_user_balance', {
+        _target_user_id: withdrawal.user_id,
+        _adjustment: -withdrawal.amount,
+        _reason: `Withdrawal approved: ${withdrawal.amount} USDT to ${withdrawal.wallet_address} (${withdrawal.network})`,
+      });
+      if (rpcError) throw rpcError;
+
+      // Then mark withdrawal as approved
+      const { error } = await supabase
+        .from('withdrawals')
+        .update({ status: 'approved', resolved_at: new Date().toISOString() })
+        .eq('id', withdrawal.id);
+      if (error) throw error;
+
+      toast.success(`Approved withdrawal of ${withdrawal.amount} USDT`);
+      fetchData();
+    } catch (error) {
+      console.error('Approval error:', error);
+      toast.error('Failed to approve withdrawal');
+    }
+  };
+
+  const handleRejectWithdrawal = async (withdrawal: WithdrawalRequest) => {
+    try {
+      const { error } = await supabase
+        .from('withdrawals')
+        .update({ status: 'failed', resolved_at: new Date().toISOString() })
+        .eq('id', withdrawal.id);
+      if (error) throw error;
+
+      toast.success('Withdrawal rejected');
+      fetchData();
+    } catch (error) {
+      console.error('Rejection error:', error);
+      toast.error('Failed to reject withdrawal');
+    }
+  };
+
   const filteredMembers = members.filter(member =>
     member.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     member.email.toLowerCase().includes(searchQuery.toLowerCase())
@@ -260,6 +374,17 @@ const AdminDashboard = () => {
       'BALANCE_ADJUSTMENT': 'bg-amber-500/20 text-amber-400',
     };
     return colors[action] || 'bg-muted text-muted-foreground';
+  };
+
+  const pendingWithdrawals = withdrawals.filter(w => w.status === 'pending');
+
+  const getTimeRemaining = (expiresAt: string) => {
+    const diff = new Date(expiresAt).getTime() - Date.now();
+    if (diff <= 0) return 'Expired';
+    const seconds = Math.floor(diff / 1000);
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   if (isLoading) {
@@ -289,6 +414,11 @@ const AdminDashboard = () => {
           </div>
           
           <div className="flex items-center gap-2">
+            {pendingWithdrawals.length > 0 && (
+              <Badge variant="destructive" className="animate-pulse">
+                {pendingWithdrawals.length} Pending
+              </Badge>
+            )}
             <Button variant="ghost" size="sm" onClick={fetchData}>
               <RefreshCw className="w-4 h-4 mr-2" />
               Refresh
@@ -347,6 +477,15 @@ const AdminDashboard = () => {
             <TabsTrigger value="members" className="gap-2">
               <Users className="w-4 h-4" />
               Members
+            </TabsTrigger>
+            <TabsTrigger value="withdrawals" className="gap-2 relative">
+              <ArrowUpRight className="w-4 h-4" />
+              Withdrawals
+              {pendingWithdrawals.length > 0 && (
+                <span className="ml-1 bg-destructive text-destructive-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                  {pendingWithdrawals.length}
+                </span>
+              )}
             </TabsTrigger>
             <TabsTrigger value="audit" className="gap-2">
               <History className="w-4 h-4" />
@@ -437,6 +576,108 @@ const AdminDashboard = () => {
                                   <Minus className="w-4 h-4" />
                                 </Button>
                               </div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="withdrawals" className="space-y-4">
+            <Card className="border-border/50 bg-card/80">
+              <CardHeader>
+                <CardTitle>Withdrawal Requests</CardTitle>
+                <CardDescription>
+                  Approve or reject withdrawal requests. Pending requests auto-fail after 2 minutes.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="rounded-lg border border-border/50 overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-muted/30">
+                        <TableHead>User</TableHead>
+                        <TableHead>Amount</TableHead>
+                        <TableHead>Wallet</TableHead>
+                        <TableHead>Network</TableHead>
+                        <TableHead>Time Left</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-center">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {withdrawals.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                            No withdrawal requests
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        withdrawals.map((w) => (
+                          <TableRow key={w.id} className={w.status === 'pending' ? 'bg-warning/5' : ''}>
+                            <TableCell>
+                              <div>
+                                <p className="font-medium text-sm">{w.user_name}</p>
+                                <p className="text-xs text-muted-foreground">{w.user_email}</p>
+                              </div>
+                            </TableCell>
+                            <TableCell className="font-mono font-medium">
+                              {w.amount} USDT
+                            </TableCell>
+                            <TableCell>
+                              <span className="text-xs font-mono truncate max-w-[120px] block">
+                                {w.wallet_address}
+                              </span>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="secondary">{w.network.toUpperCase()}</Badge>
+                            </TableCell>
+                            <TableCell>
+                              {w.status === 'pending' ? (
+                                <span className="text-warning text-sm font-medium flex items-center gap-1">
+                                  <Clock className="w-3 h-3" />
+                                  {getTimeRemaining(w.expires_at)}
+                                </span>
+                              ) : (
+                                <span className="text-xs text-muted-foreground">—</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <Badge className={
+                                w.status === 'approved' ? 'bg-success/20 text-success' :
+                                w.status === 'pending' ? 'bg-warning/20 text-warning' :
+                                'bg-destructive/20 text-destructive'
+                              }>
+                                {w.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              {w.status === 'pending' ? (
+                                <div className="flex items-center justify-center gap-1">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-success hover:text-success hover:bg-success/10"
+                                    onClick={() => handleApproveWithdrawal(w)}
+                                  >
+                                    <CheckCircle2 className="w-4 h-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                    onClick={() => handleRejectWithdrawal(w)}
+                                  >
+                                    <XCircle className="w-4 h-4" />
+                                  </Button>
+                                </div>
+                              ) : (
+                                <span className="text-xs text-muted-foreground text-center block">—</span>
+                              )}
                             </TableCell>
                           </TableRow>
                         ))
