@@ -75,14 +75,12 @@ const CreateAccount = () => {
       // Validate form data
       const validatedData = accountSchema.parse(formData);
       
-      // Check if phone number already exists
-      const { data: existingPhone } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('phone', validatedData.phone)
-        .maybeSingle();
+      // Check if phone number already exists (profiles + unconfirmed users)
+      const { data: phoneCheckData } = await supabase.functions.invoke('check-phone-exists', {
+        body: { phone: validatedData.phone },
+      });
 
-      if (existingPhone) {
+      if (phoneCheckData?.exists) {
         setErrors(prev => ({ ...prev, phone: 'This phone number is already registered' }));
         setIsSubmitting(false);
         return;
