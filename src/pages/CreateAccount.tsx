@@ -108,7 +108,7 @@ const CreateAccount = () => {
         }));
         
         // Redirect to payment if package was selected
-        const selectedPackage = sessionStorage.getItem('selectedPackage');
+        const selectedPackage = localStorage.getItem('selectedPackage');
         if (selectedPackage) {
           navigate('/payment');
         } else {

@@ -32,7 +32,7 @@ const generateSessionId = (now: number) => {
 };
 
 const readSessionFromStorage = (): TradeSession | null => {
-  const stored = sessionStorage.getItem(TRADE_SESSION_KEY);
+  const stored = localStorage.getItem(TRADE_SESSION_KEY);
   if (!stored) return null;
 
   try {
@@ -62,7 +62,7 @@ const readSessionFromStorage = (): TradeSession | null => {
     if (Date.now() >= normalized.expiresAt) return null;
 
     // Persist normalization (adds id for old sessions)
-    sessionStorage.setItem(TRADE_SESSION_KEY, JSON.stringify(normalized));
+    localStorage.setItem(TRADE_SESSION_KEY, JSON.stringify(normalized));
     return normalized;
   } catch {
     return null;
@@ -100,17 +100,17 @@ export const useTradeSession = () => {
         // Bind anonymous sessions (created pre-login) to the signed-in user.
         if (!stored.userId) {
           const bound: TradeSession = { ...stored, userId: authSession.user.id };
-          sessionStorage.setItem(TRADE_SESSION_KEY, JSON.stringify(bound));
+          localStorage.setItem(TRADE_SESSION_KEY, JSON.stringify(bound));
 
           // Keep selectedPackage consistent for payment restore logic.
-          const selected = sessionStorage.getItem(SELECTED_PACKAGE_KEY);
+          const selected = localStorage.getItem(SELECTED_PACKAGE_KEY);
           if (selected) {
             try {
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               const pkg: any = JSON.parse(selected);
               if (pkg && typeof pkg === 'object' && !pkg.sessionId) {
                 pkg.sessionId = bound.id;
-                sessionStorage.setItem(SELECTED_PACKAGE_KEY, JSON.stringify(pkg));
+                localStorage.setItem(SELECTED_PACKAGE_KEY, JSON.stringify(pkg));
               }
             } catch {
               // ignore
@@ -163,8 +163,8 @@ export const useTradeSession = () => {
       expiresAt: now + SESSION_DURATION,
     };
     
-    sessionStorage.setItem(TRADE_SESSION_KEY, JSON.stringify(newSession));
-    sessionStorage.setItem(SELECTED_PACKAGE_KEY, JSON.stringify({ usd, usdt, isCustom, sessionId: newSession.id }));
+    localStorage.setItem(TRADE_SESSION_KEY, JSON.stringify(newSession));
+    localStorage.setItem(SELECTED_PACKAGE_KEY, JSON.stringify({ usd, usdt, isCustom, sessionId: newSession.id }));
     setSession(newSession);
     notifySessionChange();
     
