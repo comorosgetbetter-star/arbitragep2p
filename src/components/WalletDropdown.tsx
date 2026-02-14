@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { ArrowUpRight, History, Shield, Copy, Check, ChevronRight, Plus, Wallet, Clock, XCircle, CheckCircle2 } from 'lucide-react';
+import { ArrowUpRight, History, Copy, Check, ChevronRight, Plus, Wallet, Clock, XCircle, CheckCircle2, Send, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -18,6 +19,13 @@ const networks = [
   { id: 'bep20', name: 'BEP20', chain: 'BSC' },
 ];
 
+const supportCategories = [
+  'Withdrawal Problems',
+  'Deposit Issues',
+  'Account Access',
+  'Other',
+];
+
 interface Withdrawal {
   id: string;
   amount: number;
@@ -28,7 +36,7 @@ interface Withdrawal {
 
 export const WalletDropdown = ({ isOpen, onClose, onAddFunds }: WalletDropdownProps) => {
   const { user } = useAuth();
-  const [view, setView] = useState<'main' | 'withdraw'>('main');
+  const [view, setView] = useState<'main' | 'withdraw' | 'support'>('main');
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [walletAddress, setWalletAddress] = useState('');
   const [selectedNetwork, setSelectedNetwork] = useState('trc20');
@@ -36,8 +44,10 @@ export const WalletDropdown = ({ isOpen, onClose, onAddFunds }: WalletDropdownPr
   const [balance, setBalance] = useState(0);
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [supportCategory, setSupportCategory] = useState('Withdrawal Problems');
+  const [supportMessage, setSupportMessage] = useState('');
+  const [isSubmittingTicket, setIsSubmittingTicket] = useState(false);
 
-  // Fetch balance and withdrawals
   useEffect(() => {
     if (!isOpen || !user) return;
 
@@ -62,7 +72,6 @@ export const WalletDropdown = ({ isOpen, onClose, onAddFunds }: WalletDropdownPr
 
     fetchData();
 
-    // Subscribe to balance changes
     const balanceChannel = supabase
       .channel('wallet-balance')
       .on('postgres_changes', {
@@ -77,7 +86,6 @@ export const WalletDropdown = ({ isOpen, onClose, onAddFunds }: WalletDropdownPr
       })
       .subscribe();
 
-    // Subscribe to withdrawal status changes
     const withdrawalChannel = supabase
       .channel('wallet-withdrawals')
       .on('postgres_changes', {
@@ -86,7 +94,6 @@ export const WalletDropdown = ({ isOpen, onClose, onAddFunds }: WalletDropdownPr
         table: 'withdrawals',
         filter: `user_id=eq.${user.id}`,
       }, () => {
-        // Refetch withdrawals on any change
         supabase
           .from('withdrawals')
           .select('id, amount, status, created_at, network')
@@ -137,7 +144,7 @@ export const WalletDropdown = ({ isOpen, onClose, onAddFunds }: WalletDropdownPr
 
       if (error) throw error;
 
-      toast.success('Withdrawal request submitted. Admin has 2 minutes to approve.');
+      toast.success('Withdrawal submitted — processing...');
       setWithdrawAmount('');
       setWalletAddress('');
       setView('main');
@@ -146,6 +153,44 @@ export const WalletDropdown = ({ isOpen, onClose, onAddFunds }: WalletDropdownPr
       toast.error('Failed to submit withdrawal');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleSubmitTicket = async () => {
+    if (!user || !supportMessage.trim()) return;
+
+    setIsSubmittingTicket(true);
+    try {
+      const { data: ticket, error: ticketError } = await supabase
+        .from('support_tickets')
+        .insert({
+          user_id: user.id,
+          category: supportCategory,
+        })
+        .select('id')
+        .single();
+
+      if (ticketError) throw ticketError;
+
+      const { error: msgError } = await supabase
+        .from('ticket_messages')
+        .insert({
+          ticket_id: ticket.id,
+          sender_id: user.id,
+          message: supportMessage.trim(),
+          is_admin: false,
+        });
+
+      if (msgError) throw msgError;
+
+      toast.success('Support ticket submitted successfully');
+      setSupportMessage('');
+      setView('main');
+    } catch (error) {
+      console.error('Ticket error:', error);
+      toast.error('Failed to submit ticket');
+    } finally {
+      setIsSubmittingTicket(false);
     }
   };
 
@@ -162,7 +207,7 @@ export const WalletDropdown = ({ isOpen, onClose, onAddFunds }: WalletDropdownPr
       case 'approved': return 'Approved';
       case 'failed': return 'Failed';
       case 'expired': return 'Expired';
-      default: return 'Pending';
+      default: return 'Processing';
     }
   };
 
@@ -248,9 +293,22 @@ export const WalletDropdown = ({ isOpen, onClose, onAddFunds }: WalletDropdownPr
                         }`}>
                           {getStatusLabel(w.status)}
                         </p>
-                        <p className="text-xs text-muted-foreground">
-                          {new Date(w.created_at).toLocaleDateString()}
-                        </p>
+                        {w.status === 'failed' && (
+                          <button
+                            onClick={() => {
+                              setSupportCategory('Withdrawal Problems');
+                              setView('support');
+                            }}
+                            className="text-xs text-primary hover:underline mt-0.5"
+                          >
+                            Contact Support
+                          </button>
+                        )}
+                        {w.status !== 'failed' && (
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(w.created_at).toLocaleDateString()}
+                          </p>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -258,7 +316,7 @@ export const WalletDropdown = ({ isOpen, onClose, onAddFunds }: WalletDropdownPr
               )}
             </div>
           </>
-        ) : (
+        ) : view === 'withdraw' ? (
           <>
             {/* Withdraw View */}
             <div className="p-5 border-b border-border/30">
@@ -337,14 +395,6 @@ export const WalletDropdown = ({ isOpen, onClose, onAddFunds }: WalletDropdownPr
                 </div>
               </div>
 
-              <div className="flex items-start gap-2 p-3 rounded-lg bg-warning/10 border border-warning/20">
-                <Shield className="h-4 w-4 text-warning shrink-0 mt-0.5" />
-                <p className="text-xs text-warning">
-                  Withdrawals require admin approval within 2 minutes. 
-                  If not approved in time, the request will be marked as failed.
-                </p>
-              </div>
-
               <Button 
                 variant="glow" 
                 className="w-full"
@@ -352,6 +402,72 @@ export const WalletDropdown = ({ isOpen, onClose, onAddFunds }: WalletDropdownPr
                 onClick={handleSubmitWithdrawal}
               >
                 {isSubmitting ? 'Submitting...' : 'Confirm Withdrawal'}
+              </Button>
+            </div>
+          </>
+        ) : (
+          <>
+            {/* Support Ticket View */}
+            <div className="p-5 border-b border-border/30">
+              <button 
+                onClick={() => setView('main')}
+                className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors mb-3"
+              >
+                <ChevronRight className="h-4 w-4 rotate-180" />
+                Back
+              </button>
+              <h3 className="text-lg font-display font-semibold flex items-center gap-2">
+                <MessageSquare className="h-5 w-5 text-primary" />
+                Contact Support
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                Submit a ticket and we'll get back to you
+              </p>
+            </div>
+
+            <div className="p-4 space-y-4">
+              <div>
+                <label className="text-sm text-muted-foreground block mb-2">Category</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {supportCategories.map((cat) => (
+                    <button
+                      key={cat}
+                      onClick={() => setSupportCategory(cat)}
+                      className={`p-2.5 rounded-lg border text-center text-sm transition-all ${
+                        supportCategory === cat
+                          ? 'border-primary bg-primary/10 text-primary font-medium'
+                          : 'border-border hover:border-border/80 text-muted-foreground'
+                      }`}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm text-muted-foreground block mb-2">Message</label>
+                <Textarea
+                  placeholder="Describe your issue..."
+                  value={supportMessage}
+                  onChange={(e) => setSupportMessage(e.target.value)}
+                  rows={4}
+                  className="resize-none"
+                />
+              </div>
+
+              <Button 
+                variant="glow" 
+                className="w-full"
+                disabled={!supportMessage.trim() || isSubmittingTicket}
+                onClick={handleSubmitTicket}
+              >
+                {isSubmittingTicket ? 'Submitting...' : (
+                  <>
+                    <Send className="h-4 w-4" />
+                    Submit Ticket
+                  </>
+                )}
               </Button>
             </div>
           </>
