@@ -17,6 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 import { z } from 'zod';
 import SliderCaptcha from '@/components/SliderCaptcha';
 import { Checkbox } from '@/components/ui/checkbox';
+import OTPVerification from '@/components/OTPVerification';
 
 const accountSchema = z.object({
   fullName: z.string().min(2, 'Name must be at least 2 characters').max(100),
@@ -50,6 +51,7 @@ const CreateAccount = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [captchaVerified, setCaptchaVerified] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [showOTPStep, setShowOTPStep] = useState(false);
 
   // Set detected country when loaded
   useEffect(() => {
@@ -60,7 +62,6 @@ const CreateAccount = () => {
 
   const handleChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    // Clear error when user starts typing
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
     }
@@ -72,10 +73,9 @@ const CreateAccount = () => {
     setErrors({});
     
     try {
-      // Validate form data
       const validatedData = accountSchema.parse(formData);
       
-      // Check if phone number already exists (profiles + unconfirmed users)
+      // Check if phone number already exists
       const { data: phoneCheckData } = await supabase.functions.invoke('check-phone-exists', {
         body: { phone: validatedData.phone },
       });
@@ -86,65 +86,23 @@ const CreateAccount = () => {
         return;
       }
 
-      // Sign up with Supabase
-      const { data, error } = await supabase.auth.signUp({
-        email: validatedData.email,
-        password: validatedData.password,
-        options: {
-          emailRedirectTo: window.location.origin,
-          data: {
-            full_name: validatedData.fullName,
-            phone: validatedData.phone,
-            country: validatedData.country,
-          },
-        },
+      // Send OTP to email
+      const { data: otpData, error: otpError } = await supabase.functions.invoke('send-otp', {
+        body: { email: validatedData.email, fullName: validatedData.fullName },
       });
 
-      if (error) {
-        if (error.message.toLowerCase().includes('already registered') || error.message.toLowerCase().includes('already been registered') || error.message.toLowerCase().includes('user already registered')) {
-          setErrors(prev => ({ ...prev, email: 'This email address is already registered' }));
-        } else {
-          toast({
-            title: "Registration Failed",
-            description: error.message,
-            variant: "destructive",
-          });
-        }
+      if (otpError || otpData?.error) {
+        toast({
+          title: "Failed to Send Code",
+          description: otpData?.error || "Could not send verification email. Please try again.",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
         return;
       }
 
-      if (data.user) {
-        // Check for fake signup (duplicate email with confirmation enabled)
-        if (data.user.identities && data.user.identities.length === 0) {
-          setErrors(prev => ({ ...prev, email: 'This email address is already registered' }));
-          return;
-        }
-
-        toast({
-          title: "Account Created!",
-          description: "Please check your email to verify your account.",
-        });
-        
-        // Store for session (temporary until email verified)
-        sessionStorage.setItem('user', JSON.stringify({
-          name: validatedData.fullName,
-          email: validatedData.email,
-          country: validatedData.country,
-        }));
-        
-        // If there's a pending trade, go to home so the confirmation modal can appear
-        const pendingTrade = localStorage.getItem('pendingTrade');
-        if (pendingTrade) {
-          navigate('/');
-        } else {
-          const selectedPackage = localStorage.getItem('selectedPackage');
-          if (selectedPackage) {
-            navigate('/payment');
-          } else {
-            navigate('/');
-          }
-        }
-      }
+      // Show OTP verification step
+      setShowOTPStep(true);
     } catch (error) {
       if (error instanceof z.ZodError) {
         const fieldErrors: Record<string, string> = {};
@@ -157,6 +115,26 @@ const CreateAccount = () => {
       }
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleOTPVerified = () => {
+    sessionStorage.setItem('user', JSON.stringify({
+      name: formData.fullName,
+      email: formData.email,
+      country: formData.country,
+    }));
+    
+    const pendingTrade = localStorage.getItem('pendingTrade');
+    if (pendingTrade) {
+      navigate('/');
+    } else {
+      const selectedPackage = localStorage.getItem('selectedPackage');
+      if (selectedPackage) {
+        navigate('/payment');
+      } else {
+        navigate('/');
+      }
     }
   };
 
@@ -175,182 +153,206 @@ const CreateAccount = () => {
       {/* Main Content */}
       <main className="container mx-auto px-4 py-12">
         <div className="max-w-md mx-auto">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-display font-bold mb-2">Create Account</h1>
-            <p className="text-muted-foreground">
-              Complete your registration to continue with your purchase
-            </p>
-          </div>
-
-          <form onSubmit={handleSubmit} className="glass-card rounded-2xl p-6 sm:p-8 space-y-5">
-            {/* Full Name */}
-            <div className="space-y-2">
-              <Label htmlFor="fullName">Full Name</Label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="fullName"
-                  type="text"
-                  placeholder="John Doe"
-                  value={formData.fullName}
-                  onChange={(e) => handleChange('fullName', e.target.value)}
-                  className="pl-10"
+          {showOTPStep ? (
+            <>
+              <div className="text-center mb-8">
+                <h1 className="text-3xl font-display font-bold mb-2">Almost There!</h1>
+                <p className="text-muted-foreground">
+                  One last step to complete your registration
+                </p>
+              </div>
+              <div className="glass-card rounded-2xl p-6 sm:p-8">
+                <OTPVerification
+                  email={formData.email}
+                  fullName={formData.fullName}
+                  phone={formData.phone}
+                  country={formData.country}
+                  password={formData.password}
+                  onVerified={handleOTPVerified}
+                  onBack={() => setShowOTPStep(false)}
                 />
               </div>
-              {errors.fullName && <p className="text-sm text-destructive">{errors.fullName}</p>}
-            </div>
+            </>
+          ) : (
+            <>
+              <div className="text-center mb-8">
+                <h1 className="text-3xl font-display font-bold mb-2">Create Account</h1>
+                <p className="text-muted-foreground">
+                  Complete your registration to continue with your purchase
+                </p>
+              </div>
 
-            {/* Country */}
-            <div className="space-y-2">
-              <Label htmlFor="country">Country</Label>
-              <div className="relative">
-                <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
-                <Select
-                  value={formData.country}
-                  onValueChange={(value) => handleChange('country', value)}
+              <form onSubmit={handleSubmit} className="glass-card rounded-2xl p-6 sm:p-8 space-y-5">
+                {/* Full Name */}
+                <div className="space-y-2">
+                  <Label htmlFor="fullName">Full Name</Label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="fullName"
+                      type="text"
+                      placeholder="John Doe"
+                      value={formData.fullName}
+                      onChange={(e) => handleChange('fullName', e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                  {errors.fullName && <p className="text-sm text-destructive">{errors.fullName}</p>}
+                </div>
+
+                {/* Country */}
+                <div className="space-y-2">
+                  <Label htmlFor="country">Country</Label>
+                  <div className="relative">
+                    <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
+                    <Select
+                      value={formData.country}
+                      onValueChange={(value) => handleChange('country', value)}
+                    >
+                      <SelectTrigger className="pl-10">
+                        <SelectValue placeholder={countryLoading ? "Detecting location..." : "Select country"} />
+                      </SelectTrigger>
+                      <SelectContent className="bg-card border-border max-h-60">
+                        {countries.map((c) => (
+                          <SelectItem key={c.code} value={c.name}>
+                            {c.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {errors.country && <p className="text-sm text-destructive">{errors.country}</p>}
+                </div>
+
+                {/* Phone Number */}
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone Number</Label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="phone"
+                      type="tel"
+                      placeholder="+1 (555) 000-0000"
+                      value={formData.phone}
+                      onChange={(e) => handleChange('phone', e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                  {errors.phone && <p className="text-sm text-destructive">{errors.phone}</p>}
+                </div>
+
+                {/* Email */}
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email Address</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="john@example.com"
+                      value={formData.email}
+                      onChange={(e) => handleChange('email', e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                  {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
+                </div>
+
+                {/* Password */}
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="password"
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="••••••••"
+                      value={formData.password}
+                      onChange={(e) => handleChange('password', e.target.value)}
+                      className="pl-10 pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                  {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
+                </div>
+
+                {/* Confirm Password */}
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword">Confirm Password</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="confirmPassword"
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      placeholder="••••••••"
+                      value={formData.confirmPassword}
+                      onChange={(e) => handleChange('confirmPassword', e.target.value)}
+                      className="pl-10 pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                  {errors.confirmPassword && <p className="text-sm text-destructive">{errors.confirmPassword}</p>}
+                </div>
+
+                {/* Slider CAPTCHA */}
+                <SliderCaptcha onVerify={setCaptchaVerified} />
+
+                {/* Terms & Conditions */}
+                <div className="flex items-start gap-3">
+                  <Checkbox
+                    id="terms"
+                    checked={acceptedTerms}
+                    onCheckedChange={(checked) => setAcceptedTerms(checked === true)}
+                    className="mt-0.5"
+                  />
+                  <label htmlFor="terms" className="text-sm text-muted-foreground leading-snug cursor-pointer select-none">
+                    I agree to the{' '}
+                    <Link to="/terms" className="text-primary hover:underline font-medium" target="_blank">Terms of Service</Link>
+                    {' '}and{' '}
+                    <Link to="/privacy" className="text-primary hover:underline font-medium" target="_blank">Privacy Policy</Link>
+                  </label>
+                </div>
+
+                <Button
+                  type="submit"
+                  variant="glow"
+                  className="w-full"
+                  size="lg"
+                  disabled={isSubmitting || !captchaVerified || !acceptedTerms}
                 >
-                  <SelectTrigger className="pl-10">
-                    <SelectValue placeholder={countryLoading ? "Detecting location..." : "Select country"} />
-                  </SelectTrigger>
-                  <SelectContent className="bg-card border-border max-h-60">
-                    {countries.map((c) => (
-                      <SelectItem key={c.code} value={c.name}>
-                        {c.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              {errors.country && <p className="text-sm text-destructive">{errors.country}</p>}
-            </div>
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      Sending Verification Code...
+                    </>
+                  ) : (
+                    'Create Account & Continue'
+                  )}
+                </Button>
 
-            {/* Phone Number */}
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone Number</Label>
-              <div className="relative">
-                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="phone"
-                  type="tel"
-                  placeholder="+1 (555) 000-0000"
-                  value={formData.phone}
-                  onChange={(e) => handleChange('phone', e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              {errors.phone && <p className="text-sm text-destructive">{errors.phone}</p>}
-            </div>
-
-            {/* Email */}
-            <div className="space-y-2">
-              <Label htmlFor="email">Email Address</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="john@example.com"
-                  value={formData.email}
-                  onChange={(e) => handleChange('email', e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
-            </div>
-
-            {/* Password */}
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="password"
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="••••••••"
-                  value={formData.password}
-                  onChange={(e) => handleChange('password', e.target.value)}
-                  className="pl-10 pr-10"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              </div>
-              {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
-            </div>
-
-            {/* Confirm Password */}
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="confirmPassword"
-                  type={showConfirmPassword ? 'text' : 'password'}
-                  placeholder="••••••••"
-                  value={formData.confirmPassword}
-                  onChange={(e) => handleChange('confirmPassword', e.target.value)}
-                  className="pl-10 pr-10"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                >
-                  {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              </div>
-              {errors.confirmPassword && <p className="text-sm text-destructive">{errors.confirmPassword}</p>}
-            </div>
-
-            {/* Slider CAPTCHA */}
-            <SliderCaptcha onVerify={setCaptchaVerified} />
-
-            {/* Terms & Conditions */}
-            <div className="flex items-start gap-3">
-              <Checkbox
-                id="terms"
-                checked={acceptedTerms}
-                onCheckedChange={(checked) => setAcceptedTerms(checked === true)}
-                className="mt-0.5"
-              />
-              <label htmlFor="terms" className="text-sm text-muted-foreground leading-snug cursor-pointer select-none">
-                I agree to the{' '}
-                <Link to="/terms" className="text-primary hover:underline font-medium" target="_blank">Terms of Service</Link>
-                {' '}and{' '}
-                <Link to="/privacy" className="text-primary hover:underline font-medium" target="_blank">Privacy Policy</Link>
-              </label>
-            </div>
-
-            <Button
-              type="submit"
-              variant="glow"
-              className="w-full"
-              size="lg"
-              disabled={isSubmitting || !captchaVerified || !acceptedTerms}
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  Creating Account...
-                </>
-              ) : (
-                'Create Account & Continue'
-              )}
-            </Button>
-
-            <div className="text-center pt-4 border-t border-border/50">
-              <p className="text-sm text-muted-foreground">
-                Already have an account?{' '}
-                <Link to="/login" className="text-primary hover:underline font-medium">
-                  Sign in
-                </Link>
-              </p>
-            </div>
-          </form>
+                <div className="text-center pt-4 border-t border-border/50">
+                  <p className="text-sm text-muted-foreground">
+                    Already have an account?{' '}
+                    <Link to="/login" className="text-primary hover:underline font-medium">
+                      Sign in
+                    </Link>
+                  </p>
+                </div>
+              </form>
+            </>
+          )}
         </div>
       </main>
     </div>
