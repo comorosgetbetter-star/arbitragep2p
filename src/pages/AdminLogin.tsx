@@ -48,12 +48,12 @@ const AdminLogin = () => {
         return;
       }
 
-      // Log admin login
-      await supabase.from('admin_audit_logs').insert({
+      // Log admin login (non-blocking)
+      supabase.from('admin_audit_logs').insert({
         admin_id: authData.user.id,
         action: 'ADMIN_LOGIN',
         details: { timestamp: new Date().toISOString() },
-      });
+      }).then(() => {});
 
       toast.success('Welcome to Admin Panel');
       navigate('/admin/dashboard');
