@@ -167,10 +167,17 @@ const Payment = () => {
           const restored = readPaymentState(sid);
           if (restored) {
             setPaymentMethod(restored.paymentMethod);
-            setDepositAddress(restored.depositAddress);
             setIsVerifying(restored.isVerifying);
             setVerificationProgress(restored.verificationProgress);
             setVerificationFailed(restored.verificationFailed);
+            
+            // Always fetch a fresh address if the stored one is the fallback
+            if (restored.depositAddress && restored.depositAddress !== FALLBACK_ADDRESS) {
+              setDepositAddress(restored.depositAddress);
+            } else {
+              const addr = await getRotatedTradeAddress();
+              setDepositAddress(addr);
+            }
             
             // If verification already failed, don't redirect - let user decide
             if (restored.verificationFailed) {
