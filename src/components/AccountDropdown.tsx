@@ -1,4 +1,5 @@
-import { User, LogOut, UserCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { User, LogOut, UserCircle, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -16,6 +17,50 @@ import { clearTradeStorage, clearPendingTrade } from '@/lib/tradeSessionStorage'
 export const AccountDropdown = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchUnread = async () => {
+      // Get open tickets for user
+      const { data: tickets } = await supabase
+        .from('support_tickets')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('status', 'open');
+
+      if (!tickets || tickets.length === 0) { setUnreadCount(0); return; }
+
+      // Count admin messages across all open tickets
+      const ticketIds = tickets.map((t) => t.id);
+      const { count } = await supabase
+        .from('ticket_messages')
+        .select('id', { count: 'exact', head: true })
+        .in('ticket_id', ticketIds)
+        .eq('is_admin', true);
+
+      setUnreadCount(count || 0);
+    };
+
+    fetchUnread();
+
+    const channel = supabase
+      .channel('account-ticket-notify')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'ticket_messages',
+      }, (payload) => {
+        if ((payload.new as { is_admin: boolean }).is_admin) {
+          setUnreadCount((c) => c + 1);
+          toast.info('New support reply received', { description: 'Check your profile for details' });
+        }
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [user]);
 
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
@@ -30,6 +75,7 @@ export const AccountDropdown = () => {
   };
 
   const handleProfile = () => {
+    setUnreadCount(0);
     navigate('/profile');
   };
 
@@ -54,6 +100,11 @@ export const AccountDropdown = () => {
           <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
             <User className="h-4 w-4 text-primary" />
           </div>
+          {unreadCount > 0 && (
+            <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center animate-pulse">
+              {unreadCount > 9 ? '9+' : unreadCount}
+            </span>
+          )}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
@@ -64,6 +115,11 @@ export const AccountDropdown = () => {
         <DropdownMenuItem onClick={handleProfile} className="cursor-pointer">
           <UserCircle className="h-4 w-4 mr-2" />
           Profile
+          {unreadCount > 0 && (
+            <span className="ml-auto w-5 h-5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center">
+              {unreadCount > 9 ? '9+' : unreadCount}
+            </span>
+          )}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-destructive focus:text-destructive">
