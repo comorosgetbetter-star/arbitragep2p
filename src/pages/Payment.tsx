@@ -266,6 +266,8 @@ const Payment = () => {
         clearInterval(interval);
         setIsVerifying(false);
         setVerificationFailed(true);
+        setTimeRemaining(0);
+        setIsTimerActive(false);
         // Clear the trade session to allow a new trade
         clearSession();
       }
@@ -513,20 +515,20 @@ const Payment = () => {
                     </div>
                   )}
 
-                  {/* Mark as Paid Button */}
-                  {!isVerifying && timeRemaining > 0 && (
+                  {/* Mark as Paid Button - show when not verifying and timer active */}
+                  {!isVerifying && !verificationFailed && timeRemaining > 0 && (
                     <Button 
                       variant="glow" 
                       size="lg" 
                       className="w-full"
                       onClick={handleMarkAsPaid}
-                      disabled={verificationFailed}
                     >
                       <Check className="h-4 w-4 mr-2" />
-                      {verificationFailed ? 'Try Again' : 'Mark as Paid'}
+                      Mark as Paid
                     </Button>
                   )}
 
+                  {/* After verification failed - show actions */}
                   {verificationFailed && (
                     <div className="flex flex-col gap-3">
                       <Button 
