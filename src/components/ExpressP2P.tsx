@@ -136,12 +136,12 @@ export const ExpressP2P = () => {
               <button
                 key={pkg.usd}
                 onClick={() => handleSelectPackage(pkg.usd, pkg.usdt)}
-                className={`relative glass-card rounded-xl transition-all duration-300 group animate-slide-in-left cursor-pointer border-2 hover:scale-[1.01] active:scale-[0.99] ${
+                className={`relative glass-card rounded-xl transition-all duration-300 group animate-slide-in-left cursor-pointer border hover:scale-[1.01] active:scale-[0.99] ${
                   isPopular
                     ? 'border-primary bg-primary/5 ring-2 ring-primary/30 py-5 px-5 sm:px-6'
                     : selectedPackage === pkg.usd
                       ? 'border-primary bg-primary/10'
-                      : 'border-transparent hover:border-primary/40'
+                      : 'border-border hover:border-primary/40'
                 } ${isPopular ? '' : 'py-4 px-5 sm:px-6'}`}
                 style={{ animationDelay: `${index * 80}ms`, opacity: 0 }}
               >
@@ -189,7 +189,7 @@ export const ExpressP2P = () => {
                   {/* Right: Buy button */}
                   <Button
                     size="sm"
-                    variant={isPopular ? 'default' : 'outline'}
+                    variant={isPopular ? 'default' : 'secondary'}
                     className={`shrink-0 w-full sm:w-auto ${isPopular ? 'shadow-md' : ''}`}
                     tabIndex={-1}
                   >
