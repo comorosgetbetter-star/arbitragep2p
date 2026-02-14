@@ -14,7 +14,7 @@ const testimonials = [
     id: 2,
     name: 'Sarah K.',
     country: 'United Kingdom',
-    comment: 'Best P2P platform I\'ve used. The bonus rates are great and customer support is always helpful.',
+    comment: 'Best P2P platform I\'ve used. The profit rates are great and customer support is always helpful.',
     rating: 5,
   },
   {
