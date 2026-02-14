@@ -26,14 +26,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -43,6 +35,7 @@ import {
 } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface Member {
   id: string;
@@ -222,7 +215,6 @@ const AdminDashboard = () => {
       .limit(50);
 
     if (data) {
-      // Get latest message for each ticket
       const ticketIds = data.map(t => t.id);
       const { data: messages } = await supabase
         .from('ticket_messages')
@@ -566,528 +558,410 @@ const AdminDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background w-full overflow-x-hidden">
       {/* Header */}
       <header className="border-b border-border/50 bg-card/50 backdrop-blur-xl sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-              <Shield className="w-5 h-5 text-primary" />
+        <div className="px-3 py-3 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+              <Shield className="w-4 h-4 text-primary" />
             </div>
-            <div>
-              <h1 className="font-bold text-lg">Admin Panel</h1>
-              <p className="text-xs text-muted-foreground">Platform Management</p>
+            <div className="min-w-0">
+              <h1 className="font-bold text-sm truncate">Admin Panel</h1>
+              <p className="text-[10px] text-muted-foreground">Management</p>
             </div>
           </div>
           
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 shrink-0">
             {pendingWithdrawals.length > 0 && (
-              <Badge variant="destructive" className="animate-pulse">
-                {pendingWithdrawals.length} Pending
+              <Badge variant="destructive" className="animate-pulse text-[10px] px-1.5 py-0.5">
+                {pendingWithdrawals.length}
               </Badge>
             )}
             {openTickets.length > 0 && (
-              <Badge className="bg-primary/20 text-primary animate-pulse">
-                {openTickets.length} Tickets
+              <Badge className="bg-primary text-primary-foreground text-[10px] px-1.5 py-0.5 animate-pulse">
+                {openTickets.length}
               </Badge>
             )}
-            <Button variant="ghost" size="sm" onClick={fetchData}>
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Refresh
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={fetchData}>
+              <RefreshCw className="w-3.5 h-3.5" />
             </Button>
-            <Button variant="outline" size="sm" onClick={handleLogout}>
-              <LogOut className="w-4 h-4 mr-2" />
-              Logout
+            <Button variant="outline" size="icon" className="h-8 w-8" onClick={handleLogout}>
+              <LogOut className="w-3.5 h-3.5" />
             </Button>
           </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-6 space-y-6">
+      <main className="px-3 py-4 space-y-4 max-w-full">
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-3 gap-2">
           <Card className="border-border/50 bg-card/80">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total Members
-              </CardTitle>
-              <Users className="w-4 h-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.totalMembers}</div>
+            <CardContent className="p-3 text-center">
+              <Users className="w-4 h-4 text-muted-foreground mx-auto mb-1" />
+              <div className="text-lg font-bold">{stats.totalMembers}</div>
+              <p className="text-[10px] text-muted-foreground">Members</p>
             </CardContent>
           </Card>
-
           <Card className="border-border/50 bg-card/80">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Completed Trades
-              </CardTitle>
-              <ArrowLeftRight className="w-4 h-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.totalTrades}</div>
+            <CardContent className="p-3 text-center">
+              <ArrowLeftRight className="w-4 h-4 text-muted-foreground mx-auto mb-1" />
+              <div className="text-lg font-bold">{stats.totalTrades}</div>
+              <p className="text-[10px] text-muted-foreground">Trades</p>
             </CardContent>
           </Card>
-
           <Card className="border-border/50 bg-card/80">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total USDT Holdings
-              </CardTitle>
-              <DollarSign className="w-4 h-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.totalVolume.toFixed(2)}</div>
+            <CardContent className="p-3 text-center">
+              <DollarSign className="w-4 h-4 text-muted-foreground mx-auto mb-1" />
+              <div className="text-lg font-bold">{stats.totalVolume.toFixed(0)}</div>
+              <p className="text-[10px] text-muted-foreground">USDT</p>
             </CardContent>
           </Card>
         </div>
 
         {/* Main Tabs */}
-        <Tabs defaultValue="members" className="space-y-4">
-          <TabsList className="bg-card border border-border/50">
-            <TabsTrigger value="members" className="gap-2">
+        <Tabs defaultValue="members" className="space-y-3">
+          <TabsList className="w-full grid grid-cols-4 h-auto p-1 bg-card border border-border/50">
+            <TabsTrigger value="members" className="flex flex-col items-center gap-0.5 py-2 text-[10px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-semibold">
               <Users className="w-4 h-4" />
               Members
             </TabsTrigger>
-            <TabsTrigger value="withdrawals" className="gap-2 relative">
+            <TabsTrigger value="withdrawals" className="flex flex-col items-center gap-0.5 py-2 text-[10px] data-[state=active]:bg-warning data-[state=active]:text-warning-foreground font-semibold relative">
               <ArrowUpRight className="w-4 h-4" />
-              Withdrawals
+              Withdraw
               {pendingWithdrawals.length > 0 && (
-                <span className="ml-1 bg-destructive text-destructive-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-[9px] rounded-full w-4 h-4 flex items-center justify-center">
                   {pendingWithdrawals.length}
                 </span>
               )}
             </TabsTrigger>
-            <TabsTrigger value="tickets" className="gap-2 relative">
+            <TabsTrigger value="tickets" className="flex flex-col items-center gap-0.5 py-2 text-[10px] data-[state=active]:bg-success data-[state=active]:text-success-foreground font-semibold relative">
               <MessageSquare className="w-4 h-4" />
               Tickets
               {openTickets.length > 0 && (
-                <span className="ml-1 bg-primary text-primary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[9px] rounded-full w-4 h-4 flex items-center justify-center">
                   {openTickets.length}
                 </span>
               )}
             </TabsTrigger>
-            <TabsTrigger value="audit" className="gap-2">
+            <TabsTrigger value="audit" className="flex flex-col items-center gap-0.5 py-2 text-[10px] data-[state=active]:bg-accent data-[state=active]:text-accent-foreground font-semibold">
               <History className="w-4 h-4" />
-              Audit Logs
+              Logs
             </TabsTrigger>
           </TabsList>
 
           {/* Members Tab */}
-          <TabsContent value="members" className="space-y-4">
-            <Card className="border-border/50 bg-card/80">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>Registered Members</CardTitle>
-                    <CardDescription>
-                      View and manage all platform users
-                    </CardDescription>
-                  </div>
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Search members..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-9 w-64 bg-background/50"
-                    />
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="rounded-lg border border-border/50 overflow-hidden">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="bg-muted/30">
-                        <TableHead>Member</TableHead>
-                        <TableHead>Join Date</TableHead>
-                        <TableHead>Country</TableHead>
-                        <TableHead className="text-center">Trades</TableHead>
-                        <TableHead className="text-right">USDT Balance</TableHead>
-                        <TableHead className="text-center">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredMembers.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                            No members found
-                          </TableCell>
-                        </TableRow>
-                      ) : (
-                        filteredMembers.map((member) => (
-                          <TableRow key={member.id}>
-                            <TableCell>
-                              <div>
-                                <p className="font-medium">{member.full_name}</p>
-                                <p className="text-sm text-muted-foreground">{member.email}</p>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <div className="text-sm">
-                                {formatDate(member.created_at)}
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <span className="text-sm">{member.country || '-'}</span>
-                            </TableCell>
-                            <TableCell className="text-center">
-                              <Badge variant="secondary">{member.trade_count}</Badge>
-                            </TableCell>
-                            <TableCell className="text-right font-mono">
-                              {Number(member.usdt_balance).toFixed(2)} USDT
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center justify-center gap-1">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="text-success hover:text-success hover:bg-success/10"
-                                  onClick={() => openAdjustDialog(member, 'add')}
-                                >
-                                  <Plus className="w-4 h-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                                  onClick={() => openAdjustDialog(member, 'subtract')}
-                                >
-                                  <Minus className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </Card>
+          <TabsContent value="members" className="space-y-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Search members..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 bg-card border-border/50"
+              />
+            </div>
+            <div className="space-y-2">
+              {filteredMembers.length === 0 ? (
+                <Card className="border-border/50 bg-card/80">
+                  <CardContent className="py-8 text-center text-muted-foreground text-sm">
+                    No members found
+                  </CardContent>
+                </Card>
+              ) : (
+                filteredMembers.map((member) => (
+                  <Card key={member.id} className="border-border/50 bg-card/80">
+                    <CardContent className="p-3 space-y-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="font-medium text-sm truncate">{member.full_name}</p>
+                          <p className="text-xs text-muted-foreground truncate">{member.email}</p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="font-mono text-sm font-bold">{Number(member.usdt_balance).toFixed(2)}</p>
+                          <p className="text-[10px] text-muted-foreground">USDT</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <span>{member.country || '—'}</span>
+                          <span>•</span>
+                          <span>{member.trade_count} trades</span>
+                          <span>•</span>
+                          <span>{new Date(member.created_at).toLocaleDateString()}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            size="sm"
+                            className="h-7 px-2 bg-success hover:bg-success/90 text-success-foreground text-xs"
+                            onClick={() => openAdjustDialog(member, 'add')}
+                          >
+                            <Plus className="w-3 h-3 mr-0.5" />
+                            Add
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            className="h-7 px-2 text-xs"
+                            onClick={() => openAdjustDialog(member, 'subtract')}
+                          >
+                            <Minus className="w-3 h-3 mr-0.5" />
+                            Sub
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </div>
           </TabsContent>
 
           {/* Withdrawals Tab */}
-          <TabsContent value="withdrawals" className="space-y-4">
-            <Card className="border-border/50 bg-card/80">
-              <CardHeader>
-                <CardTitle>Withdrawal Requests</CardTitle>
-                <CardDescription>
-                  Approve or reject withdrawal requests. Pending requests auto-fail after 2 minutes.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="rounded-lg border border-border/50 overflow-hidden">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="bg-muted/30">
-                        <TableHead>User</TableHead>
-                        <TableHead>Amount</TableHead>
-                        <TableHead>Wallet</TableHead>
-                        <TableHead>Network</TableHead>
-                        <TableHead>Time Left</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="text-center">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {withdrawals.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                            No withdrawal requests
-                          </TableCell>
-                        </TableRow>
-                      ) : (
-                        withdrawals.map((w) => (
-                          <TableRow key={w.id} className={w.status === 'pending' ? 'bg-warning/5' : ''}>
-                            <TableCell>
-                              <div>
-                                <p className="font-medium text-sm">{w.user_name}</p>
-                                <p className="text-xs text-muted-foreground">{w.user_email}</p>
-                              </div>
-                            </TableCell>
-                            <TableCell className="font-mono font-medium">
-                              {w.amount} USDT
-                            </TableCell>
-                            <TableCell>
-                              <span className="text-xs font-mono truncate max-w-[120px] block">
-                                {w.wallet_address}
-                              </span>
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant="secondary">{w.network.toUpperCase()}</Badge>
-                            </TableCell>
-                            <TableCell>
-                              {w.status === 'pending' ? (
-                                <span className="text-warning text-sm font-medium flex items-center gap-1">
-                                  <Clock className="w-3 h-3" />
-                                  {getTimeRemaining(w.expires_at)}
-                                </span>
-                              ) : (
-                                <span className="text-xs text-muted-foreground">—</span>
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              <Badge className={
-                                w.status === 'approved' ? 'bg-success/20 text-success' :
-                                w.status === 'pending' ? 'bg-warning/20 text-warning' :
-                                'bg-destructive/20 text-destructive'
-                              }>
-                                {w.status}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              {w.status === 'pending' ? (
-                                <div className="flex items-center justify-center gap-1">
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="text-success hover:text-success hover:bg-success/10"
-                                    onClick={() => handleApproveWithdrawal(w)}
-                                  >
-                                    <CheckCircle2 className="w-4 h-4" />
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                                    onClick={() => handleRejectWithdrawal(w)}
-                                  >
-                                    <XCircle className="w-4 h-4" />
-                                  </Button>
-                                </div>
-                              ) : (
-                                <span className="text-xs text-muted-foreground text-center block">—</span>
-                              )}
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </Card>
+          <TabsContent value="withdrawals" className="space-y-3">
+            <CardDescription className="text-xs">
+              Pending requests auto-fail after 2 minutes.
+            </CardDescription>
+            <div className="space-y-2">
+              {withdrawals.length === 0 ? (
+                <Card className="border-border/50 bg-card/80">
+                  <CardContent className="py-8 text-center text-muted-foreground text-sm">
+                    No withdrawal requests
+                  </CardContent>
+                </Card>
+              ) : (
+                withdrawals.map((w) => (
+                  <Card key={w.id} className={`border-border/50 ${w.status === 'pending' ? 'bg-warning/5 border-warning/30' : 'bg-card/80'}`}>
+                    <CardContent className="p-3 space-y-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="font-medium text-sm truncate">{w.user_name}</p>
+                          <p className="text-xs text-muted-foreground truncate">{w.user_email}</p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="font-mono text-sm font-bold">{w.amount} USDT</p>
+                          <Badge variant="secondary" className="text-[10px]">{w.network.toUpperCase()}</Badge>
+                        </div>
+                      </div>
+                      <div className="text-xs font-mono text-muted-foreground break-all">
+                        {w.wallet_address}
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Badge className={
+                            w.status === 'approved' ? 'bg-success text-success-foreground' :
+                            w.status === 'pending' ? 'bg-warning text-warning-foreground' :
+                            'bg-destructive text-destructive-foreground'
+                          }>
+                            {w.status}
+                          </Badge>
+                          {w.status === 'pending' && (
+                            <span className="text-warning text-xs font-medium flex items-center gap-1">
+                              <Clock className="w-3 h-3" />
+                              {getTimeRemaining(w.expires_at)}
+                            </span>
+                          )}
+                        </div>
+                        {w.status === 'pending' && (
+                          <div className="flex items-center gap-1">
+                            <Button
+                              size="sm"
+                              className="h-7 px-2 bg-success hover:bg-success/90 text-success-foreground text-xs"
+                              onClick={() => handleApproveWithdrawal(w)}
+                            >
+                              <CheckCircle2 className="w-3 h-3 mr-0.5" />
+                              Approve
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              className="h-7 px-2 text-xs"
+                              onClick={() => handleRejectWithdrawal(w)}
+                            >
+                              <XCircle className="w-3 h-3 mr-0.5" />
+                              Reject
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </div>
           </TabsContent>
 
           {/* Tickets Tab */}
-          <TabsContent value="tickets" className="space-y-4">
-            <Card className="border-border/50 bg-card/80">
-              <CardHeader>
-                <CardTitle>Support Tickets</CardTitle>
-                <CardDescription>
-                  View, reply to, and close support tickets from users
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {selectedTicket ? (
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <button
-                        onClick={() => { setSelectedTicket(null); setTicketMessages([]); }}
-                        className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1"
-                      >
-                        ← Back to tickets
-                      </button>
-                      <div className="flex items-center gap-2">
-                        <Badge className={
-                          selectedTicket.status === 'open' ? 'bg-warning/20 text-warning' : 'bg-muted text-muted-foreground'
-                        }>
-                          {selectedTicket.status}
-                        </Badge>
-                        {selectedTicket.status === 'open' && (
-                          <Button variant="outline" size="sm" onClick={handleCloseTicket}>
-                            Close Ticket
-                          </Button>
-                        )}
+          <TabsContent value="tickets" className="space-y-3">
+            {selectedTicket ? (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                  <button
+                    onClick={() => { setSelectedTicket(null); setTicketMessages([]); }}
+                    className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
+                  >
+                    ← Back
+                  </button>
+                  <div className="flex items-center gap-2">
+                    <Badge className={
+                      selectedTicket.status === 'open' ? 'bg-warning text-warning-foreground' : 'bg-muted text-muted-foreground'
+                    }>
+                      {selectedTicket.status}
+                    </Badge>
+                    {selectedTicket.status === 'open' && (
+                      <Button variant="destructive" size="sm" className="h-7 text-xs" onClick={handleCloseTicket}>
+                        Close
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                <Card className="border-border/50 bg-card/80">
+                  <CardContent className="p-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <div>
+                        <p className="font-medium text-sm">{selectedTicket.user_name}</p>
+                        <p className="text-xs text-muted-foreground">{selectedTicket.user_email}</p>
                       </div>
+                      <Badge variant="secondary" className="text-[10px]">{selectedTicket.category}</Badge>
                     </div>
 
-                    <div className="rounded-lg border border-border/50 p-4">
-                      <div className="flex items-center justify-between mb-3">
-                        <div>
-                          <p className="font-medium">{selectedTicket.user_name}</p>
-                          <p className="text-sm text-muted-foreground">{selectedTicket.user_email}</p>
-                        </div>
-                        <Badge variant="secondary">{selectedTicket.category}</Badge>
-                      </div>
-
-                      <div className="space-y-3 max-h-96 overflow-y-auto mb-4">
+                    <ScrollArea className="h-64 mb-3">
+                      <div className="space-y-2 pr-2">
                         {ticketMessages.map((msg) => (
                           <div
                             key={msg.id}
-                            className={`p-3 rounded-lg ${
+                            className={`p-2.5 rounded-lg text-sm ${
                               msg.is_admin
-                                ? 'bg-primary/10 border border-primary/20 ml-6'
-                                : 'bg-secondary/50 mr-6'
+                                ? 'bg-primary/10 border border-primary/20 ml-4'
+                                : 'bg-secondary/50 mr-4'
                             }`}
                           >
                             <div className="flex items-center justify-between mb-1">
-                              <span className="text-xs font-medium">
+                              <span className="text-[10px] font-medium">
                                 {msg.is_admin ? 'Admin' : selectedTicket.user_name}
                               </span>
-                              <span className="text-xs text-muted-foreground">
+                              <span className="text-[10px] text-muted-foreground">
                                 {formatDate(msg.created_at)}
                               </span>
                             </div>
-                            <p className="text-sm">{msg.message}</p>
+                            <p className="text-xs">{msg.message}</p>
                           </div>
                         ))}
                       </div>
+                    </ScrollArea>
 
-                      {selectedTicket.status === 'open' && (
-                        <div className="flex gap-2">
-                          <Input
-                            placeholder="Type your reply..."
-                            value={replyMessage}
-                            onChange={(e) => setReplyMessage(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleReplyToTicket()}
-                            className="flex-1"
-                          />
-                          <Button
-                            variant="glow"
-                            size="icon"
-                            disabled={!replyMessage.trim() || isSendingReply}
-                            onClick={handleReplyToTicket}
-                          >
-                            <Send className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                    {selectedTicket.status === 'open' && (
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="Type reply..."
+                          value={replyMessage}
+                          onChange={(e) => setReplyMessage(e.target.value)}
+                          onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleReplyToTicket()}
+                          className="flex-1 text-sm"
+                        />
+                        <Button
+                          size="icon"
+                          className="h-9 w-9 bg-primary hover:bg-primary/90"
+                          disabled={!replyMessage.trim() || isSendingReply}
+                          onClick={handleReplyToTicket}
+                        >
+                          <Send className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {tickets.length === 0 ? (
+                  <Card className="border-border/50 bg-card/80">
+                    <CardContent className="py-8 text-center text-muted-foreground text-sm">
+                      No support tickets
+                    </CardContent>
+                  </Card>
                 ) : (
-                  <div className="rounded-lg border border-border/50 overflow-hidden">
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="bg-muted/30">
-                          <TableHead>User</TableHead>
-                          <TableHead>Category</TableHead>
-                          <TableHead>Last Message</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Date</TableHead>
-                          <TableHead className="text-center">Action</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {tickets.length === 0 ? (
-                          <TableRow>
-                            <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                              No support tickets
-                            </TableCell>
-                          </TableRow>
-                        ) : (
-                          tickets.map((ticket) => (
-                            <TableRow key={ticket.id} className={ticket.status === 'open' ? 'bg-primary/5' : ''}>
-                              <TableCell>
-                                <div>
-                                  <p className="font-medium text-sm">{ticket.user_name}</p>
-                                  <p className="text-xs text-muted-foreground">{ticket.user_email}</p>
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                <Badge variant="secondary">{ticket.category}</Badge>
-                              </TableCell>
-                              <TableCell>
-                                <p className="text-sm text-muted-foreground truncate max-w-[200px]">
-                                  {ticket.last_message || '—'}
-                                </p>
-                              </TableCell>
-                              <TableCell>
-                                <Badge className={
-                                  ticket.status === 'open' ? 'bg-warning/20 text-warning' : 'bg-muted text-muted-foreground'
-                                }>
-                                  {ticket.status}
-                                </Badge>
-                              </TableCell>
-                              <TableCell className="text-sm">
-                                {formatDate(ticket.created_at)}
-                              </TableCell>
-                              <TableCell className="text-center">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleOpenTicket(ticket)}
-                                >
-                                  <MessageSquare className="w-4 h-4" />
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          ))
+                  tickets.map((ticket) => (
+                    <Card
+                      key={ticket.id}
+                      className={`border-border/50 cursor-pointer transition-colors ${
+                        ticket.status === 'open' ? 'bg-primary/5 border-primary/20 hover:bg-primary/10' : 'bg-card/80 hover:bg-card'
+                      }`}
+                      onClick={() => handleOpenTicket(ticket)}
+                    >
+                      <CardContent className="p-3">
+                        <div className="flex items-start justify-between gap-2 mb-1">
+                          <div className="min-w-0">
+                            <p className="font-medium text-sm truncate">{ticket.user_name}</p>
+                            <p className="text-xs text-muted-foreground truncate">{ticket.user_email}</p>
+                          </div>
+                          <Badge className={
+                            ticket.status === 'open' ? 'bg-warning text-warning-foreground' : 'bg-muted text-muted-foreground'
+                          }>
+                            {ticket.status}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Badge variant="secondary" className="text-[10px]">{ticket.category}</Badge>
+                            <span className="text-[10px] text-muted-foreground">{new Date(ticket.created_at).toLocaleDateString()}</span>
+                          </div>
+                          <MessageSquare className="w-4 h-4 text-primary" />
+                        </div>
+                        {ticket.last_message && (
+                          <p className="text-xs text-muted-foreground mt-1 truncate">{ticket.last_message}</p>
                         )}
-                      </TableBody>
-                    </Table>
-                  </div>
+                      </CardContent>
+                    </Card>
+                  ))
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            )}
           </TabsContent>
 
           {/* Audit Logs Tab */}
-          <TabsContent value="audit" className="space-y-4">
-            <Card className="border-border/50 bg-card/80">
-              <CardHeader>
-                <CardTitle>Audit Logs</CardTitle>
-                <CardDescription>
-                  Track all administrative actions for security purposes
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="rounded-lg border border-border/50 overflow-hidden">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="bg-muted/30">
-                        <TableHead>Timestamp</TableHead>
-                        <TableHead>Admin</TableHead>
-                        <TableHead>Action</TableHead>
-                        <TableHead>Target User</TableHead>
-                        <TableHead>Details</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {auditLogs.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                            No audit logs found
-                          </TableCell>
-                        </TableRow>
-                      ) : (
-                        auditLogs.map((log) => (
-                          <TableRow key={log.id}>
-                            <TableCell className="text-sm">
-                              {formatDate(log.created_at)}
-                            </TableCell>
-                            <TableCell className="text-sm">
-                              {log.admin_email}
-                            </TableCell>
-                            <TableCell>
-                              <Badge className={getActionBadge(log.action)}>
-                                {log.action.replace(/_/g, ' ')}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="text-sm">
-                              {log.target_email || '-'}
-                            </TableCell>
-                            <TableCell className="text-sm text-muted-foreground max-w-xs truncate">
-                              {log.details ? JSON.stringify(log.details) : '-'}
-                            </TableCell>
-                          </TableRow>
-                        ))
+          <TabsContent value="audit" className="space-y-3">
+            <div className="space-y-2">
+              {auditLogs.length === 0 ? (
+                <Card className="border-border/50 bg-card/80">
+                  <CardContent className="py-8 text-center text-muted-foreground text-sm">
+                    No audit logs found
+                  </CardContent>
+                </Card>
+              ) : (
+                auditLogs.map((log) => (
+                  <Card key={log.id} className="border-border/50 bg-card/80">
+                    <CardContent className="p-3 space-y-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <Badge className={getActionBadge(log.action) + ' text-[10px]'}>
+                          {log.action.replace(/_/g, ' ')}
+                        </Badge>
+                        <span className="text-[10px] text-muted-foreground shrink-0">
+                          {formatDate(log.created_at)}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        By: {log.admin_email}
+                        {log.target_email && <> → {log.target_email}</>}
+                      </p>
+                      {log.details && (
+                        <p className="text-[10px] text-muted-foreground break-all">
+                          {JSON.stringify(log.details)}
+                        </p>
                       )}
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </Card>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </div>
           </TabsContent>
         </Tabs>
       </main>
 
       {/* Balance Adjustment Dialog */}
       <Dialog open={isAdjustDialogOpen} onOpenChange={setIsAdjustDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               {adjustmentType === 'add' ? (
@@ -1095,20 +969,18 @@ const AdminDashboard = () => {
               ) : (
                 <Minus className="w-5 h-5 text-destructive" />
               )}
-              {adjustmentType === 'add' ? 'Add' : 'Subtract'} USDT Balance
+              {adjustmentType === 'add' ? 'Add' : 'Subtract'} USDT
             </DialogTitle>
             <DialogDescription>
               {selectedMember && (
                 <span>
-                  Adjusting balance for <strong>{selectedMember.full_name}</strong>
-                  <br />
-                  Current balance: <strong>{Number(selectedMember.usdt_balance).toFixed(2)} USDT</strong>
+                  <strong>{selectedMember.full_name}</strong> — Balance: <strong>{Number(selectedMember.usdt_balance).toFixed(2)} USDT</strong>
                 </span>
               )}
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-4">
+          <div className="space-y-4 py-2">
             <div className="space-y-2">
               <Label htmlFor="amount">Amount (USDT)</Label>
               <Input
@@ -1124,19 +996,19 @@ const AdminDashboard = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="reason">Reason (required)</Label>
+              <Label htmlFor="reason">Reason</Label>
               <Textarea
                 id="reason"
-                placeholder="Enter reason for this adjustment..."
+                placeholder="Reason for adjustment..."
                 value={adjustmentReason}
                 onChange={(e) => setAdjustmentReason(e.target.value)}
                 className="bg-background/50"
-                rows={3}
+                rows={2}
               />
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="gap-2">
             <Button
               variant="outline"
               onClick={() => setIsAdjustDialogOpen(false)}
@@ -1150,7 +1022,7 @@ const AdminDashboard = () => {
               className={adjustmentType === 'add' ? 'bg-success hover:bg-success/90' : ''}
               variant={adjustmentType === 'subtract' ? 'destructive' : 'default'}
             >
-              {isAdjusting ? 'Processing...' : 'Confirm Adjustment'}
+              {isAdjusting ? 'Processing...' : 'Confirm'}
             </Button>
           </DialogFooter>
         </DialogContent>
