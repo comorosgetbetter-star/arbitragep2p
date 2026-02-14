@@ -16,17 +16,37 @@ interface PackageData {
   isCustom?: boolean;
 }
 
-// Pool of USDT addresses to randomize
-const USDT_ADDRESSES = [
-  'TNGgujx2JCg9tqxNceGCotzjX2p3Zc4S75',
-  'TKPDALoYRtaD3zK5zDdjDSg6aWUQghFrNh',
-  'TVyzob43oGTBV9AJSvHC2NQozK46eWF2jp',
-];
+// Fetch next rotated trade address from DB
+const getRotatedTradeAddress = async (): Promise<string> => {
+  const { data: addresses } = await supabase
+    .from('usdt_addresses')
+    .select('address')
+    .eq('address_type', 'trade')
+    .eq('is_active', true)
+    .order('display_order');
 
-const getRandomAddress = () => {
-  const randomIndex = Math.floor(Math.random() * USDT_ADDRESSES.length);
-  return USDT_ADDRESSES[randomIndex];
+  if (!addresses || addresses.length === 0) return 'No address configured';
+
+  // Get current rotation index
+  const { data: rotation } = await supabase
+    .from('address_rotation')
+    .select('last_used_index')
+    .eq('address_type', 'trade')
+    .single();
+
+  const lastIndex = rotation?.last_used_index ?? 0;
+  const nextIndex = (lastIndex + 1) % addresses.length;
+
+  // Update rotation (best effort)
+  await supabase
+    .from('address_rotation')
+    .update({ last_used_index: nextIndex, updated_at: new Date().toISOString() })
+    .eq('address_type', 'trade');
+
+  return addresses[nextIndex].address;
 };
+
+const FALLBACK_ADDRESS = 'No address configured';
 
 type PaymentMethod = 'card' | 'crypto';
 
@@ -63,7 +83,7 @@ const readPaymentState = (sessionId: string): TradePaymentState | null => {
     const paymentMethod: PaymentMethod = raw?.paymentMethod === 'crypto' ? 'crypto' : 'card';
     const depositAddress = typeof raw?.depositAddress === 'string' && raw.depositAddress.length > 0
       ? raw.depositAddress
-      : getRandomAddress();
+      : FALLBACK_ADDRESS;
 
     return {
       paymentMethod,
@@ -88,8 +108,8 @@ const Payment = () => {
   });
   const [depositAddress, setDepositAddress] = useState<string>(() => {
     const sid = readActiveTradeSessionId();
-    if (!sid) return getRandomAddress();
-    return readPaymentState(sid)?.depositAddress ?? getRandomAddress();
+    if (!sid) return FALLBACK_ADDRESS;
+    return readPaymentState(sid)?.depositAddress ?? FALLBACK_ADDRESS;
   });
   
   // Crypto payment states - initialize from trade session storage directly
@@ -158,7 +178,14 @@ const Payment = () => {
               setIsTimerActive(false);
               return;
             }
+          } else {
+            // No saved state - fetch a rotated trade address from DB
+            const addr = await getRotatedTradeAddress();
+            setDepositAddress(addr);
           }
+        } else {
+          const addr = await getRotatedTradeAddress();
+          setDepositAddress(addr);
         }
         
         // If there's no active session anymore and not in failed state, redirect

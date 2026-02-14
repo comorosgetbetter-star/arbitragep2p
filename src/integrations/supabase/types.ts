@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      address_rotation: {
+        Row: {
+          address_type: string
+          id: string
+          last_used_index: number
+          updated_at: string
+        }
+        Insert: {
+          address_type: string
+          id?: string
+          last_used_index?: number
+          updated_at?: string
+        }
+        Update: {
+          address_type?: string
+          id?: string
+          last_used_index?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       admin_audit_logs: {
         Row: {
           action: string
@@ -181,6 +202,36 @@ export type Database = {
           status?: string
           trade_type?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      usdt_addresses: {
+        Row: {
+          address: string
+          address_type: string
+          created_at: string
+          display_order: number
+          id: string
+          is_active: boolean
+          network: string
+        }
+        Insert: {
+          address: string
+          address_type: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          network: string
+        }
+        Update: {
+          address?: string
+          address_type?: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          network?: string
         }
         Relationships: []
       }
