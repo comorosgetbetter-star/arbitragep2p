@@ -12,7 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
-import { clearTradeStorage } from '@/lib/tradeSessionStorage';
+import { clearTradeStorage, clearPendingTrade } from '@/lib/tradeSessionStorage';
 
 export const AccountDropdown = () => {
   const [user, setUser] = useState<SupabaseUser | null>(null);
@@ -26,6 +26,7 @@ export const AccountDropdown = () => {
       // On logout, ensure trade state is purged
       if (event === 'SIGNED_OUT') {
         clearTradeStorage();
+        clearPendingTrade();
       }
     });
 
@@ -42,8 +43,8 @@ export const AccountDropdown = () => {
     if (error) {
       toast.error('Error signing out');
     } else {
-      // Ensure trade state is fully purged on logout (no resume prompts for logged-out users).
       clearTradeStorage();
+      clearPendingTrade();
       toast.success('Signed out successfully');
       navigate('/');
     }
