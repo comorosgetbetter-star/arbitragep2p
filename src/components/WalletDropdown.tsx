@@ -1,7 +1,10 @@
-import { useState } from 'react';
-import { ArrowUpRight, History, Shield, Copy, Check, ChevronRight, Plus, Wallet } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { ArrowUpRight, History, Shield, Copy, Check, ChevronRight, Plus, Wallet, Clock, XCircle, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface WalletDropdownProps {
   isOpen: boolean;
@@ -15,35 +18,160 @@ const networks = [
   { id: 'bep20', name: 'BEP20', chain: 'BSC' },
 ];
 
-// Wallet starts at zero - no fake transactions
-const transactions: { id: number; type: string; amount: number; date: string; status: string }[] = [];
+interface Withdrawal {
+  id: string;
+  amount: number;
+  status: string;
+  created_at: string;
+  network: string;
+}
 
 export const WalletDropdown = ({ isOpen, onClose, onAddFunds }: WalletDropdownProps) => {
+  const { user } = useAuth();
   const [view, setView] = useState<'main' | 'withdraw'>('main');
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [walletAddress, setWalletAddress] = useState('');
   const [selectedNetwork, setSelectedNetwork] = useState('trc20');
   const [copied, setCopied] = useState(false);
+  const [balance, setBalance] = useState(0);
+  const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Wallet balance starts at zero
-  const balance = 0;
+  // Fetch balance and withdrawals
+  useEffect(() => {
+    if (!isOpen || !user) return;
+
+    const fetchData = async () => {
+      const [balanceRes, withdrawalsRes] = await Promise.all([
+        supabase
+          .from('user_balances')
+          .select('usdt_balance')
+          .eq('user_id', user.id)
+          .single(),
+        supabase
+          .from('withdrawals')
+          .select('id, amount, status, created_at, network')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(10),
+      ]);
+
+      if (balanceRes.data) setBalance(Number(balanceRes.data.usdt_balance));
+      if (withdrawalsRes.data) setWithdrawals(withdrawalsRes.data);
+    };
+
+    fetchData();
+
+    // Subscribe to balance changes
+    const balanceChannel = supabase
+      .channel('wallet-balance')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'user_balances',
+        filter: `user_id=eq.${user.id}`,
+      }, (payload: { new: { usdt_balance?: number } }) => {
+        if (payload.new?.usdt_balance !== undefined) {
+          setBalance(Number(payload.new.usdt_balance));
+        }
+      })
+      .subscribe();
+
+    // Subscribe to withdrawal status changes
+    const withdrawalChannel = supabase
+      .channel('wallet-withdrawals')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'withdrawals',
+        filter: `user_id=eq.${user.id}`,
+      }, () => {
+        // Refetch withdrawals on any change
+        supabase
+          .from('withdrawals')
+          .select('id, amount, status, created_at, network')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(10)
+          .then(({ data }) => {
+            if (data) setWithdrawals(data);
+          });
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(balanceChannel);
+      supabase.removeChannel(withdrawalChannel);
+    };
+  }, [isOpen, user]);
 
   const handleCopy = () => {
+    if (walletAddress) {
+      navigator.clipboard.writeText(walletAddress);
+    }
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleSubmitWithdrawal = async () => {
+    if (!user || !withdrawAmount || !walletAddress) return;
+
+    const amount = parseFloat(withdrawAmount);
+    if (isNaN(amount) || amount <= 0) {
+      toast.error('Enter a valid amount');
+      return;
+    }
+    if (amount > balance) {
+      toast.error('Insufficient balance');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const { error } = await supabase.from('withdrawals').insert({
+        user_id: user.id,
+        amount,
+        wallet_address: walletAddress,
+        network: selectedNetwork,
+      });
+
+      if (error) throw error;
+
+      toast.success('Withdrawal request submitted. Admin has 2 minutes to approve.');
+      setWithdrawAmount('');
+      setWalletAddress('');
+      setView('main');
+    } catch (error) {
+      console.error('Withdrawal error:', error);
+      toast.error('Failed to submit withdrawal');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'approved': return <CheckCircle2 className="h-4 w-4 text-success" />;
+      case 'failed': case 'expired': return <XCircle className="h-4 w-4 text-destructive" />;
+      default: return <Clock className="h-4 w-4 text-warning animate-pulse" />;
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'approved': return 'Approved';
+      case 'failed': return 'Failed';
+      case 'expired': return 'Expired';
+      default: return 'Pending';
+    }
   };
 
   if (!isOpen) return null;
 
   return (
     <>
-      {/* Backdrop */}
-      <div 
-        className="fixed inset-0 z-40" 
-        onClick={onClose}
-      />
+      <div className="fixed inset-0 z-40" onClick={onClose} />
       
-      {/* Dropdown */}
       <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 glass-card rounded-xl border border-border/50 shadow-xl z-50 animate-scale-in overflow-hidden">
         {view === 'main' ? (
           <>
@@ -66,10 +194,7 @@ export const WalletDropdown = ({ isOpen, onClose, onAddFunds }: WalletDropdownPr
               <Button 
                 variant="glow" 
                 className="w-full"
-                onClick={() => {
-                  onClose();
-                  onAddFunds();
-                }}
+                onClick={() => { onClose(); onAddFunds(); }}
               >
                 <Plus className="h-4 w-4" />
                 Add Funds
@@ -85,41 +210,47 @@ export const WalletDropdown = ({ isOpen, onClose, onAddFunds }: WalletDropdownPr
               </Button>
             </div>
 
-            {/* Transaction History */}
+            {/* Recent Withdrawals */}
             <div className="p-4">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-sm font-medium flex items-center gap-2">
                   <History className="h-4 w-4 text-muted-foreground" />
-                  Recent Transactions
+                  Recent Withdrawals
                 </span>
               </div>
               
-              {transactions.length === 0 ? (
+              {withdrawals.length === 0 ? (
                 <div className="text-center py-6">
                   <div className="w-12 h-12 rounded-xl bg-muted/50 flex items-center justify-center mx-auto mb-3">
                     <Wallet className="h-6 w-6 text-muted-foreground" />
                   </div>
-                  <p className="text-sm text-muted-foreground">No transactions yet</p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Add funds to get started
-                  </p>
+                  <p className="text-sm text-muted-foreground">No withdrawals yet</p>
+                  <p className="text-xs text-muted-foreground mt-1">Add funds to get started</p>
                 </div>
               ) : (
-                <div className="space-y-2">
-                  {transactions.map((tx) => (
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                  {withdrawals.map((w) => (
                     <div 
-                      key={tx.id}
-                      className="flex items-center justify-between p-3 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors"
+                      key={w.id}
+                      className="flex items-center justify-between p-3 rounded-lg bg-secondary/50"
                     >
-                      <div>
-                        <p className="text-sm font-medium capitalize">{tx.type}</p>
-                        <p className="text-xs text-muted-foreground">{tx.date}</p>
+                      <div className="flex items-center gap-2">
+                        {getStatusIcon(w.status)}
+                        <div>
+                          <p className="text-sm font-medium">{w.amount} USDT</p>
+                          <p className="text-xs text-muted-foreground">{w.network.toUpperCase()}</p>
+                        </div>
                       </div>
                       <div className="text-right">
-                        <p className={`text-sm font-medium ${tx.type === 'buy' ? 'text-success' : 'text-foreground'}`}>
-                          {tx.type === 'buy' ? '+' : '-'}{tx.amount} USDT
+                        <p className={`text-xs font-medium capitalize ${
+                          w.status === 'approved' ? 'text-success' : 
+                          w.status === 'pending' ? 'text-warning' : 'text-destructive'
+                        }`}>
+                          {getStatusLabel(w.status)}
                         </p>
-                        <p className="text-xs text-success capitalize">{tx.status}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(w.created_at).toLocaleDateString()}
+                        </p>
                       </div>
                     </div>
                   ))}
@@ -145,7 +276,6 @@ export const WalletDropdown = ({ isOpen, onClose, onAddFunds }: WalletDropdownPr
             </div>
 
             <div className="p-4 space-y-4">
-              {/* Amount */}
               <div>
                 <label className="text-sm text-muted-foreground block mb-2">Amount</label>
                 <div className="relative">
@@ -165,7 +295,6 @@ export const WalletDropdown = ({ isOpen, onClose, onAddFunds }: WalletDropdownPr
                 </div>
               </div>
 
-              {/* Wallet Address */}
               <div>
                 <label className="text-sm text-muted-foreground block mb-2">Wallet Address</label>
                 <div className="relative">
@@ -188,7 +317,6 @@ export const WalletDropdown = ({ isOpen, onClose, onAddFunds }: WalletDropdownPr
                 </div>
               </div>
 
-              {/* Network Selection */}
               <div>
                 <label className="text-sm text-muted-foreground block mb-2">Network</label>
                 <div className="grid grid-cols-3 gap-2">
@@ -209,22 +337,21 @@ export const WalletDropdown = ({ isOpen, onClose, onAddFunds }: WalletDropdownPr
                 </div>
               </div>
 
-              {/* Security Notice */}
               <div className="flex items-start gap-2 p-3 rounded-lg bg-warning/10 border border-warning/20">
                 <Shield className="h-4 w-4 text-warning shrink-0 mt-0.5" />
                 <p className="text-xs text-warning">
-                  Always verify the wallet address and network before confirming. 
-                  Transactions cannot be reversed.
+                  Withdrawals require admin approval within 2 minutes. 
+                  If not approved in time, the request will be marked as failed.
                 </p>
               </div>
 
-              {/* Confirm Button */}
               <Button 
                 variant="glow" 
                 className="w-full"
-                disabled={!withdrawAmount || !walletAddress}
+                disabled={!withdrawAmount || !walletAddress || isSubmitting}
+                onClick={handleSubmitWithdrawal}
               >
-                Confirm Withdrawal
+                {isSubmitting ? 'Submitting...' : 'Confirm Withdrawal'}
               </Button>
             </div>
           </>
