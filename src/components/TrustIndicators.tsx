@@ -1,22 +1,31 @@
 import { useState, useEffect } from 'react';
 import { Users, Shield, Globe, TrendingUp } from 'lucide-react';
 
-const useAnimatedCounter = (baseValue: number, incrementInterval?: number) => {
-  const [count, setCount] = useState(baseValue);
+// Fixed epoch: every user calculates the same count based on elapsed time
+const COUNTER_EPOCH = new Date('2025-01-01T00:00:00Z').getTime();
+const BASE_VALUE = 25000;
+const INCREMENT_INTERVAL_MS = 7000;
+
+const useDeterministicCounter = () => {
+  const getCount = () => {
+    const elapsed = Date.now() - COUNTER_EPOCH;
+    return BASE_VALUE + Math.floor(elapsed / INCREMENT_INTERVAL_MS);
+  };
+
+  const [count, setCount] = useState(getCount);
 
   useEffect(() => {
-    if (!incrementInterval) return;
     const interval = setInterval(() => {
-      setCount(prev => prev + 1);
-    }, incrementInterval);
+      setCount(getCount());
+    }, INCREMENT_INTERVAL_MS);
     return () => clearInterval(interval);
-  }, [incrementInterval]);
+  }, []);
 
   return count;
 };
 
 export const TrustIndicators = () => {
-  const activeUsers = useAnimatedCounter(25000, 7000);
+  const activeUsers = useDeterministicCounter();
 
   const stats = [
     {
