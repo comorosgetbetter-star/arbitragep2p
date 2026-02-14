@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Zap, Check } from 'lucide-react';
+import { Zap, TrendingUp, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { WhyUsdt } from './WhyUsdt';
 import { TradeConflictModal } from './TradeConflictModal';
@@ -7,6 +7,8 @@ import { TradeConfirmationModal } from './TradeConfirmationModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTradeSession, TradeSession } from '@/hooks/useTradeSession';
 import { toast } from '@/components/ui/sonner';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 
 // Bonus rates: tiered system where larger amounts get slightly better rates
 const packages = [
@@ -124,43 +126,79 @@ export const ExpressP2P = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 max-w-5xl mx-auto">
-          {packages.map((pkg, index) => (
-            <button 
-              key={pkg.usd}
-              onClick={() => handleSelectPackage(pkg.usd, pkg.usdt)}
-              className={`glass-card rounded-2xl p-5 text-center transition-all duration-300 group animate-fade-in-up cursor-pointer border-2 hover:scale-[1.02] active:scale-[0.98] ${
-                selectedPackage === pkg.usd 
-                  ? 'border-primary bg-primary/10 shadow-lg' 
-                  : 'border-transparent hover:border-primary/40 hover:shadow-md'
-              }`}
-              style={{ animationDelay: `${index * 50}ms` }}
-            >
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center mx-auto mb-3 transition-all duration-300 ${
-                selectedPackage === pkg.usd
-                  ? 'bg-primary/20 scale-110'
-                  : 'bg-primary/10 group-hover:bg-primary/20 group-hover:scale-105'
-              }`}>
-                {selectedPackage === pkg.usd ? (
-                  <Check className="h-5 w-5 text-primary" />
-                ) : (
-                  <span className="text-lg font-bold text-primary">₮</span>
+        <div className="flex flex-col gap-3 max-w-2xl mx-auto">
+          {packages.map((pkg, index) => {
+            const bonus = pkg.usdt - pkg.usd;
+            const roi = ((bonus / pkg.usd) * 100).toFixed(1);
+            const isPopular = pkg.usd === 1000;
+
+            return (
+              <button
+                key={pkg.usd}
+                onClick={() => handleSelectPackage(pkg.usd, pkg.usdt)}
+                className={`relative glass-card rounded-xl transition-all duration-300 group animate-slide-in-left cursor-pointer border-2 hover:scale-[1.01] active:scale-[0.99] ${
+                  isPopular
+                    ? 'border-primary bg-primary/5 ring-2 ring-primary/30 py-5 px-5 sm:px-6'
+                    : selectedPackage === pkg.usd
+                      ? 'border-primary bg-primary/10'
+                      : 'border-transparent hover:border-primary/40'
+                } ${isPopular ? '' : 'py-4 px-5 sm:px-6'}`}
+                style={{ animationDelay: `${index * 80}ms`, opacity: 0 }}
+              >
+                {isPopular && (
+                  <Badge className="absolute -top-2.5 left-4 bg-primary text-primary-foreground text-[10px] px-2 py-0.5">
+                    Most Popular
+                  </Badge>
                 )}
-              </div>
-              
-              <p className="text-xs text-muted-foreground mb-1">Pay</p>
-              <p className="text-lg font-display font-bold mb-2 transition-colors group-hover:text-foreground">
-                ${pkg.usd.toLocaleString()}
-              </p>
-              
-              <div className="h-px bg-border my-3 transition-colors group-hover:bg-border/70" />
-              
-              <p className="text-xs text-muted-foreground mb-1">Receive</p>
-              <p className="text-xl font-display font-bold text-primary transition-transform group-hover:scale-105">
-                {pkg.usdt.toLocaleString()} USDT
-              </p>
-            </button>
-          ))}
+
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+                  {/* Left: Pay & Receive */}
+                  <div className="flex items-center gap-4 sm:gap-6 min-w-0">
+                    <div className="text-left min-w-[70px]">
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Pay</p>
+                      <p className={`font-display font-bold ${isPopular ? 'text-lg' : 'text-base'}`}>
+                        ${pkg.usd.toLocaleString()}
+                      </p>
+                    </div>
+
+                    <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 hidden sm:block" />
+
+                    <div className="text-left min-w-[90px]">
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Receive</p>
+                      <p className={`font-display font-bold text-primary ${isPopular ? 'text-lg' : 'text-base'}`}>
+                        {pkg.usdt.toLocaleString()} USDT
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Middle: Bonus & ROI */}
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <div className="text-left">
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Bonus</p>
+                      <p className="font-display font-semibold text-success text-sm">
+                        +{bonus} USDT
+                      </p>
+                    </div>
+
+                    <Badge variant="outline" className="text-success border-success/30 bg-success/10 text-xs whitespace-nowrap">
+                      <TrendingUp className="h-3 w-3 mr-1" />
+                      {roi}% ROI
+                    </Badge>
+                  </div>
+
+                  {/* Right: Buy button */}
+                  <Button
+                    size="sm"
+                    variant={isPopular ? 'default' : 'outline'}
+                    className={`shrink-0 w-full sm:w-auto ${isPopular ? 'shadow-md' : ''}`}
+                    tabIndex={-1}
+                  >
+                    Buy
+                  </Button>
+                </div>
+              </button>
+            );
+          })}
         </div>
 
         <p className="text-xs text-muted-foreground text-center mt-6">
