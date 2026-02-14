@@ -16,7 +16,7 @@ const useAnimatedCounter = (baseValue: number, incrementInterval?: number) => {
 };
 
 export const TrustIndicators = () => {
-  const activeUsers = useAnimatedCounter(25000, 2000);
+  const activeUsers = useAnimatedCounter(25000, 7000);
 
   const stats = [
     {
