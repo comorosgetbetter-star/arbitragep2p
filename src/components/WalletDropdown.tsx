@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/AuthContext';
+import { useUserData } from '@/contexts/UserDataContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -36,13 +37,12 @@ interface Withdrawal {
 
 export const WalletDropdown = ({ isOpen, onClose, onAddFunds }: WalletDropdownProps) => {
   const { user } = useAuth();
+  const { balance, withdrawals } = useUserData();
   const [view, setView] = useState<'main' | 'withdraw' | 'support'>('main');
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [walletAddress, setWalletAddress] = useState('');
   const [selectedNetwork, setSelectedNetwork] = useState('trc20');
   const [copied, setCopied] = useState(false);
-  const [balance, setBalance] = useState(0);
-  const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [supportCategory, setSupportCategory] = useState('Withdrawal Problems');
   const [hasOpenTicket, setHasOpenTicket] = useState(false);
@@ -52,72 +52,16 @@ export const WalletDropdown = ({ isOpen, onClose, onAddFunds }: WalletDropdownPr
   useEffect(() => {
     if (!isOpen || !user) return;
 
-    const fetchData = async () => {
-      const [balanceRes, withdrawalsRes, ticketRes] = await Promise.all([
-        supabase
-          .from('user_balances')
-          .select('usdt_balance')
-          .eq('user_id', user.id)
-          .single(),
-        supabase
-          .from('withdrawals')
-          .select('id, amount, status, created_at, network')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false })
-          .limit(10),
-        supabase
-          .from('support_tickets')
-          .select('id')
-          .eq('user_id', user.id)
-          .eq('category', 'Withdrawal Problems')
-          .limit(1),
-      ]);
-
-      if (balanceRes.data) setBalance(Number(balanceRes.data.usdt_balance));
-      if (withdrawalsRes.data) setWithdrawals(withdrawalsRes.data);
-      setHasOpenTicket(!!(ticketRes.data && ticketRes.data.length > 0));
-    };
-
-    fetchData();
-
-    const balanceChannel = supabase
-      .channel('wallet-balance')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'user_balances',
-        filter: `user_id=eq.${user.id}`,
-      }, (payload: { new: { usdt_balance?: number } }) => {
-        if (payload.new?.usdt_balance !== undefined) {
-          setBalance(Number(payload.new.usdt_balance));
-        }
-      })
-      .subscribe();
-
-    const withdrawalChannel = supabase
-      .channel('wallet-withdrawals')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'withdrawals',
-        filter: `user_id=eq.${user.id}`,
-      }, () => {
-        supabase
-          .from('withdrawals')
-          .select('id, amount, status, created_at, network')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false })
-          .limit(10)
-          .then(({ data }) => {
-            if (data) setWithdrawals(data);
-          });
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(balanceChannel);
-      supabase.removeChannel(withdrawalChannel);
-    };
+    // Only fetch ticket status (balance & withdrawals come from context)
+    supabase
+      .from('support_tickets')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('category', 'Withdrawal Problems')
+      .limit(1)
+      .then(({ data }) => {
+        setHasOpenTicket(!!(data && data.length > 0));
+      });
   }, [isOpen, user]);
 
   const handleCopy = () => {
