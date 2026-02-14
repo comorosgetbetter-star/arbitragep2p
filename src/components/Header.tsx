@@ -21,12 +21,10 @@ export const Header = ({ isDark, toggleTheme }: HeaderProps) => {
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
-              <span className="text-primary font-bold text-xl">₮</span>
-            </div>
+            <img src="/logo.png" alt="ArbitrageP2P" className="w-10 h-10 rounded-xl" />
             <span className="font-display font-bold text-xl hidden sm:block">
-              <span className="text-foreground">USDT</span>
-              <span className="text-primary">Exchange</span>
+              <span className="text-foreground">Arbitrage</span>
+              <span className="text-primary">P2P</span>
             </span>
           </div>
 
