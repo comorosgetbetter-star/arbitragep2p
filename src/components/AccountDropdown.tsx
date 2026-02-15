@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User, LogOut, UserCircle, MessageSquare } from 'lucide-react';
+import { User, LogOut, UserCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -15,7 +15,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { clearTradeStorage, clearPendingTrade } from '@/lib/tradeSessionStorage';
 
 export const AccountDropdown = () => {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -63,15 +63,11 @@ export const AccountDropdown = () => {
   }, [user]);
 
   const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      toast.error('Error signing out');
-    } else {
-      clearTradeStorage();
-      clearPendingTrade();
-      toast.success('Signed out successfully');
-      navigate('/');
-    }
+    clearTradeStorage();
+    clearPendingTrade();
+    await signOut();
+    toast.success('Signed out successfully');
+    navigate('/');
   };
 
   const handleProfile = () => {
