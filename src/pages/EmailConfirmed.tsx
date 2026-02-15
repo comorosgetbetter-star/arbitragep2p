@@ -7,7 +7,7 @@ const PRODUCTION_URL = 'https://peerbitx.com';
 
 const EmailConfirmed = () => {
   const [status, setStatus] = useState<'loading' | 'confirmed'>('loading');
-  const [countdown, setCountdown] = useState(3);
+  const [countdown, setCountdown] = useState(1);
 
   useEffect(() => {
     const checkSession = async () => {
