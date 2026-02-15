@@ -139,7 +139,7 @@ const CreateAccount = () => {
         email: validatedData.email,
         password: validatedData.password,
         options: {
-          emailRedirectTo: `${window.location.origin}/login`,
+          emailRedirectTo: 'https://peerbitx.com/login',
           data: {
             full_name: validatedData.fullName,
             phone: validatedData.phone,
@@ -186,7 +186,7 @@ const CreateAccount = () => {
         type: 'signup',
         email: formData.email,
         options: {
-          emailRedirectTo: `${window.location.origin}/login`,
+          emailRedirectTo: 'https://peerbitx.com/login',
         },
       });
       if (error) {
