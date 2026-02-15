@@ -3,13 +3,15 @@ import { Users, Shield, Globe, TrendingUp } from 'lucide-react';
 
 // Fixed epoch: every user calculates the same count based on elapsed time
 const COUNTER_EPOCH = new Date('2025-01-01T00:00:00Z').getTime();
-const BASE_VALUE = 25000;
-const INCREMENT_INTERVAL_MS = 7000;
+const BASE_VALUE = 56000;
+const MAX_VALUE = 56999;
+const INCREMENT_INTERVAL_MS = 30000;
 
 const useDeterministicCounter = () => {
   const getCount = () => {
     const elapsed = Date.now() - COUNTER_EPOCH;
-    return BASE_VALUE + Math.floor(elapsed / INCREMENT_INTERVAL_MS);
+    const increment = Math.floor(elapsed / INCREMENT_INTERVAL_MS);
+    return BASE_VALUE + (increment % (MAX_VALUE - BASE_VALUE));
   };
 
   const [count, setCount] = useState(getCount);
