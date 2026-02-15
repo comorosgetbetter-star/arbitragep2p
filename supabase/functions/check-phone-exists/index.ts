@@ -46,7 +46,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Check auth.users metadata for unconfirmed users
+    // Check auth.users metadata for CONFIRMED users only
     const { data: { users }, error } = await supabaseAdmin.auth.admin.listUsers({
       perPage: 1000,
     });
@@ -58,8 +58,9 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Only consider users who have confirmed their email
     const phoneExists = users?.some(
-      (user) => user.user_metadata?.phone === sanitizedPhone
+      (user) => user.email_confirmed_at && user.user_metadata?.phone === sanitizedPhone
     );
 
     return new Response(JSON.stringify({ exists: !!phoneExists }), {
