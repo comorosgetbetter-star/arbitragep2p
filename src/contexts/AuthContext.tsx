@@ -5,9 +5,10 @@ import type { User } from '@supabase/supabase-js';
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  signOut: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType>({ user: null, loading: true });
+const AuthContext = createContext<AuthContextType>({ user: null, loading: true, signOut: async () => {} });
 
 export const useAuth = () => useContext(AuthContext);
 
@@ -19,10 +20,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      // Use the session from the event - this handles login, logout, token refresh, etc.
+      console.log('[Auth] event:', event, 'user:', session?.user?.email ?? 'none');
       setUser(session?.user ?? null);
 
-      // Mark loading as done once we receive the initial session event
       if (event === 'INITIAL_SESSION' || !initialSessionHandled.current) {
         initialSessionHandled.current = true;
         setLoading(false);
@@ -33,6 +33,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // manually check the session to prevent the app from being stuck in loading state
     const fallbackTimer = setTimeout(async () => {
       if (!initialSessionHandled.current) {
+        console.log('[Auth] Fallback: checking session manually');
         const { data: { session } } = await supabase.auth.getSession();
         setUser(session?.user ?? null);
         initialSessionHandled.current = true;
@@ -46,8 +47,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
   }, []);
 
+  const signOut = async () => {
+    try {
+      // Use scope: 'local' to ensure sign out works even if network fails
+      await supabase.auth.signOut({ scope: 'local' });
+    } catch (e) {
+      console.error('[Auth] signOut error, forcing local cleanup:', e);
+      // Force clear local storage auth keys as fallback
+      const keys = Object.keys(localStorage);
+      keys.forEach((key) => {
+        if (key.startsWith('sb-')) {
+          localStorage.removeItem(key);
+        }
+      });
+    }
+    setUser(null);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading }}>
+    <AuthContext.Provider value={{ user, loading, signOut }}>
       {children}
     </AuthContext.Provider>
   );
