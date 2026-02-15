@@ -29,28 +29,28 @@
     <script type="text/javascript">
       var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
 
-      // Hide Tawk.to widget on admin pages
-      function checkAdminPage() {
-        var isAdmin = window.location.pathname.indexOf('/admin') === 0;
+      // Only show Tawk.to widget on the home page
+      function checkPage() {
+        var isHome = window.location.pathname === '/' || window.location.pathname === '';
         if (typeof Tawk_API.hideWidget === 'function' && typeof Tawk_API.showWidget === 'function') {
-          if (isAdmin) {
-            Tawk_API.hideWidget();
-          } else {
+          if (isHome) {
             Tawk_API.showWidget();
+          } else {
+            Tawk_API.hideWidget();
           }
         }
       }
 
       Tawk_API.onLoad = function() {
-        checkAdminPage();
+        checkPage();
         // Re-check on route changes (SPA)
         var pushState = history.pushState;
         history.pushState = function() {
           pushState.apply(history, arguments);
-          setTimeout(checkAdminPage, 100);
+          setTimeout(checkPage, 100);
         };
         window.addEventListener('popstate', function() {
-          setTimeout(checkAdminPage, 100);
+          setTimeout(checkPage, 100);
         });
       };
 
