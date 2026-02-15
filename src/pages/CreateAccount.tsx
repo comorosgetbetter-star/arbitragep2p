@@ -139,7 +139,7 @@ const CreateAccount = () => {
         email: validatedData.email,
         password: validatedData.password,
         options: {
-          emailRedirectTo: 'https://peerbitx.com/login',
+          emailRedirectTo: 'https://arbitragep2p.lovable.app/auth/confirm',
           data: {
             full_name: validatedData.fullName,
             phone: validatedData.phone,
@@ -186,7 +186,7 @@ const CreateAccount = () => {
         type: 'signup',
         email: formData.email,
         options: {
-          emailRedirectTo: 'https://peerbitx.com/login',
+          emailRedirectTo: 'https://arbitragep2p.lovable.app/auth/confirm',
         },
       });
       if (error) {
