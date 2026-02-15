@@ -6,27 +6,28 @@ import { supabase } from '@/integrations/supabase/client';
 const PRODUCTION_URL = 'https://peerbitx.com';
 
 const EmailConfirmed = () => {
-  const [status, setStatus] = useState<'loading' | 'confirmed' | 'error'>('loading');
+  const [status, setStatus] = useState<'loading' | 'confirmed'>('loading');
+  const [countdown, setCountdown] = useState(3);
 
   useEffect(() => {
-    // Supabase automatically processes the token from the URL hash
-    // when the client initializes. We just need to check the session.
     const checkSession = async () => {
-      // Give Supabase client a moment to process the hash tokens
       await new Promise((r) => setTimeout(r, 1500));
-
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        setStatus('confirmed');
-      } else {
-        // Even without a session, the email may have been confirmed
-        // via the server-side redirect. Show confirmed either way.
-        setStatus('confirmed');
-      }
+      await supabase.auth.getSession();
+      setStatus('confirmed');
     };
-
     checkSession();
   }, []);
+
+  // Auto-redirect countdown when confirmed
+  useEffect(() => {
+    if (status !== 'confirmed') return;
+    if (countdown <= 0) {
+      window.location.href = `${PRODUCTION_URL}/login`;
+      return;
+    }
+    const timer = setTimeout(() => setCountdown((c) => c - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [status, countdown]);
 
   if (status === 'loading') {
     return (
@@ -47,11 +48,11 @@ const EmailConfirmed = () => {
         </div>
         <h1 className="text-3xl font-display font-bold">Email Confirmed!</h1>
         <p className="text-muted-foreground">
-          Your email has been successfully verified. You can now log in to your account.
+          Your email has been successfully verified. Redirecting you to login in {countdown}...
         </p>
         <a href={`${PRODUCTION_URL}/login`}>
           <Button variant="glow" size="lg" className="w-full mt-4">
-            Go to Login
+            Go to Login Now
           </Button>
         </a>
       </div>
