@@ -52,15 +52,36 @@ const CreateAccount = () => {
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
 
+  // Get dial code for selected country
+  const getDialCode = (countryName: string) => {
+    const found = countries.find(c => c.name === countryName);
+    return found?.dialCode || '';
+  };
+
   // Set detected country when loaded
   useEffect(() => {
     if (detectedCountry && !formData.country) {
-      setFormData(prev => ({ ...prev, country: detectedCountry }));
+      const dialCode = countries.find(c => c.name === detectedCountry)?.dialCode || '';
+      setFormData(prev => ({ ...prev, country: detectedCountry, phone: dialCode ? `${dialCode} ` : '' }));
     }
   }, [detectedCountry]);
 
   const handleChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData(prev => {
+      const updated = { ...prev, [field]: value };
+      // When country changes, update phone dial code
+      if (field === 'country') {
+        const newDialCode = countries.find(c => c.name === value)?.dialCode || '';
+        const oldDialCode = countries.find(c => c.name === prev.country)?.dialCode || '';
+        // Replace old dial code prefix with new one
+        if (oldDialCode && prev.phone.startsWith(oldDialCode)) {
+          updated.phone = newDialCode ? `${newDialCode} ${prev.phone.slice(oldDialCode.length).trimStart()}` : prev.phone.slice(oldDialCode.length).trimStart();
+        } else if (!prev.phone || prev.phone.trim() === '') {
+          updated.phone = newDialCode ? `${newDialCode} ` : '';
+        }
+      }
+      return updated;
+    });
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
     }
@@ -300,7 +321,7 @@ const CreateAccount = () => {
                     <Input
                       id="phone"
                       type="tel"
-                      placeholder="+1 (555) 000-0000"
+                      placeholder={getDialCode(formData.country) ? `${getDialCode(formData.country)} xxx xxx xxxx` : "+1 xxx xxx xxxx"}
                       value={formData.phone}
                       onChange={(e) => handleChange('phone', e.target.value)}
                       className="pl-10"
