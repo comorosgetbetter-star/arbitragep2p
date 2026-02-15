@@ -157,7 +157,7 @@ export const ExpressP2P = () => {
                   {/* Left: Pay & Receive */}
                   <div className="flex items-center gap-4 sm:gap-6 min-w-0">
                     <div className="text-left min-w-[70px]">
-                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Pay</p>
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">You Send</p>
                       <p className={`font-display font-bold ${isPopular ? 'text-lg' : 'text-base'}`}>
                         ${pkg.usd.toLocaleString()}
                       </p>
