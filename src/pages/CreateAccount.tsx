@@ -53,9 +53,29 @@ const CreateAccount = () => {
   const [emailSent, setEmailSent] = useState(false);
 
   // Get dial code for selected country
+  const getCountryInfo = (countryName: string) => {
+    return countries.find(c => c.name === countryName);
+  };
+
   const getDialCode = (countryName: string) => {
-    const found = countries.find(c => c.name === countryName);
-    return found?.dialCode || '';
+    return getCountryInfo(countryName)?.dialCode || '';
+  };
+
+  // Extract local digits (after dial code) from phone
+  const getLocalDigits = (phone: string, countryName: string) => {
+    const dialCode = getDialCode(countryName);
+    const raw = phone.startsWith(dialCode) ? phone.slice(dialCode.length) : phone;
+    return raw.replace(/\D/g, '');
+  };
+
+  const validatePhone = (phone: string, countryName: string): string | null => {
+    const info = getCountryInfo(countryName);
+    if (!info) return null;
+    const localDigits = getLocalDigits(phone, countryName);
+    if (localDigits.length === 0) return 'Please enter your phone number';
+    if (localDigits.length < info.phoneDigits) return `Phone number requires ${info.phoneDigits} digits for ${info.name} (${localDigits.length}/${info.phoneDigits})`;
+    if (localDigits.length > info.phoneDigits) return `Phone number too long for ${info.name} — expected ${info.phoneDigits} digits (${localDigits.length}/${info.phoneDigits})`;
+    return null;
   };
 
   // Set detected country when loaded
@@ -94,6 +114,14 @@ const CreateAccount = () => {
     
     try {
       const validatedData = accountSchema.parse(formData);
+
+      // Validate phone digits for selected country
+      const phoneError = validatePhone(validatedData.phone, validatedData.country);
+      if (phoneError) {
+        setErrors(prev => ({ ...prev, phone: phoneError }));
+        setIsSubmitting(false);
+        return;
+      }
       
       // Check if phone number already exists
       const { data: phoneCheckData } = await supabase.functions.invoke('check-phone-exists', {
@@ -328,6 +356,24 @@ const CreateAccount = () => {
                     />
                   </div>
                   {errors.phone && <p className="text-sm text-destructive">{errors.phone}</p>}
+                  {formData.country && !errors.phone && (() => {
+                    const info = getCountryInfo(formData.country);
+                    if (!info) return null;
+                    const localDigits = getLocalDigits(formData.phone, formData.country);
+                    const remaining = info.phoneDigits - localDigits.length;
+                    if (localDigits.length === 0) return (
+                      <p className="text-xs text-muted-foreground">{info.phoneDigits} digits required after {info.dialCode}</p>
+                    );
+                    if (remaining > 0) return (
+                      <p className="text-xs text-muted-foreground">{remaining} digit{remaining !== 1 ? 's' : ''} remaining</p>
+                    );
+                    if (remaining === 0) return (
+                      <p className="text-xs text-primary">✓ Valid phone number length</p>
+                    );
+                    return (
+                      <p className="text-xs text-destructive">{Math.abs(remaining)} digit{Math.abs(remaining) !== 1 ? 's' : ''} too many</p>
+                    );
+                  })()}
                 </div>
 
                 {/* Email */}
