@@ -442,6 +442,14 @@ const CreateAccount = () => {
                     </button>
                   </div>
                   {errors.confirmPassword && <p className="text-sm text-destructive">{errors.confirmPassword}</p>}
+                  {!errors.confirmPassword && formData.confirmPassword.length > 0 && (() => {
+                    if (formData.password === formData.confirmPassword) return (
+                      <p className="text-xs text-primary">✓ Passwords match</p>
+                    );
+                    return (
+                      <p className="text-xs text-destructive">Passwords do not match</p>
+                    );
+                  })()}
                 </div>
 
                 {/* Slider CAPTCHA */}
