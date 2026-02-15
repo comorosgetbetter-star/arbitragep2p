@@ -385,6 +385,15 @@ const CreateAccount = () => {
                     />
                   </div>
                   {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
+                  {!errors.email && formData.email.length > 0 && (() => {
+                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+                    if (emailRegex.test(formData.email)) return (
+                      <p className="text-xs text-primary">✓ Valid email address</p>
+                    );
+                    return (
+                      <p className="text-xs text-destructive">Invalid email format</p>
+                    );
+                  })()}
                 </div>
 
                 {/* Password */}
