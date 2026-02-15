@@ -360,18 +360,12 @@ const CreateAccount = () => {
                     const info = getCountryInfo(formData.country);
                     if (!info) return null;
                     const localDigits = getLocalDigits(formData.phone, formData.country);
-                    const remaining = info.phoneDigits - localDigits.length;
-                    if (localDigits.length === 0) return (
-                      <p className="text-xs text-muted-foreground">{info.phoneDigits} digits required after {info.dialCode}</p>
-                    );
-                    if (remaining > 0) return (
-                      <p className="text-xs text-muted-foreground">{remaining} digit{remaining !== 1 ? 's' : ''} remaining</p>
-                    );
-                    if (remaining === 0) return (
-                      <p className="text-xs text-primary">✓ Valid phone number length</p>
+                    if (localDigits.length === 0) return null;
+                    if (localDigits.length === info.phoneDigits) return (
+                      <p className="text-xs text-primary">✓ Valid phone number</p>
                     );
                     return (
-                      <p className="text-xs text-destructive">{Math.abs(remaining)} digit{Math.abs(remaining) !== 1 ? 's' : ''} too many</p>
+                      <p className="text-xs text-destructive">Invalid phone number format for {info.name}</p>
                     );
                   })()}
                 </div>
