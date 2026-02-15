@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   Accordion,
   AccordionContent,
@@ -6,6 +7,7 @@ import {
 } from '@/components/ui/accordion';
 import { HelpCircle, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { SupportTicketForm } from '@/components/SupportTicketForm';
 
 const faqs = [
   {
@@ -35,6 +37,8 @@ const faqs = [
 ];
 
 export const FAQ = () => {
+  const [showSupport, setShowSupport] = useState(false);
+
   return (
     <section id="faq" className="py-16">
       <div className="container mx-auto px-4">
@@ -74,12 +78,16 @@ export const FAQ = () => {
             <p className="text-muted-foreground text-sm mb-4">
               Our support team is available 24/7 to help you
             </p>
-            <Button variant="outline">
+            <Button variant="outline" onClick={() => setShowSupport(true)}>
               Contact Support
             </Button>
           </div>
         </div>
       </div>
+
+      {showSupport && (
+        <SupportTicketForm onClose={() => setShowSupport(false)} />
+      )}
     </section>
   );
 };
