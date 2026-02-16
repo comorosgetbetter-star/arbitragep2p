@@ -150,7 +150,7 @@ Deno.serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'PeerBitX <noreply@peerbitx.com>',
+        from: 'PeerBitX <noreply@contact.peerbitx.com>',
         to: [email.toLowerCase().trim()],
         subject: `${code} is your ArbitrageP2P verification code`,
         html: getEmailHTML(code, safeName),
