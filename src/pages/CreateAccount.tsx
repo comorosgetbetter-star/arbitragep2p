@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, User, Mail, Phone, Globe, Lock, Eye, EyeOff, Loader2, CheckCircle2, MailCheck } from 'lucide-react';
+import { ArrowLeft, User, Mail, Phone, Globe, Lock, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -17,6 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 import { z } from 'zod';
 import SliderCaptcha from '@/components/SliderCaptcha';
 import { Checkbox } from '@/components/ui/checkbox';
+import OTPVerification from '@/components/OTPVerification';
 
 const accountSchema = z.object({
   fullName: z.string().min(2, 'Name must be at least 2 characters').max(100),
@@ -50,7 +51,7 @@ const CreateAccount = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [captchaVerified, setCaptchaVerified] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
-  const [emailSent, setEmailSent] = useState(false);
+  const [showOTP, setShowOTP] = useState(false);
 
   // Get dial code for selected country
   const getCountryInfo = (countryName: string) => {
@@ -89,11 +90,9 @@ const CreateAccount = () => {
   const handleChange = (field: string, value: string) => {
     setFormData(prev => {
       const updated = { ...prev, [field]: value };
-      // When country changes, update phone dial code
       if (field === 'country') {
         const newDialCode = countries.find(c => c.name === value)?.dialCode || '';
         const oldDialCode = countries.find(c => c.name === prev.country)?.dialCode || '';
-        // Replace old dial code prefix with new one
         if (oldDialCode && prev.phone.startsWith(oldDialCode)) {
           updated.phone = newDialCode ? `${newDialCode} ${prev.phone.slice(oldDialCode.length).trimStart()}` : prev.phone.slice(oldDialCode.length).trimStart();
         } else if (!prev.phone || prev.phone.trim() === '') {
@@ -134,36 +133,23 @@ const CreateAccount = () => {
         return;
       }
 
-      // Sign up with Supabase Auth — sends confirmation email automatically
-      const { error: signUpError } = await supabase.auth.signUp({
-        email: validatedData.email,
-        password: validatedData.password,
-        options: {
-          emailRedirectTo: 'https://p2p-email-check.lovable.app/auth/confirm',
-          data: {
-            full_name: validatedData.fullName,
-            phone: validatedData.phone,
-            country: validatedData.country,
-          },
-        },
+      // Send OTP code via Resend
+      const { data, error: sendError } = await supabase.functions.invoke('send-otp', {
+        body: { email: validatedData.email, fullName: validatedData.fullName },
       });
 
-      if (signUpError) {
-        if (signUpError.message?.toLowerCase().includes('already') || signUpError.message?.toLowerCase().includes('exists')) {
-          setErrors(prev => ({ ...prev, email: 'This email address is already registered' }));
-        } else {
-          toast({
-            title: "Registration Failed",
-            description: signUpError.message || "Could not create account. Please try again.",
-            variant: "destructive",
-          });
-        }
+      if (sendError || data?.error) {
+        toast({
+          title: "Failed to send verification code",
+          description: data?.error || "Please try again later.",
+          variant: "destructive",
+        });
         setIsSubmitting(false);
         return;
       }
 
-      // Show confirmation screen
-      setEmailSent(true);
+      // Show OTP verification screen
+      setShowOTP(true);
     } catch (error) {
       if (error instanceof z.ZodError) {
         const fieldErrors: Record<string, string> = {};
@@ -173,33 +159,6 @@ const CreateAccount = () => {
           }
         });
         setErrors(fieldErrors);
-      }
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleResendEmail = async () => {
-    setIsSubmitting(true);
-    try {
-      const { error } = await supabase.auth.resend({
-        type: 'signup',
-        email: formData.email,
-        options: {
-          emailRedirectTo: 'https://p2p-email-check.lovable.app/auth/confirm',
-        },
-      });
-      if (error) {
-        toast({
-          title: "Failed to resend",
-          description: error.message,
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Email Resent",
-          description: "A new confirmation link has been sent to your email.",
-        });
       }
     } finally {
       setIsSubmitting(false);
@@ -221,73 +180,24 @@ const CreateAccount = () => {
       {/* Main Content */}
       <main className="container mx-auto px-4 py-12">
         <div className="max-w-md mx-auto">
-          {emailSent ? (
+          {showOTP ? (
             <>
               <div className="text-center mb-8">
-                <h1 className="text-3xl font-display font-bold mb-2">Check Your Email</h1>
+                <h1 className="text-3xl font-display font-bold mb-2">Verify Your Email</h1>
                 <p className="text-muted-foreground">
-                  One last step to complete your registration
+                  Enter the code sent to your email
                 </p>
               </div>
-              <div className="glass-card rounded-2xl p-6 sm:p-8 space-y-6">
-                <div className="text-center space-y-3">
-                  <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
-                    <MailCheck className="h-8 w-8 text-primary" />
-                  </div>
-                  <h2 className="text-xl font-display font-bold">Confirmation Link Sent</h2>
-                  <p className="text-muted-foreground text-sm leading-relaxed">
-                    We've sent a confirmation link to<br />
-                    <span className="text-foreground font-medium">{formData.email}</span>
-                  </p>
-                  <p className="text-muted-foreground text-sm leading-relaxed">
-                    Click the link in the email to verify your address and activate your account.
-                  </p>
-                </div>
-
-                {/* Spam Warning */}
-                <div className="bg-warning/5 border border-warning/20 rounded-xl p-4 flex gap-3">
-                  <MailCheck className="h-5 w-5 text-warning shrink-0 mt-0.5" />
-                  <div className="space-y-1">
-                    <p className="text-sm font-semibold text-warning">Can't find the email?</p>
-                    <p className="text-xs text-muted-foreground leading-relaxed">
-                      Please check your <span className="font-semibold text-foreground">Spam</span> or{' '}
-                      <span className="font-semibold text-foreground">Junk</span> folder. Some email providers 
-                      may filter verification emails.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-3">
-                  <Button
-                    variant="ghost"
-                    onClick={handleResendEmail}
-                    disabled={isSubmitting}
-                    className="text-primary"
-                  >
-                    {isSubmitting ? (
-                      <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Sending...</>
-                    ) : (
-                      'Resend Confirmation Email'
-                    )}
-                  </Button>
-
-                  <Link to="/login">
-                    <Button variant="glow" className="w-full" size="lg">
-                      <CheckCircle2 className="h-4 w-4 mr-2" />
-                      Go to Login
-                    </Button>
-                  </Link>
-                </div>
-
-                <div className="text-center pt-2 border-t border-border/50">
-                  <button
-                    onClick={() => setEmailSent(false)}
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1"
-                  >
-                    <ArrowLeft className="h-3 w-3" />
-                    Back to registration
-                  </button>
-                </div>
+              <div className="glass-card rounded-2xl p-6 sm:p-8">
+                <OTPVerification
+                  email={formData.email}
+                  fullName={formData.fullName}
+                  phone={formData.phone}
+                  country={formData.country}
+                  password={formData.password}
+                  onVerified={() => navigate('/')}
+                  onBack={() => setShowOTP(false)}
+                />
               </div>
             </>
           ) : (
@@ -481,7 +391,7 @@ const CreateAccount = () => {
                   {isSubmitting ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      Creating Account...
+                      Sending Verification Code...
                     </>
                   ) : (
                     'Create Account & Continue'
