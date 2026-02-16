@@ -11,9 +11,14 @@ const EmailConfirmed = () => {
 
   useEffect(() => {
     const checkSession = async () => {
-      await new Promise((r) => setTimeout(r, 1500));
-      await supabase.auth.getSession();
-      setStatus('confirmed');
+      try {
+        await new Promise((r) => setTimeout(r, 1000));
+        await supabase.auth.getSession();
+      } catch (e) {
+        console.error('Session check failed:', e);
+      } finally {
+        setStatus('confirmed');
+      }
     };
     checkSession();
   }, []);
