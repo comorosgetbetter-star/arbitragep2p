@@ -72,23 +72,25 @@ export const Header = ({ isDark, toggleTheme }: HeaderProps) => {
 
             <AccountDropdown />
 
-            <div className="relative">
-              <Button
-                variant="glass"
-                size="default"
-                onClick={() => setIsWalletOpen(!isWalletOpen)}
-                className="flex items-center gap-2"
-              >
-                <Wallet className="h-5 w-5" />
-                <span className="hidden sm:inline">Wallet</span>
-              </Button>
-              
-              <WalletDropdown 
-                isOpen={isWalletOpen} 
-                onClose={() => setIsWalletOpen(false)}
-                onAddFunds={() => setIsAddFundsOpen(true)}
-              />
-            </div>
+            {user && (
+              <div className="relative">
+                <Button
+                  variant="glass"
+                  size="default"
+                  onClick={() => setIsWalletOpen(!isWalletOpen)}
+                  className="flex items-center gap-2"
+                >
+                  <Wallet className="h-5 w-5" />
+                  <span className="hidden sm:inline">Wallet</span>
+                </Button>
+                
+                <WalletDropdown 
+                  isOpen={isWalletOpen} 
+                  onClose={() => setIsWalletOpen(false)}
+                  onAddFunds={() => setIsAddFundsOpen(true)}
+                />
+              </div>
+            )}
 
             <Button
               variant="ghost"

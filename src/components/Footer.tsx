@@ -23,7 +23,7 @@ export const Footer = () => {
                   <span className="text-primary">Exchange</span>
                 </span>
                 <p className="text-xs text-muted-foreground">
-                  © 2024 All rights reserved
+                  © 2025 All rights reserved
                 </p>
               </div>
             </div>
