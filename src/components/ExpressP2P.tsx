@@ -112,23 +112,22 @@ export const ExpressP2P = () => {
   };
 
   return (
-    <section id="rates" className="py-16">
-      <div className="container mx-auto px-4">
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-4">
-            <Zap className="h-4 w-4 text-primary" />
-            <span className="text-sm font-semibold text-primary">Express P2P</span>
-          </div>
-          <h2 className="text-3xl sm:text-4xl font-display font-bold mb-4">
-            Buy <span className="gradient-text">USDT</span> Instantly
-          </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            Select a package below to purchase USDT at competitive rates. 
-            Fast, secure, and direct to your wallet.
-          </p>
+    <div>
+      <div className="text-center mb-10">
+        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-4">
+          <Zap className="h-4 w-4 text-primary" />
+          <span className="text-sm font-semibold text-primary">Express P2P</span>
         </div>
+        <h2 className="text-3xl sm:text-4xl font-display font-bold mb-4">
+          Buy <span className="gradient-text">USDT</span> Instantly
+        </h2>
+        <p className="text-muted-foreground max-w-2xl mx-auto">
+          Select a package below to purchase USDT at competitive rates. 
+          Fast, secure, and direct to your wallet.
+        </p>
+      </div>
 
-        <div className="flex flex-col gap-3 max-w-2xl mx-auto">
+      <div className="flex flex-col gap-3 max-w-2xl mx-auto">
           {packages.map((pkg, index) => {
             const profit = pkg.usdt - pkg.usd;
             const roi = ((profit / pkg.usd) * 100).toFixed(1);
@@ -201,15 +200,14 @@ export const ExpressP2P = () => {
               </button>
             );
           })}
-        </div>
-
-        <p className="text-xs text-muted-foreground text-center mt-6">
-          Profit rates applied • Larger amounts receive better rates
-        </p>
-
-        {/* Why USDT Accordion */}
-        <WhyUsdt />
       </div>
+
+      <p className="text-xs text-muted-foreground text-center mt-6">
+        Profit rates applied • Larger amounts receive better rates
+      </p>
+
+      {/* Why USDT Accordion */}
+      <WhyUsdt />
 
       {/* Trade Confirmation Modal */}
       <TradeConfirmationModal
@@ -231,6 +229,6 @@ export const ExpressP2P = () => {
         onResume={handleResumeExisting}
         onStartNew={handleStartNew}
       />
-    </section>
+    </div>
   );
 };

@@ -16,8 +16,24 @@ interface PackageData {
   isCustom?: boolean;
 }
 
+// Check if there's a P2P order payment with a specific address
+const getP2POrderAddress = (): string | null => {
+  try {
+    const stored = localStorage.getItem('p2pOrderPayment');
+    if (!stored) return null;
+    const data = JSON.parse(stored);
+    return typeof data?.paymentAddress === 'string' ? data.paymentAddress : null;
+  } catch {
+    return null;
+  }
+};
+
 // Fetch next rotated trade address from DB
 const getRotatedTradeAddress = async (): Promise<string> => {
+  // Check P2P order address first
+  const p2pAddr = getP2POrderAddress();
+  if (p2pAddr) return p2pAddr;
+
   const { data: addresses } = await supabase
     .from('usdt_addresses')
     .select('address')
@@ -27,7 +43,6 @@ const getRotatedTradeAddress = async (): Promise<string> => {
 
   if (!addresses || addresses.length === 0) return 'No address configured';
 
-  // Get current rotation index
   const { data: rotation } = await supabase
     .from('address_rotation')
     .select('last_used_index')
@@ -37,7 +52,6 @@ const getRotatedTradeAddress = async (): Promise<string> => {
   const lastIndex = rotation?.last_used_index ?? 0;
   const nextIndex = (lastIndex + 1) % addresses.length;
 
-  // Update rotation (best effort)
   await supabase
     .from('address_rotation')
     .update({ last_used_index: nextIndex, updated_at: new Date().toISOString() })

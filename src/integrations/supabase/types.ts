@@ -65,6 +65,48 @@ export type Database = {
         }
         Relationships: []
       }
+      p2p_orders: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          max_amount: number
+          min_amount: number
+          payment_address: string
+          payment_method: string
+          payment_window_minutes: number
+          seller_avatar_url: string | null
+          seller_name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          max_amount: number
+          min_amount: number
+          payment_address: string
+          payment_method?: string
+          payment_window_minutes?: number
+          seller_avatar_url?: string | null
+          seller_name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          max_amount?: number
+          min_amount?: number
+          payment_address?: string
+          payment_method?: string
+          payment_window_minutes?: number
+          seller_avatar_url?: string | null
+          seller_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           country: string | null
