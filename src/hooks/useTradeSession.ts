@@ -150,8 +150,9 @@ export const useTradeSession = () => {
   }, []);
 
   // Start a new trade session
-  const startSession = useCallback((usd: number, usdt: number, isCustom?: boolean, userId?: string) => {
+  const startSession = useCallback((usd: number, usdt: number, isCustom?: boolean, userId?: string, durationMinutes?: number) => {
     const now = Date.now();
+    const duration = durationMinutes ? durationMinutes * 60 * 1000 : SESSION_DURATION;
     const newSession: TradeSession = {
       id: generateSessionId(now),
       usd,
@@ -159,7 +160,7 @@ export const useTradeSession = () => {
       isCustom,
       userId,
       startedAt: now,
-      expiresAt: now + SESSION_DURATION,
+      expiresAt: now + duration,
     };
     
     localStorage.setItem(TRADE_SESSION_KEY, JSON.stringify(newSession));

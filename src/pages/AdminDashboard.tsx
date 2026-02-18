@@ -19,9 +19,11 @@ import {
   Clock,
   MessageSquare,
   Send,
-  MapPin
+  MapPin,
+  ShoppingBag
 } from 'lucide-react';
 import { AdminAddressManager } from '@/components/AdminAddressManager';
+import { AdminP2POrderManager } from '@/components/AdminP2POrderManager';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -640,7 +642,7 @@ const AdminDashboard = () => {
 
         {/* Main Tabs */}
         <Tabs defaultValue="members" className="space-y-3">
-          <TabsList className="w-full grid grid-cols-5 h-auto p-1 bg-card border border-border/50">
+          <TabsList className="w-full grid grid-cols-6 h-auto p-1 bg-card border border-border/50">
             <TabsTrigger value="members" className="flex flex-col items-center gap-0.5 py-2 text-[10px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-semibold">
               <Users className="w-3.5 h-3.5" />
               Members
@@ -663,9 +665,13 @@ const AdminDashboard = () => {
                 </span>
               )}
             </TabsTrigger>
+            <TabsTrigger value="p2p-orders" className="flex flex-col items-center gap-0.5 py-2 text-[10px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-semibold">
+              <ShoppingBag className="w-3.5 h-3.5" />
+              P2P
+            </TabsTrigger>
             <TabsTrigger value="addresses" className="flex flex-col items-center gap-0.5 py-2 text-[10px] data-[state=active]:bg-chart-4 data-[state=active]:text-white font-semibold">
               <MapPin className="w-3.5 h-3.5" />
-              Addresses
+              Addr
             </TabsTrigger>
             <TabsTrigger value="audit" className="flex flex-col items-center gap-0.5 py-2 text-[10px] data-[state=active]:bg-accent data-[state=active]:text-accent-foreground font-semibold">
               <History className="w-3.5 h-3.5" />
@@ -941,6 +947,11 @@ const AdminDashboard = () => {
                 )}
               </div>
             )}
+          </TabsContent>
+
+          {/* P2P Orders Tab */}
+          <TabsContent value="p2p-orders" className="space-y-3">
+            <AdminP2POrderManager />
           </TabsContent>
 
           {/* Addresses Tab */}
