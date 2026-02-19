@@ -16,8 +16,26 @@ import {
   DialogFooter,
   DialogDescription,
 } from '@/components/ui/dialog';
-import { Clock, ShieldCheck, ThumbsUp, BarChart3, Timer } from 'lucide-react';
+import { Clock, ShieldCheck, ThumbsUp, BarChart3, Timer, Lock } from 'lucide-react';
 import type { TradeSession } from '@/hooks/useTradeSession';
+
+// Same tiered rate table as Express P2P
+const rateTiers = [
+  { min: 0, max: 50, rate: 1.20 },
+  { min: 50, max: 100, rate: 1.20 },
+  { min: 100, max: 150, rate: 1.21 },
+  { min: 150, max: 500, rate: 1.2133 },
+  { min: 500, max: 1000, rate: 1.218 },
+  { min: 1000, max: 5000, rate: 1.219 },
+  { min: 5000, max: 7000, rate: 1.2194 },
+  { min: 7000, max: 10000, rate: 1.22 },
+  { min: 10000, max: Infinity, rate: 1.22 },
+];
+
+const getUsdtAmount = (usd: number): number => {
+  const tier = rateTiers.find(t => usd >= t.min && usd <= t.max) || rateTiers[rateTiers.length - 1];
+  return Math.round(usd * tier.rate);
+};
 
 interface P2POrder {
   id: string;
@@ -42,7 +60,7 @@ export const P2POrders = () => {
   const [buyAmount, setBuyAmount] = useState('');
   const [showConflictModal, setShowConflictModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [pendingOrder, setPendingOrder] = useState<{ order: P2POrder; amount: number } | null>(null);
+  const [pendingOrder, setPendingOrder] = useState<{ order: P2POrder; amount: number; usdt: number } | null>(null);
   const [existingSession, setExistingSession] = useState<TradeSession | null>(null);
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -67,9 +85,11 @@ export const P2POrders = () => {
       return;
     }
 
+    const usdt = getUsdtAmount(amount);
+
     if (!user) {
       localStorage.setItem('pendingTrade', JSON.stringify({
-        usd: amount, usdt: amount, isCustom: false,
+        usd: amount, usdt, isCustom: false,
         p2pOrderId: order.id, p2pPaymentAddress: order.payment_address,
         p2pPaymentWindowMinutes: order.payment_window_minutes,
       }));
@@ -77,8 +97,7 @@ export const P2POrders = () => {
       return;
     }
 
-    // Show confirmation modal instead of proceeding immediately
-    setPendingOrder({ order, amount });
+    setPendingOrder({ order, amount, usdt });
     setShowConfirmModal(true);
   };
 
@@ -86,7 +105,7 @@ export const P2POrders = () => {
     if (!pendingOrder) return;
     setShowConfirmModal(false);
 
-    const { order, amount } = pendingOrder;
+    const { order, amount, usdt } = pendingOrder;
     const existing = getStoredSession();
     if (existing?.userId && existing.userId !== user!.id) clearSession();
 
@@ -97,17 +116,17 @@ export const P2POrders = () => {
       return;
     }
 
-    proceedWithOrder(order, amount);
+    proceedWithOrder(order, amount, usdt);
   };
 
-  const proceedWithOrder = (order: P2POrder, amount: number) => {
+  const proceedWithOrder = (order: P2POrder, amount: number, usdt: number) => {
     localStorage.setItem('p2pOrderPayment', JSON.stringify({
       paymentAddress: order.payment_address,
       paymentWindowMinutes: order.payment_window_minutes,
       sellerName: order.seller_name,
     }));
-    startSession(amount, amount, false, user!.id, order.payment_window_minutes);
-    toast.success('Trade started!', { description: `$${amount} USDT purchase` });
+    startSession(amount, usdt, false, user!.id, order.payment_window_minutes);
+    toast.success('Trade started!', { description: `$${amount} → ${usdt} USDT` });
     navigate('/payment');
   };
 
@@ -116,7 +135,7 @@ export const P2POrders = () => {
   const handleStartNew = () => {
     if (pendingOrder) {
       clearSession();
-      proceedWithOrder(pendingOrder.order, pendingOrder.amount);
+      proceedWithOrder(pendingOrder.order, pendingOrder.amount, pendingOrder.usdt);
     }
     setShowConflictModal(false);
   };
@@ -241,7 +260,7 @@ export const P2POrders = () => {
           <DialogHeader>
             <DialogTitle className="text-base">Confirm Trade</DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground">
-              Please review and confirm your trade details.
+              Review your trade details before proceeding.
             </DialogDescription>
           </DialogHeader>
           {pendingOrder && (
@@ -263,12 +282,16 @@ export const P2POrders = () => {
 
               <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Amount</span>
+                  <span className="text-muted-foreground">You pay</span>
                   <span className="font-semibold">${pendingOrder.amount.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">You receive</span>
-                  <span className="font-semibold text-primary">{pendingOrder.amount.toLocaleString()} USDT</span>
+                  <span className="font-semibold text-primary">{pendingOrder.usdt.toLocaleString()} USDT</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Profit</span>
+                  <span className="font-semibold text-success">+{pendingOrder.usdt - pendingOrder.amount} USDT</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Payment window</span>
@@ -276,8 +299,19 @@ export const P2POrders = () => {
                 </div>
               </div>
 
+              {/* Escrow notice */}
+              <div className="flex items-start gap-2.5 rounded-lg border border-success/20 bg-success/5 p-3">
+                <Lock className="w-4 h-4 text-success shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-xs font-semibold text-success">Funds Secured in Escrow</p>
+                  <p className="text-[11px] text-muted-foreground leading-relaxed mt-0.5">
+                    Your funds are held securely in escrow throughout the transaction. They will only be released once payment is confirmed by the seller.
+                  </p>
+                </div>
+              </div>
+
               <p className="text-[11px] text-muted-foreground leading-relaxed">
-                By confirming, you agree to complete payment within the {pendingOrder.order.payment_window_minutes}-minute window. Funds are held in escrow until the seller confirms receipt.
+                By confirming, you agree to complete payment within the {pendingOrder.order.payment_window_minutes}-minute window.
               </p>
             </div>
           )}
