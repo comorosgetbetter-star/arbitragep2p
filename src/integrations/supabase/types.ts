@@ -67,9 +67,11 @@ export type Database = {
       }
       p2p_orders: {
         Row: {
+          avg_trading_time: string
           created_at: string
           id: string
           is_active: boolean
+          likes_count: number
           max_amount: number
           min_amount: number
           payment_address: string
@@ -77,12 +79,15 @@ export type Database = {
           payment_window_minutes: number
           seller_avatar_url: string | null
           seller_name: string
+          trades_count: number
           updated_at: string
         }
         Insert: {
+          avg_trading_time?: string
           created_at?: string
           id?: string
           is_active?: boolean
+          likes_count?: number
           max_amount: number
           min_amount: number
           payment_address: string
@@ -90,12 +95,15 @@ export type Database = {
           payment_window_minutes?: number
           seller_avatar_url?: string | null
           seller_name: string
+          trades_count?: number
           updated_at?: string
         }
         Update: {
+          avg_trading_time?: string
           created_at?: string
           id?: string
           is_active?: boolean
+          likes_count?: number
           max_amount?: number
           min_amount?: number
           payment_address?: string
@@ -103,6 +111,7 @@ export type Database = {
           payment_window_minutes?: number
           seller_avatar_url?: string | null
           seller_name?: string
+          trades_count?: number
           updated_at?: string
         }
         Relationships: []

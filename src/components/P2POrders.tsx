@@ -8,7 +8,15 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { TradeConflictModal } from './TradeConflictModal';
-import { Copy, Clock, ShieldCheck, User } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import { Clock, ShieldCheck, ThumbsUp, BarChart3, Timer } from 'lucide-react';
 import type { TradeSession } from '@/hooks/useTradeSession';
 
 interface P2POrder {
@@ -20,6 +28,9 @@ interface P2POrder {
   payment_method: string;
   payment_address: string;
   payment_window_minutes: number;
+  trades_count: number;
+  avg_trading_time: string;
+  likes_count: number;
   is_active: boolean;
   created_at: string;
 }
@@ -30,6 +41,8 @@ export const P2POrders = () => {
   const [selectedOrder, setSelectedOrder] = useState<P2POrder | null>(null);
   const [buyAmount, setBuyAmount] = useState('');
   const [showConflictModal, setShowConflictModal] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [pendingOrder, setPendingOrder] = useState<{ order: P2POrder; amount: number } | null>(null);
   const [existingSession, setExistingSession] = useState<TradeSession | null>(null);
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -41,14 +54,11 @@ export const P2POrders = () => {
       .select('*')
       .eq('is_active', true)
       .order('created_at', { ascending: false });
-
-    if (data) setOrders(data);
+    if (data) setOrders(data as P2POrder[]);
     setLoading(false);
   }, []);
 
-  useEffect(() => {
-    fetchOrders();
-  }, [fetchOrders]);
+  useEffect(() => { fetchOrders(); }, [fetchOrders]);
 
   const handleBuyNow = (order: P2POrder) => {
     const amount = parseFloat(buyAmount);
@@ -59,23 +69,29 @@ export const P2POrders = () => {
 
     if (!user) {
       localStorage.setItem('pendingTrade', JSON.stringify({
-        usd: amount,
-        usdt: amount, // 1:1 for P2P orders
-        isCustom: false,
-        p2pOrderId: order.id,
-        p2pPaymentAddress: order.payment_address,
+        usd: amount, usdt: amount, isCustom: false,
+        p2pOrderId: order.id, p2pPaymentAddress: order.payment_address,
         p2pPaymentWindowMinutes: order.payment_window_minutes,
       }));
       navigate('/login');
       return;
     }
 
-    const existing = getStoredSession();
-    if (existing?.userId && existing.userId !== user.id) {
-      clearSession();
-    }
+    // Show confirmation modal instead of proceeding immediately
+    setPendingOrder({ order, amount });
+    setShowConfirmModal(true);
+  };
 
-    if (existing && existing.userId === user.id) {
+  const handleConfirmTrade = () => {
+    if (!pendingOrder) return;
+    setShowConfirmModal(false);
+
+    const { order, amount } = pendingOrder;
+    const existing = getStoredSession();
+    if (existing?.userId && existing.userId !== user!.id) clearSession();
+
+    if (existing && existing.userId === user!.id) {
+      setSelectedOrder(order);
       setExistingSession(existing);
       setShowConflictModal(true);
       return;
@@ -85,29 +101,22 @@ export const P2POrders = () => {
   };
 
   const proceedWithOrder = (order: P2POrder, amount: number) => {
-    // Store the P2P order payment details for the payment page
     localStorage.setItem('p2pOrderPayment', JSON.stringify({
       paymentAddress: order.payment_address,
       paymentWindowMinutes: order.payment_window_minutes,
       sellerName: order.seller_name,
     }));
-
     startSession(amount, amount, false, user!.id, order.payment_window_minutes);
-    toast.success('Trade started!', {
-      description: `$${amount} USDT purchase`,
-    });
+    toast.success('Trade started!', { description: `$${amount} USDT purchase` });
     navigate('/payment');
   };
 
-  const handleResumeExisting = () => {
-    setShowConflictModal(false);
-    navigate('/payment');
-  };
+  const handleResumeExisting = () => { setShowConflictModal(false); navigate('/payment'); };
 
   const handleStartNew = () => {
-    if (selectedOrder && buyAmount) {
+    if (pendingOrder) {
       clearSession();
-      proceedWithOrder(selectedOrder, parseFloat(buyAmount));
+      proceedWithOrder(pendingOrder.order, pendingOrder.amount);
     }
     setShowConflictModal(false);
   };
@@ -139,7 +148,7 @@ export const P2POrders = () => {
           key={order.id}
           className="glass-card rounded-xl border border-border hover:border-primary/40 transition-all duration-300 p-4 sm:p-5"
         >
-          {/* Seller Info Row */}
+          {/* Seller Info */}
           <div className="flex items-center gap-3 mb-4">
             <Avatar className="h-9 w-9">
               {order.seller_avatar_url ? (
@@ -157,15 +166,25 @@ export const P2POrders = () => {
                   Verified
                 </Badge>
               </div>
-              <div className="flex items-center gap-1 text-[11px] text-muted-foreground mt-0.5">
-                <Clock className="w-3 h-3" />
-                {order.payment_window_minutes} min window
+              <div className="flex items-center gap-3 text-[11px] text-muted-foreground mt-0.5">
+                <span className="flex items-center gap-1">
+                  <BarChart3 className="w-3 h-3" />
+                  {order.trades_count} trades
+                </span>
+                <span className="flex items-center gap-1">
+                  <Timer className="w-3 h-3" />
+                  {order.avg_trading_time}
+                </span>
+                <span className="flex items-center gap-1">
+                  <ThumbsUp className="w-3 h-3" />
+                  {order.likes_count}
+                </span>
               </div>
             </div>
           </div>
 
           {/* Order Details */}
-          <div className="grid grid-cols-2 gap-3 mb-4">
+          <div className="grid grid-cols-3 gap-3 mb-4">
             <div>
               <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Amount Range</p>
               <p className="font-display font-bold text-sm">
@@ -175,6 +194,13 @@ export const P2POrders = () => {
             <div>
               <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Payment</p>
               <p className="font-display font-bold text-sm text-primary">{order.payment_method}</p>
+            </div>
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Window</p>
+              <p className="font-display font-bold text-sm flex items-center gap-1">
+                <Clock className="w-3 h-3" />
+                {order.payment_window_minutes} min
+              </p>
             </div>
           </div>
 
@@ -208,6 +234,59 @@ export const P2POrders = () => {
           </div>
         </div>
       ))}
+
+      {/* Trade Confirmation Modal */}
+      <Dialog open={showConfirmModal} onOpenChange={setShowConfirmModal}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-base">Confirm Trade</DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground">
+              Please review and confirm your trade details.
+            </DialogDescription>
+          </DialogHeader>
+          {pendingOrder && (
+            <div className="space-y-3 py-2">
+              <div className="flex items-center gap-3">
+                <Avatar className="h-8 w-8">
+                  {pendingOrder.order.seller_avatar_url ? (
+                    <AvatarImage src={pendingOrder.order.seller_avatar_url} />
+                  ) : null}
+                  <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                    {pendingOrder.order.seller_name.slice(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="text-sm font-medium">{pendingOrder.order.seller_name}</p>
+                  <p className="text-[11px] text-muted-foreground">{pendingOrder.order.trades_count} trades · {pendingOrder.order.likes_count} likes</p>
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Amount</span>
+                  <span className="font-semibold">${pendingOrder.amount.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">You receive</span>
+                  <span className="font-semibold text-primary">{pendingOrder.amount.toLocaleString()} USDT</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Payment window</span>
+                  <span className="font-semibold">{pendingOrder.order.payment_window_minutes} min</span>
+                </div>
+              </div>
+
+              <p className="text-[11px] text-muted-foreground leading-relaxed">
+                By confirming, you agree to complete payment within the {pendingOrder.order.payment_window_minutes}-minute window. Funds are held in escrow until the seller confirms receipt.
+              </p>
+            </div>
+          )}
+          <DialogFooter className="gap-2">
+            <Button variant="outline" size="sm" onClick={() => setShowConfirmModal(false)}>Cancel</Button>
+            <Button size="sm" onClick={handleConfirmTrade}>Confirm Trade</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <TradeConflictModal
         isOpen={showConflictModal}

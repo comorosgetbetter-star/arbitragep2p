@@ -1,0 +1,5 @@
+
+ALTER TABLE public.p2p_orders
+ADD COLUMN trades_count INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN avg_trading_time TEXT NOT NULL DEFAULT '5 min',
+ADD COLUMN likes_count INTEGER NOT NULL DEFAULT 0;

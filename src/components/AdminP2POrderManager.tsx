@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Plus, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
+import { Plus, Trash2, ToggleLeft, ToggleRight, Pencil } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,36 +25,67 @@ interface P2POrder {
   payment_method: string;
   payment_address: string;
   payment_window_minutes: number;
+  trades_count: number;
+  avg_trading_time: string;
+  likes_count: number;
   is_active: boolean;
   created_at: string;
 }
 
+const emptyForm = {
+  seller_name: '',
+  seller_avatar_url: '',
+  min_amount: '',
+  max_amount: '',
+  payment_address: '',
+  payment_window_minutes: '10',
+  trades_count: '0',
+  avg_trading_time: '5 min',
+  likes_count: '0',
+};
+
 export const AdminP2POrderManager = () => {
   const [orders, setOrders] = useState<P2POrder[]>([]);
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingOrder, setEditingOrder] = useState<P2POrder | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [form, setForm] = useState({
-    seller_name: '',
-    seller_avatar_url: '',
-    min_amount: '',
-    max_amount: '',
-    payment_address: '',
-    payment_window_minutes: '10',
-  });
+  const [form, setForm] = useState(emptyForm);
 
   const fetchOrders = async () => {
     const { data } = await supabase
       .from('p2p_orders')
       .select('*')
       .order('created_at', { ascending: false });
-    if (data) setOrders(data);
+    if (data) setOrders(data as P2POrder[]);
   };
 
   useEffect(() => {
     fetchOrders();
   }, []);
 
-  const handleCreate = async () => {
+  const openCreate = () => {
+    setEditingOrder(null);
+    setForm(emptyForm);
+    setIsDialogOpen(true);
+  };
+
+  const openEdit = (order: P2POrder) => {
+    setEditingOrder(order);
+    setForm({
+      seller_name: order.seller_name,
+      seller_avatar_url: order.seller_avatar_url || '',
+      min_amount: String(order.min_amount),
+      max_amount: String(order.max_amount),
+      payment_address: order.payment_address,
+      payment_window_minutes: String(order.payment_window_minutes),
+      trades_count: String(order.trades_count),
+      avg_trading_time: order.avg_trading_time,
+      likes_count: String(order.likes_count),
+    });
+    setIsDialogOpen(true);
+  };
+
+  const handleSubmit = async () => {
     if (!form.seller_name || !form.min_amount || !form.max_amount || !form.payment_address) {
       toast.error('Please fill all required fields');
       return;
@@ -62,41 +93,45 @@ export const AdminP2POrderManager = () => {
 
     const minAmt = parseFloat(form.min_amount);
     const maxAmt = parseFloat(form.max_amount);
-    const windowMins = parseInt(form.payment_window_minutes) || 10;
-
     if (isNaN(minAmt) || isNaN(maxAmt) || minAmt <= 0 || maxAmt <= 0 || minAmt >= maxAmt) {
       toast.error('Invalid amount range');
       return;
     }
 
+    const payload = {
+      seller_name: form.seller_name.trim(),
+      seller_avatar_url: form.seller_avatar_url.trim() || null,
+      min_amount: minAmt,
+      max_amount: maxAmt,
+      payment_method: 'USDT',
+      payment_address: form.payment_address.trim(),
+      payment_window_minutes: parseInt(form.payment_window_minutes) || 10,
+      trades_count: parseInt(form.trades_count) || 0,
+      avg_trading_time: form.avg_trading_time.trim() || '5 min',
+      likes_count: parseInt(form.likes_count) || 0,
+    };
+
     setIsSubmitting(true);
     try {
-      const { error } = await supabase.from('p2p_orders').insert({
-        seller_name: form.seller_name.trim(),
-        seller_avatar_url: form.seller_avatar_url.trim() || null,
-        min_amount: minAmt,
-        max_amount: maxAmt,
-        payment_method: 'USDT',
-        payment_address: form.payment_address.trim(),
-        payment_window_minutes: windowMins,
-      });
-
-      if (error) throw error;
-
-      toast.success('P2P order created');
-      setIsCreateOpen(false);
-      setForm({
-        seller_name: '',
-        seller_avatar_url: '',
-        min_amount: '',
-        max_amount: '',
-        payment_address: '',
-        payment_window_minutes: '10',
-      });
+      if (editingOrder) {
+        const { error } = await supabase
+          .from('p2p_orders')
+          .update(payload)
+          .eq('id', editingOrder.id);
+        if (error) throw error;
+        toast.success('Order updated');
+      } else {
+        const { error } = await supabase.from('p2p_orders').insert(payload);
+        if (error) throw error;
+        toast.success('Order created');
+      }
+      setIsDialogOpen(false);
+      setEditingOrder(null);
+      setForm(emptyForm);
       fetchOrders();
     } catch (error) {
       console.error(error);
-      toast.error('Failed to create order');
+      toast.error(editingOrder ? 'Failed to update' : 'Failed to create');
     } finally {
       setIsSubmitting(false);
     }
@@ -107,10 +142,8 @@ export const AdminP2POrderManager = () => {
       .from('p2p_orders')
       .update({ is_active: !order.is_active })
       .eq('id', order.id);
-
-    if (error) {
-      toast.error('Failed to update');
-    } else {
+    if (error) toast.error('Failed to update');
+    else {
       toast.success(order.is_active ? 'Order deactivated' : 'Order activated');
       fetchOrders();
     }
@@ -118,19 +151,20 @@ export const AdminP2POrderManager = () => {
 
   const deleteOrder = async (id: string) => {
     const { error } = await supabase.from('p2p_orders').delete().eq('id', id);
-    if (error) {
-      toast.error('Failed to delete');
-    } else {
+    if (error) toast.error('Failed to delete');
+    else {
       toast.success('Order deleted');
       fetchOrders();
     }
   };
 
+  const setField = (key: string, value: string) => setForm(f => ({ ...f, [key]: value }));
+
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold">P2P Orders</h3>
-        <Button size="sm" onClick={() => setIsCreateOpen(true)} className="gap-1">
+        <Button size="sm" onClick={openCreate} className="gap-1">
           <Plus className="w-3.5 h-3.5" />
           New Order
         </Button>
@@ -165,24 +199,17 @@ export const AdminP2POrderManager = () => {
                   </Badge>
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7"
-                    onClick={() => toggleActive(order)}
-                  >
+                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(order)}>
+                    <Pencil className="w-3.5 h-3.5" />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => toggleActive(order)}>
                     {order.is_active ? (
                       <ToggleRight className="w-4 h-4 text-success" />
                     ) : (
                       <ToggleLeft className="w-4 h-4 text-muted-foreground" />
                     )}
                   </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 text-destructive"
-                    onClick={() => deleteOrder(order.id)}
-                  >
+                  <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => deleteOrder(order.id)}>
                     <Trash2 className="w-3.5 h-3.5" />
                   </Button>
                 </div>
@@ -201,84 +228,84 @@ export const AdminP2POrderManager = () => {
                   <p className="font-medium truncate">{order.payment_address.slice(0, 10)}...</p>
                 </div>
               </div>
+              <div className="grid grid-cols-3 gap-2 text-[11px]">
+                <div>
+                  <span className="text-muted-foreground">Trades:</span>
+                  <p className="font-medium">{order.trades_count}</p>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Avg Time:</span>
+                  <p className="font-medium">{order.avg_trading_time}</p>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Likes:</span>
+                  <p className="font-medium">{order.likes_count}</p>
+                </div>
+              </div>
             </CardContent>
           </Card>
         ))
       )}
 
-      {/* Create Order Dialog */}
-      <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-        <DialogContent className="max-w-sm">
+      {/* Create / Edit Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="max-w-sm max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-base">Create P2P Order</DialogTitle>
+            <DialogTitle className="text-base">
+              {editingOrder ? 'Edit P2P Order' : 'Create P2P Order'}
+            </DialogTitle>
           </DialogHeader>
           <div className="space-y-3 py-2">
             <div className="space-y-1.5">
               <Label className="text-xs">Seller Name *</Label>
-              <Input
-                placeholder="e.g. CryptoKing"
-                value={form.seller_name}
-                onChange={(e) => setForm(f => ({ ...f, seller_name: e.target.value }))}
-                className="h-9 text-sm"
-              />
+              <Input placeholder="e.g. CryptoKing" value={form.seller_name} onChange={e => setField('seller_name', e.target.value)} className="h-9 text-sm" />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Seller Avatar URL</Label>
-              <Input
-                placeholder="https://..."
-                value={form.seller_avatar_url}
-                onChange={(e) => setForm(f => ({ ...f, seller_avatar_url: e.target.value }))}
-                className="h-9 text-sm"
-              />
+              <Input placeholder="https://..." value={form.seller_avatar_url} onChange={e => setField('seller_avatar_url', e.target.value)} className="h-9 text-sm" />
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div className="space-y-1.5">
                 <Label className="text-xs">Min Amount ($) *</Label>
-                <Input
-                  type="number"
-                  placeholder="50"
-                  value={form.min_amount}
-                  onChange={(e) => setForm(f => ({ ...f, min_amount: e.target.value }))}
-                  className="h-9 text-sm"
-                />
+                <Input type="number" placeholder="50" value={form.min_amount} onChange={e => setField('min_amount', e.target.value)} className="h-9 text-sm" />
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">Max Amount ($) *</Label>
-                <Input
-                  type="number"
-                  placeholder="1000"
-                  value={form.max_amount}
-                  onChange={(e) => setForm(f => ({ ...f, max_amount: e.target.value }))}
-                  className="h-9 text-sm"
-                />
+                <Input type="number" placeholder="1000" value={form.max_amount} onChange={e => setField('max_amount', e.target.value)} className="h-9 text-sm" />
               </div>
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Payment Address (USDT) *</Label>
-              <Input
-                placeholder="TRC20/ERC20 address"
-                value={form.payment_address}
-                onChange={(e) => setForm(f => ({ ...f, payment_address: e.target.value }))}
-                className="h-9 text-sm"
-              />
+              <Input placeholder="TRC20/ERC20 address" value={form.payment_address} onChange={e => setField('payment_address', e.target.value)} className="h-9 text-sm" />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Payment Window (minutes)</Label>
-              <Input
-                type="number"
-                placeholder="10"
-                value={form.payment_window_minutes}
-                onChange={(e) => setForm(f => ({ ...f, payment_window_minutes: e.target.value }))}
-                className="h-9 text-sm"
-              />
+              <Input type="number" placeholder="10" value={form.payment_window_minutes} onChange={e => setField('payment_window_minutes', e.target.value)} className="h-9 text-sm" />
+            </div>
+
+            {/* Authenticity Stats */}
+            <div className="border-t border-border/50 pt-3 mt-3">
+              <p className="text-xs font-semibold text-muted-foreground mb-2">Authenticity Stats</p>
+              <div className="grid grid-cols-3 gap-2">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Trades</Label>
+                  <Input type="number" placeholder="0" value={form.trades_count} onChange={e => setField('trades_count', e.target.value)} className="h-9 text-sm" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Avg Time</Label>
+                  <Input placeholder="5 min" value={form.avg_trading_time} onChange={e => setField('avg_trading_time', e.target.value)} className="h-9 text-sm" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Likes</Label>
+                  <Input type="number" placeholder="0" value={form.likes_count} onChange={e => setField('likes_count', e.target.value)} className="h-9 text-sm" />
+                </div>
+              </div>
             </div>
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" size="sm" onClick={() => setIsCreateOpen(false)}>
-              Cancel
-            </Button>
-            <Button size="sm" onClick={handleCreate} disabled={isSubmitting}>
-              {isSubmitting ? 'Creating...' : 'Create Order'}
+            <Button variant="outline" size="sm" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
+            <Button size="sm" onClick={handleSubmit} disabled={isSubmitting}>
+              {isSubmitting ? 'Saving...' : editingOrder ? 'Save Changes' : 'Create Order'}
             </Button>
           </DialogFooter>
         </DialogContent>
