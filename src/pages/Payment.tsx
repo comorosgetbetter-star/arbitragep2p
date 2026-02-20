@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, CreditCard, Wallet, Shield, Check, Copy, AlertCircle, Loader2 } from 'lucide-react';
+import { ArrowLeft, CreditCard, Wallet, Shield, Check, Copy, AlertCircle, Loader2, Lock, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -111,9 +111,20 @@ const readPaymentState = (sessionId: string): TradePaymentState | null => {
   }
 };
 
+// Check if this is a P2P order payment (forces crypto only)
+const isP2POrder = (): boolean => {
+  try {
+    const stored = localStorage.getItem('p2pOrderPayment');
+    return !!stored && !!JSON.parse(stored)?.paymentAddress;
+  } catch {
+    return false;
+  }
+};
+
 const Payment = () => {
   const navigate = useNavigate();
   const [packageData, setPackageData] = useState<PackageData | null>(null);
+  const [isP2P, setIsP2P] = useState(false);
   const { session: tradeSession, clearSession, getRemainingTime } = useTradeSession();
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(() => {
     const sid = readActiveTradeSessionId();
@@ -169,6 +180,9 @@ const Payment = () => {
         navigate('/login');
         return;
       }
+
+      // Detect if this is a P2P order
+      setIsP2P(isP2POrder());
 
       // Get selected package from trade session
       const storedPackage = localStorage.getItem('selectedPackage');
@@ -385,32 +399,43 @@ const Payment = () => {
             {/* Payment Methods */}
             <div className="glass-card rounded-2xl p-6">
               <h2 className="text-lg font-semibold mb-4">Payment Method</h2>
-              
-              <div className="grid grid-cols-2 gap-3 mb-6">
-                <button
-                  onClick={() => setPaymentMethod('card')}
-                  className={`p-4 rounded-xl border-2 transition-all ${
-                    paymentMethod === 'card' 
-                      ? 'border-primary bg-primary/10' 
-                      : 'border-border hover:border-primary/40'
-                  }`}
-                >
-                  <CreditCard className={`h-6 w-6 mx-auto mb-2 ${paymentMethod === 'card' ? 'text-primary' : 'text-muted-foreground'}`} />
-                  <p className="text-sm font-medium">Card</p>
-                </button>
-                
-                <button
-                  onClick={() => setPaymentMethod('crypto')}
-                  className={`p-4 rounded-xl border-2 transition-all ${
-                    paymentMethod === 'crypto' 
-                      ? 'border-primary bg-primary/10' 
-                      : 'border-border hover:border-primary/40'
-                  }`}
-                >
-                  <Wallet className={`h-6 w-6 mx-auto mb-2 ${paymentMethod === 'crypto' ? 'text-primary' : 'text-muted-foreground'}`} />
-                  <p className="text-sm font-medium">Crypto</p>
-                </button>
-              </div>
+
+              {/* P2P orders: crypto only — no method selector */}
+              {isP2P ? (
+                <div className="flex items-center gap-3 p-3 mb-6 rounded-xl border border-primary/30 bg-primary/5">
+                  <Wallet className="h-5 w-5 text-primary shrink-0" />
+                  <div>
+                    <p className="text-sm font-semibold text-primary">Crypto (USDT · TRC20)</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">This P2P trade is settled in USDT on the TRC20 network</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-3 mb-6">
+                  <button
+                    onClick={() => setPaymentMethod('card')}
+                    className={`p-4 rounded-xl border-2 transition-all ${
+                      paymentMethod === 'card'
+                        ? 'border-primary bg-primary/10'
+                        : 'border-border hover:border-primary/40'
+                    }`}
+                  >
+                    <CreditCard className={`h-6 w-6 mx-auto mb-2 ${paymentMethod === 'card' ? 'text-primary' : 'text-muted-foreground'}`} />
+                    <p className="text-sm font-medium">Card</p>
+                  </button>
+
+                  <button
+                    onClick={() => setPaymentMethod('crypto')}
+                    className={`p-4 rounded-xl border-2 transition-all ${
+                      paymentMethod === 'crypto'
+                        ? 'border-primary bg-primary/10'
+                        : 'border-border hover:border-primary/40'
+                    }`}
+                  >
+                    <Wallet className={`h-6 w-6 mx-auto mb-2 ${paymentMethod === 'crypto' ? 'text-primary' : 'text-muted-foreground'}`} />
+                    <p className="text-sm font-medium">Crypto</p>
+                  </button>
+                </div>
+              )}
 
               {/* Card Payment Form */}
               {paymentMethod === 'card' && (
@@ -469,10 +494,10 @@ const Payment = () => {
                     <AlertCircle className="h-5 w-5 text-warning shrink-0" />
                     <div className="flex-1">
                       <p className="text-sm font-medium text-warning">
-                        Copy the address below and complete the payment within 10 minutes
+                        Send USDT to the address below within the allotted time
                       </p>
                       <p className="text-xs text-warning/80 mt-1">
-                        Mark as paid only after you've completed the payment
+                        Once payment is sent, tap <strong>Mark as Paid</strong> and our system will verify the transaction automatically.
                       </p>
                     </div>
                   </div>
@@ -484,8 +509,39 @@ const Payment = () => {
                       {formatTime(timeRemaining)}
                     </p>
                     {timeRemaining <= 0 && (
-                      <p className="text-xs text-destructive mt-2">Time expired. Please refresh to get a new address.</p>
+                      <p className="text-xs text-destructive mt-2">Time expired. Please go back and start a new trade.</p>
                     )}
+                  </div>
+
+                  {/* Escrow notice — P2P only */}
+                  {isP2P && (
+                    <div className="flex items-start gap-3 p-4 rounded-xl border border-primary/20 bg-primary/5">
+                      <Lock className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-semibold text-primary">Funds Held in Escrow</p>
+                        <p className="text-xs text-muted-foreground leading-relaxed mt-1">
+                          The seller's USDT is locked in escrow for this trade. Once your payment is confirmed on-chain, the funds will be automatically released and credited to your wallet — no manual action required from the seller.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Step-by-step instructions */}
+                  <div className="rounded-xl border border-border bg-muted/20 p-4 space-y-3">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">How it works</p>
+                    {[
+                      { step: '1', text: 'Copy the USDT (TRC20) address below.' },
+                      { step: '2', text: 'Send the exact USDT amount from your wallet.' },
+                      { step: '3', text: 'Return here and tap "Mark as Paid".' },
+                      { step: '4', text: isP2P ? 'Our system verifies the transaction and credits your wallet automatically.' : 'Our system verifies the transaction on the blockchain.' },
+                    ].map(({ step, text }) => (
+                      <div key={step} className="flex items-start gap-3">
+                        <div className="w-5 h-5 rounded-full bg-primary/10 text-primary text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">
+                          {step}
+                        </div>
+                        <p className="text-xs text-muted-foreground leading-relaxed">{text}</p>
+                      </div>
+                    ))}
                   </div>
 
                   {/* USDT Address */}
@@ -495,7 +551,7 @@ const Payment = () => {
                       <code className="text-sm font-mono flex-1 break-all">
                         {depositAddress}
                       </code>
-                      <button 
+                      <button
                         onClick={() => copyToClipboard(depositAddress)}
                         className="p-2 hover:bg-secondary rounded-lg transition-colors"
                       >
@@ -517,11 +573,20 @@ const Payment = () => {
                         title="Searching on the blockchain..."
                         subtitle="Verifying your transaction"
                       />
+                      {isP2P && (
+                        <div className="flex items-center gap-2 justify-center">
+                          <CheckCircle2 className="h-4 w-4 text-success" />
+                          <p className="text-xs text-success font-medium">
+                            Balance will be credited to your wallet upon confirmation
+                          </p>
+                        </div>
+                      )}
                       <p className="text-xs text-muted-foreground text-center">
                         This may take up to 2 minutes
                       </p>
                     </div>
                   )}
+
 
                   {/* Verification Failed */}
                   {verificationFailed && (
