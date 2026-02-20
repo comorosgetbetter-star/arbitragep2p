@@ -22,6 +22,8 @@ function generateOTP(): string {
   return otp
 }
 
+const LOGO_URL = 'https://hywqedthwvuiftmfmkjs.supabase.co/storage/v1/object/public/email-assets/logo.png'
+
 function getEmailHTML(code: string, fullName: string): string {
   return `
 <!DOCTYPE html>
@@ -37,9 +39,17 @@ function getEmailHTML(code: string, fullName: string): string {
       <td align="center">
         <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="background-color:#111827;border-radius:16px;overflow:hidden;border:1px solid #1f2937;">
           <tr>
-            <td style="padding:32px 40px 24px;text-align:center;border-bottom:1px solid #1f2937;">
-              <img src="https://arbitragep2p.lovable.app/logo.png" alt="ArbitrageP2P" width="48" height="48" style="display:inline-block;vertical-align:middle;margin-right:12px;" />
-              <span style="font-size:24px;font-weight:700;color:#ffffff;vertical-align:middle;">ArbitrageP2P</span>
+            <td style="padding:28px 40px 24px;text-align:center;border-bottom:1px solid #1f2937;">
+              <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto;">
+                <tr>
+                  <td style="vertical-align:middle;padding-right:10px;">
+                    <img src="${LOGO_URL}" alt="ArbitrageP2P" width="38" height="38" style="display:block;border-radius:8px;border:0;" />
+                  </td>
+                  <td style="vertical-align:middle;">
+                    <span style="font-size:22px;font-weight:700;color:#ffffff;letter-spacing:-0.3px;line-height:1;">ArbitrageP2P</span>
+                  </td>
+                </tr>
+              </table>
             </td>
           </tr>
           <tr>
