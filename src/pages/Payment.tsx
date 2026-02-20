@@ -358,311 +358,261 @@ const Payment = () => {
     <div className="min-h-screen bg-background animate-fade-in">
       {/* Header */}
       <header className="border-b border-border/50 bg-card/50 backdrop-blur-xl sticky top-0 z-50 transition-colors">
-        <div className="container mx-auto px-4 h-16 flex items-center">
+        <div className="container mx-auto px-4 h-14 flex items-center">
           <Link to="/" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors group">
             <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
-            <span className="text-sm font-medium">Back to Home</span>
+            <span className="text-sm font-medium">Back</span>
           </Link>
+          {isP2P && (
+            <div className="ml-auto flex items-center gap-1.5 text-xs text-success font-medium">
+              <Lock className="h-3.5 w-3.5" />
+              Funds in Escrow
+            </div>
+          )}
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-12">
-        <div className="max-w-2xl mx-auto animate-slide-up">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-display font-bold mb-2">Complete Payment</h1>
-            <p className="text-muted-foreground">
-              Choose your preferred payment method to complete the purchase
-            </p>
-          </div>
+      <main className="container mx-auto px-4 py-6">
+        <div className="max-w-lg mx-auto animate-slide-up space-y-4">
 
-          <div className="grid gap-6">
-            {/* Order Summary */}
-            <div className="glass-card rounded-2xl p-6">
-              <h2 className="text-lg font-semibold mb-4">Order Summary</h2>
-              <div className="flex items-center justify-between py-3 border-b border-border/50">
-                <span className="text-muted-foreground">Package</span>
-                <span className="font-medium">
-                  {packageData.isCustom ? 'Custom Package' : 'Express P2P Package'}
-                </span>
-              </div>
-              <div className="flex items-center justify-between py-3 border-b border-border/50">
-                <span className="text-muted-foreground">You Pay</span>
-                <span className="font-display font-bold text-lg">${packageData.usd.toLocaleString()}</span>
-              </div>
-              <div className="flex items-center justify-between py-3">
-                <span className="text-muted-foreground">You Receive</span>
-                <span className="font-display font-bold text-lg text-primary">{packageData.usdt.toLocaleString()} USDT</span>
-              </div>
-            </div>
-
-            {/* Payment Methods */}
-            <div className="glass-card rounded-2xl p-6">
-              <h2 className="text-lg font-semibold mb-4">Payment Method</h2>
-
-              {/* P2P orders: crypto only — no method selector */}
-              {isP2P ? (
-                <div className="flex items-center gap-3 p-3 mb-6 rounded-xl border border-primary/30 bg-primary/5">
-                  <Wallet className="h-5 w-5 text-primary shrink-0" />
-                  <div>
-                    <p className="text-sm font-semibold text-primary">Crypto (USDT · TRC20)</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">This P2P trade is settled in USDT on the TRC20 network</p>
-                  </div>
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 gap-3 mb-6">
-                  <button
-                    onClick={() => setPaymentMethod('card')}
-                    className={`p-4 rounded-xl border-2 transition-all ${
-                      paymentMethod === 'card'
-                        ? 'border-primary bg-primary/10'
-                        : 'border-border hover:border-primary/40'
-                    }`}
-                  >
-                    <CreditCard className={`h-6 w-6 mx-auto mb-2 ${paymentMethod === 'card' ? 'text-primary' : 'text-muted-foreground'}`} />
-                    <p className="text-sm font-medium">Card</p>
-                  </button>
-
-                  <button
-                    onClick={() => setPaymentMethod('crypto')}
-                    className={`p-4 rounded-xl border-2 transition-all ${
-                      paymentMethod === 'crypto'
-                        ? 'border-primary bg-primary/10'
-                        : 'border-border hover:border-primary/40'
-                    }`}
-                  >
-                    <Wallet className={`h-6 w-6 mx-auto mb-2 ${paymentMethod === 'crypto' ? 'text-primary' : 'text-muted-foreground'}`} />
-                    <p className="text-sm font-medium">Crypto</p>
-                  </button>
-                </div>
-              )}
-
-              {/* Card Payment Form */}
-              {paymentMethod === 'card' && (
-                <div className="space-y-4">
-                  {isCardProcessing ? (
-                    <div className="bg-secondary/50 rounded-xl p-8 text-center space-y-4">
-                      <Loader2 className="h-12 w-12 text-primary animate-spin mx-auto" />
-                      <div>
-                        <p className="text-lg font-medium">Processing your payment...</p>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          Please wait while we verify your transaction
-                        </p>
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                      {cardPaymentFailed && (
-                        <div className="flex items-center gap-3 p-4 bg-destructive/10 rounded-xl border border-destructive/20 mb-4">
-                          <AlertCircle className="h-5 w-5 text-destructive shrink-0" />
-                          <div>
-                            <p className="text-sm font-medium text-destructive">Something went wrong</p>
-                            <p className="text-xs text-destructive/80 mt-1">
-                              We couldn't process your payment. Please check your card details and try again.
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                      <div className="space-y-2">
-                        <Label>Card Number</Label>
-                        <Input placeholder="1234 5678 9012 3456" disabled={isCardProcessing} />
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label>Expiry Date</Label>
-                          <Input placeholder="MM/YY" disabled={isCardProcessing} />
-                        </div>
-                        <div className="space-y-2">
-                          <Label>CVV</Label>
-                          <Input placeholder="123" type="password" disabled={isCardProcessing} />
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Cardholder Name</Label>
-                        <Input placeholder="John Doe" disabled={isCardProcessing} />
-                      </div>
-                    </>
-                  )}
-                </div>
-              )}
-
-              {/* Crypto Payment */}
-              {paymentMethod === 'crypto' && (
-                <div className="space-y-4">
-                  {/* Timer and Instructions */}
-                  <div className="flex items-center gap-2 p-4 bg-warning/10 rounded-xl border border-warning/20">
-                    <AlertCircle className="h-5 w-5 text-warning shrink-0" />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-warning">
-                        Send USDT to the address below within the allotted time
-                      </p>
-                      <p className="text-xs text-warning/80 mt-1">
-                        Once payment is sent, tap <strong>Mark as Paid</strong> and our system will verify the transaction automatically.
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Countdown Timer */}
-                  <div className="text-center p-4 bg-secondary/50 rounded-xl">
-                    <p className="text-xs text-muted-foreground mb-1">Time Remaining</p>
-                    <p className={`text-3xl font-display font-bold ${timeRemaining <= 60 ? 'text-destructive' : 'text-primary'}`}>
-                      {formatTime(timeRemaining)}
-                    </p>
-                    {timeRemaining <= 0 && (
-                      <p className="text-xs text-destructive mt-2">Time expired. Please go back and start a new trade.</p>
-                    )}
-                  </div>
-
-                  {/* Escrow notice — P2P only */}
-                  {isP2P && (
-                    <div className="flex items-start gap-3 p-4 rounded-xl border border-primary/20 bg-primary/5">
-                      <Lock className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                      <div>
-                        <p className="text-sm font-semibold text-primary">Funds Held in Escrow</p>
-                        <p className="text-xs text-muted-foreground leading-relaxed mt-1">
-                          The seller's USDT is locked in escrow for this trade. Once your payment is confirmed on-chain, the funds will be automatically released and credited to your wallet — no manual action required from the seller.
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Step-by-step instructions */}
-                  <div className="rounded-xl border border-border bg-muted/20 p-4 space-y-3">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">How it works</p>
-                    {[
-                      { step: '1', text: 'Copy the USDT (TRC20) address below.' },
-                      { step: '2', text: 'Send the exact USDT amount from your wallet.' },
-                      { step: '3', text: 'Return here and tap "Mark as Paid".' },
-                      { step: '4', text: isP2P ? 'Our system verifies the transaction and credits your wallet automatically.' : 'Our system verifies the transaction on the blockchain.' },
-                    ].map(({ step, text }) => (
-                      <div key={step} className="flex items-start gap-3">
-                        <div className="w-5 h-5 rounded-full bg-primary/10 text-primary text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">
-                          {step}
-                        </div>
-                        <p className="text-xs text-muted-foreground leading-relaxed">{text}</p>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* USDT Address */}
-                  <div className="bg-secondary/50 rounded-xl p-4">
-                    <p className="text-sm text-muted-foreground mb-3">Send USDT (TRC20) to:</p>
-                    <div className="flex items-center gap-2 bg-background/50 rounded-lg p-3">
-                      <code className="text-sm font-mono flex-1 break-all">
-                        {depositAddress}
-                      </code>
-                      <button
-                        onClick={() => copyToClipboard(depositAddress)}
-                        className="p-2 hover:bg-secondary rounded-lg transition-colors"
-                      >
-                        <Copy className="h-4 w-4" />
-                      </button>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-3">
-                      Amount to send: <span className="font-bold text-primary">${packageData.usd.toLocaleString()} USDT</span>
-                    </p>
-                  </div>
-
-                  {/* Verification Status */}
-                  {isVerifying && (
-                    <div className="bg-secondary/50 rounded-xl p-8 space-y-4">
-                      <CircularLoader
-                        size={100}
-                        strokeWidth={5}
-                        showPulse={true}
-                        title="Searching on the blockchain..."
-                        subtitle="Verifying your transaction"
-                      />
-                      {isP2P && (
-                        <div className="flex items-center gap-2 justify-center">
-                          <CheckCircle2 className="h-4 w-4 text-success" />
-                          <p className="text-xs text-success font-medium">
-                            Balance will be credited to your wallet upon confirmation
-                          </p>
-                        </div>
-                      )}
-                      <p className="text-xs text-muted-foreground text-center">
-                        This may take up to 2 minutes
-                      </p>
-                    </div>
-                  )}
-
-
-                  {/* Verification Failed */}
-                  {verificationFailed && (
-                    <div className="flex items-center gap-3 p-4 bg-destructive/10 rounded-xl border border-destructive/20">
-                      <AlertCircle className="h-5 w-5 text-destructive shrink-0" />
-                      <div>
-                        <p className="text-sm font-medium text-destructive">Payment not confirmed</p>
-                        <p className="text-xs text-destructive/80 mt-1">
-                          We couldn't find your transaction on the blockchain. Please verify you sent to the correct address and try again.
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Mark as Paid Button - show when not verifying and timer active */}
-                  {!isVerifying && !verificationFailed && timeRemaining > 0 && (
-                    <Button 
-                      variant="glow" 
-                      size="lg" 
-                      className="w-full"
-                      onClick={handleMarkAsPaid}
-                    >
-                      <Check className="h-4 w-4 mr-2" />
-                      Mark as Paid
-                    </Button>
-                  )}
-
-                  {/* After verification failed - show actions */}
-                  {verificationFailed && (
-                    <div className="flex flex-col gap-3">
-                      <Button 
-                        variant="glow" 
-                        size="lg" 
-                        className="w-full"
-                        onClick={() => navigate('/')}
-                      >
-                        Start New Trade
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="lg" 
-                        className="w-full"
-                        onClick={() => navigate('/')}
-                      >
-                        Go Back to Home
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Security Notice */}
-            <div className="flex items-center gap-3 p-4 bg-muted/30 rounded-xl">
-              <Shield className="h-5 w-5 text-primary shrink-0" />
-              <p className="text-xs text-muted-foreground">
-                All transactions are secured with 256-bit SSL encryption. Your payment information is never stored on our servers.
-              </p>
-            </div>
-
-            {/* Submit Button - Only for Card */}
-            {paymentMethod === 'card' && !isCardProcessing && (
-              <Button 
-                variant="glow" 
-                size="xl" 
-                className="w-full"
-                onClick={handlePayment}
-                disabled={isCardProcessing}
-              >
-                {cardPaymentFailed 
-                  ? 'Try Again'
-                  : `Pay $${packageData.usd.toLocaleString()} & Receive ${packageData.usdt.toLocaleString()} USDT`
-                }
-              </Button>
+          {/* Compact page title */}
+          <div>
+            <h1 className="text-xl font-display font-bold">Complete Payment</h1>
+            {isP2P && (
+              <p className="text-xs text-muted-foreground mt-0.5">P2P Trade · USDT TRC20 · Escrow Protected</p>
             )}
           </div>
+
+          {/* Order Summary — compact single card */}
+          <div className="glass-card rounded-xl p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-center flex-1">
+                <p className="text-[11px] text-muted-foreground uppercase tracking-wide mb-0.5">You Pay</p>
+                <p className="font-display font-bold text-base">${packageData.usd.toLocaleString()}</p>
+              </div>
+              <div className="text-muted-foreground text-lg">→</div>
+              <div className="text-center flex-1">
+                <p className="text-[11px] text-muted-foreground uppercase tracking-wide mb-0.5">You Receive</p>
+                <p className="font-display font-bold text-base text-primary">{packageData.usdt.toLocaleString()} USDT</p>
+              </div>
+              <div className="text-muted-foreground text-lg">·</div>
+              <div className="text-center flex-1">
+                <p className="text-[11px] text-muted-foreground uppercase tracking-wide mb-0.5">Profit</p>
+                <p className="font-display font-bold text-base text-success">+{(packageData.usdt - packageData.usd).toLocaleString()} USDT</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Payment Method Card */}
+          <div className="glass-card rounded-xl p-4">
+
+            {/* P2P: crypto-only badge */}
+            {isP2P ? (
+              <div className="flex items-center gap-2 p-2.5 mb-4 rounded-lg border border-primary/30 bg-primary/5">
+                <Wallet className="h-4 w-4 text-primary shrink-0" />
+                <p className="text-xs font-semibold text-primary">Crypto · USDT TRC20 only</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                <button
+                  onClick={() => setPaymentMethod('card')}
+                  className={`p-3 rounded-xl border-2 transition-all ${
+                    paymentMethod === 'card'
+                      ? 'border-primary bg-primary/10'
+                      : 'border-border hover:border-primary/40'
+                  }`}
+                >
+                  <CreditCard className={`h-5 w-5 mx-auto mb-1 ${paymentMethod === 'card' ? 'text-primary' : 'text-muted-foreground'}`} />
+                  <p className="text-xs font-medium">Card</p>
+                </button>
+                <button
+                  onClick={() => setPaymentMethod('crypto')}
+                  className={`p-3 rounded-xl border-2 transition-all ${
+                    paymentMethod === 'crypto'
+                      ? 'border-primary bg-primary/10'
+                      : 'border-border hover:border-primary/40'
+                  }`}
+                >
+                  <Wallet className={`h-5 w-5 mx-auto mb-1 ${paymentMethod === 'crypto' ? 'text-primary' : 'text-muted-foreground'}`} />
+                  <p className="text-xs font-medium">Crypto</p>
+                </button>
+              </div>
+            )}
+
+            {/* Card Payment Form */}
+            {paymentMethod === 'card' && (
+              <div className="space-y-4">
+                {isCardProcessing ? (
+                  <div className="bg-secondary/50 rounded-xl p-8 text-center space-y-4">
+                    <Loader2 className="h-12 w-12 text-primary animate-spin mx-auto" />
+                    <div>
+                      <p className="text-lg font-medium">Processing your payment...</p>
+                      <p className="text-sm text-muted-foreground mt-1">Please wait while we verify your transaction</p>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    {cardPaymentFailed && (
+                      <div className="flex items-center gap-3 p-4 bg-destructive/10 rounded-xl border border-destructive/20 mb-4">
+                        <AlertCircle className="h-5 w-5 text-destructive shrink-0" />
+                        <div>
+                          <p className="text-sm font-medium text-destructive">Something went wrong</p>
+                          <p className="text-xs text-destructive/80 mt-1">We couldn't process your payment. Please check your card details and try again.</p>
+                        </div>
+                      </div>
+                    )}
+                    <div className="space-y-2">
+                      <Label>Card Number</Label>
+                      <Input placeholder="1234 5678 9012 3456" disabled={isCardProcessing} />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Expiry Date</Label>
+                        <Input placeholder="MM/YY" disabled={isCardProcessing} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>CVV</Label>
+                        <Input placeholder="123" type="password" disabled={isCardProcessing} />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Cardholder Name</Label>
+                      <Input placeholder="John Doe" disabled={isCardProcessing} />
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* Crypto Payment */}
+            {paymentMethod === 'crypto' && (
+              <div className="space-y-3">
+
+                {/* Timer + instruction row */}
+                <div className="flex items-center gap-3 p-3 rounded-xl border border-warning/20 bg-warning/5">
+                  <div className="text-center shrink-0">
+                    <p className="text-[10px] text-warning/70 uppercase tracking-wide">Time left</p>
+                    <p className={`text-xl font-display font-bold leading-none mt-0.5 ${timeRemaining <= 60 ? 'text-destructive' : 'text-warning'}`}>
+                      {formatTime(timeRemaining)}
+                    </p>
+                  </div>
+                  <div className="w-px h-8 bg-warning/20 shrink-0" />
+                  <p className="text-xs text-warning/90 leading-relaxed">
+                    Send USDT to the address below, then tap <strong>Mark as Paid</strong>. Our system verifies the transaction and{isP2P ? ' automatically credits your wallet.' : ' confirms on the blockchain.'}
+                  </p>
+                </div>
+
+                {timeRemaining <= 0 && (
+                  <p className="text-xs text-destructive text-center">Time expired. Please go back and start a new trade.</p>
+                )}
+
+                {/* Escrow notice — compact, P2P only */}
+                {isP2P && (
+                  <div className="flex items-center gap-2 p-2.5 rounded-lg border border-success/20 bg-success/5">
+                    <Lock className="h-3.5 w-3.5 text-success shrink-0" />
+                    <p className="text-xs text-success font-medium">Seller's funds locked in escrow — released automatically upon on-chain confirmation</p>
+                  </div>
+                )}
+
+                {/* Steps — minimal horizontal strip */}
+                <div className="flex items-center gap-1 px-1">
+                  {[
+                    'Copy address',
+                    'Send USDT',
+                    'Mark as Paid',
+                    isP2P ? 'Balance credited' : 'Blockchain confirmed',
+                  ].map((label, i) => (
+                    <div key={i} className="flex items-center gap-1 flex-1 min-w-0">
+                      <div className="w-4 h-4 rounded-full bg-primary/10 text-primary text-[9px] font-bold flex items-center justify-center shrink-0">{i + 1}</div>
+                      <p className="text-[10px] text-muted-foreground truncate">{label}</p>
+                      {i < 3 && <div className="w-2 h-px bg-border shrink-0" />}
+                    </div>
+                  ))}
+                </div>
+
+                {/* USDT Address */}
+                <div className="bg-secondary/50 rounded-xl p-3">
+                  <p className="text-[11px] text-muted-foreground mb-2 uppercase tracking-wide">Send USDT (TRC20) to:</p>
+                  <div className="flex items-center gap-2 bg-background/50 rounded-lg p-2.5">
+                    <code className="text-xs font-mono flex-1 break-all leading-relaxed">{depositAddress}</code>
+                    <button
+                      onClick={() => copyToClipboard(depositAddress)}
+                      className="p-1.5 hover:bg-secondary rounded-lg transition-colors shrink-0"
+                    >
+                      <Copy className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground mt-2">
+                    Amount: <span className="font-bold text-primary">${packageData.usd.toLocaleString()} USDT</span>
+                  </p>
+                </div>
+
+                {/* Verification Status */}
+                {isVerifying && (
+                  <div className="bg-secondary/50 rounded-xl p-6 space-y-3">
+                    <CircularLoader
+                      size={80}
+                      strokeWidth={4}
+                      showPulse={true}
+                      title="Searching on the blockchain..."
+                      subtitle="Verifying your transaction"
+                    />
+                    {isP2P && (
+                      <div className="flex items-center gap-2 justify-center">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-success" />
+                        <p className="text-xs text-success font-medium">Balance will be credited automatically upon confirmation</p>
+                      </div>
+                    )}
+                    <p className="text-xs text-muted-foreground text-center">This may take up to 2 minutes</p>
+                  </div>
+                )}
+
+                {/* Verification Failed */}
+                {verificationFailed && (
+                  <div className="flex items-center gap-3 p-3 bg-destructive/10 rounded-xl border border-destructive/20">
+                    <AlertCircle className="h-4 w-4 text-destructive shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium text-destructive">Payment not confirmed</p>
+                      <p className="text-xs text-destructive/80 mt-0.5">We couldn't find your transaction. Verify you sent to the correct address and try again.</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Mark as Paid */}
+                {!isVerifying && !verificationFailed && timeRemaining > 0 && (
+                  <Button variant="glow" size="lg" className="w-full" onClick={handleMarkAsPaid}>
+                    <Check className="h-4 w-4 mr-2" />
+                    Mark as Paid
+                  </Button>
+                )}
+
+                {/* After failure actions */}
+                {verificationFailed && (
+                  <div className="flex gap-3">
+                    <Button variant="glow" size="sm" className="flex-1" onClick={() => navigate('/')}>Start New Trade</Button>
+                    <Button variant="outline" size="sm" className="flex-1" onClick={() => navigate('/')}>Go Home</Button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Security Notice — compact */}
+          <div className="flex items-center gap-2 px-1">
+            <Shield className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+            <p className="text-[11px] text-muted-foreground">256-bit SSL encrypted · Payment info never stored</p>
+          </div>
+
+          {/* Submit Button — Card only */}
+          {paymentMethod === 'card' && !isCardProcessing && (
+            <Button variant="glow" size="xl" className="w-full" onClick={handlePayment} disabled={isCardProcessing}>
+              {cardPaymentFailed
+                ? 'Try Again'
+                : `Pay $${packageData.usd.toLocaleString()} & Receive ${packageData.usdt.toLocaleString()} USDT`}
+            </Button>
+          )}
+
         </div>
       </main>
     </div>
