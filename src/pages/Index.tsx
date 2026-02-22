@@ -54,7 +54,7 @@ const Index = () => {
               <Button
                 variant={activeTab === 'express' ? 'default' : 'outline'}
                 onClick={() => setActiveTab('express')}
-                className="gap-2"
+                className="gap-2 w-44 justify-center"
               >
                 <Zap className="h-4 w-4" />
                 P2P Express Rates
@@ -62,7 +62,7 @@ const Index = () => {
               <Button
                 variant={activeTab === 'orders' ? 'default' : 'outline'}
                 onClick={() => setActiveTab('orders')}
-                className="gap-2"
+                className="gap-2 w-44 justify-center"
               >
                 <ShoppingBag className="h-4 w-4" />
                 P2P Orders
