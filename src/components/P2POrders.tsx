@@ -206,7 +206,7 @@ export const P2POrders = () => {
           <div className="grid grid-cols-3 gap-3 mb-4">
             <div>
               <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Amount Range</p>
-              <p className="font-display font-bold text-sm">
+              <p className="font-display font-bold text-sm whitespace-nowrap">
                 ${order.min_amount.toLocaleString()} – ${order.max_amount.toLocaleString()}
               </p>
             </div>
