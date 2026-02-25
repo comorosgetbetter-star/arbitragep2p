@@ -178,12 +178,12 @@ export const WalletDropdown = ({ isOpen, onClose, onAddFunds }: WalletDropdownPr
               <p className="text-sm text-muted-foreground mb-1">USDT Balance</p>
               <div className="flex items-baseline gap-2">
                 <span className="text-3xl font-display font-bold text-foreground">
-                  {balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                  {balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </span>
                 <span className="text-muted-foreground">USDT</span>
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                ≈ ${balance.toLocaleString('en-US', { minimumFractionDigits: 2 })} USD
+                ≈ ${balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
               </p>
             </div>
 
@@ -288,7 +288,7 @@ export const WalletDropdown = ({ isOpen, onClose, onAddFunds }: WalletDropdownPr
                           <p className={`text-sm font-semibold ${
                             item.type === 'deposit' ? 'text-success' : 'text-foreground'
                           }`}>
-                            {item.type === 'deposit' ? '+' : '-'}{item.amount} USDT
+                            {item.type === 'deposit' ? '+' : '-'}{item.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT
                           </p>
                           {item.type === 'withdrawal' && item.status === 'failed' && !hasOpenTicket ? (
                             <button
@@ -333,7 +333,7 @@ export const WalletDropdown = ({ isOpen, onClose, onAddFunds }: WalletDropdownPr
               </button>
               <h3 className="text-lg font-display font-semibold">Withdraw USDT</h3>
               <p className="text-sm text-muted-foreground">
-                Available: {balance.toLocaleString()} USDT
+                Available: {balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT
               </p>
             </div>
 
