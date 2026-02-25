@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowUpRight, History, Copy, Check, ChevronRight, Plus, Wallet, Clock, XCircle, CheckCircle2, Send, MessageSquare } from 'lucide-react';
+import { ArrowUpRight, ArrowDownLeft, History, Copy, Check, ChevronRight, Plus, Wallet, Clock, XCircle, CheckCircle2, Send, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -37,7 +37,7 @@ interface Withdrawal {
 
 export const WalletDropdown = ({ isOpen, onClose, onAddFunds }: WalletDropdownProps) => {
   const { user } = useAuth();
-  const { balance, withdrawals } = useUserData();
+  const { balance, withdrawals, deposits } = useUserData();
   const [view, setView] = useState<'main' | 'withdraw' | 'support'>('main');
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [walletAddress, setWalletAddress] = useState('');
@@ -208,65 +208,116 @@ export const WalletDropdown = ({ isOpen, onClose, onAddFunds }: WalletDropdownPr
               </Button>
             </div>
 
-            {/* Recent Withdrawals */}
+            {/* Recent Activity */}
             <div className="p-4">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-sm font-medium flex items-center gap-2">
                   <History className="h-4 w-4 text-muted-foreground" />
-                  Recent Withdrawals
+                  Recent Activity
                 </span>
               </div>
               
-              {withdrawals.length === 0 ? (
-                <div className="text-center py-6">
-                  <div className="w-12 h-12 rounded-xl bg-muted/50 flex items-center justify-center mx-auto mb-3">
-                    <Wallet className="h-6 w-6 text-muted-foreground" />
-                  </div>
-                  <p className="text-sm text-muted-foreground">No withdrawals yet</p>
-                  <p className="text-xs text-muted-foreground mt-1">Add funds to get started</p>
-                </div>
-              ) : (
-                <div className="space-y-2 max-h-48 overflow-y-auto">
-                  {withdrawals.map((w) => (
-                    <div 
-                      key={w.id}
-                      className="flex items-center justify-between p-3 rounded-lg bg-secondary/50"
-                    >
-                      <div className="flex items-center gap-2">
-                        {getStatusIcon(w.status)}
-                        <div>
-                          <p className="text-sm font-medium">{w.amount} USDT</p>
-                          <p className="text-xs text-muted-foreground">{w.network.toUpperCase()}</p>
+              {(() => {
+                // Merge deposits and withdrawals into a single sorted list
+                const activities = [
+                  ...deposits.map(d => ({
+                    id: d.id,
+                    type: 'deposit' as const,
+                    amount: d.amount,
+                    status: 'approved',
+                    created_at: d.created_at,
+                    network: '',
+                    reason: d.reason,
+                  })),
+                  ...withdrawals.map(w => ({
+                    id: w.id,
+                    type: 'withdrawal' as const,
+                    amount: w.amount,
+                    status: w.status,
+                    created_at: w.created_at,
+                    network: w.network,
+                    reason: null,
+                  })),
+                ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 10);
+
+                if (activities.length === 0) {
+                  return (
+                    <div className="text-center py-6">
+                      <div className="w-12 h-12 rounded-xl bg-muted/50 flex items-center justify-center mx-auto mb-3">
+                        <Wallet className="h-6 w-6 text-muted-foreground" />
+                      </div>
+                      <p className="text-sm text-muted-foreground">No activity yet</p>
+                      <p className="text-xs text-muted-foreground mt-1">Add funds to get started</p>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                    {activities.map((item) => (
+                      <div 
+                        key={item.id}
+                        className="flex items-center justify-between p-3 rounded-lg bg-secondary/50"
+                      >
+                        <div className="flex items-center gap-2.5">
+                          {item.type === 'deposit' ? (
+                            <div className="w-8 h-8 rounded-full bg-success/15 flex items-center justify-center">
+                              <ArrowDownLeft className="h-4 w-4 text-success" />
+                            </div>
+                          ) : (
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                              item.status === 'approved' ? 'bg-success/15' :
+                              item.status === 'pending' ? 'bg-warning/15' : 'bg-destructive/15'
+                            }`}>
+                              <ArrowUpRight className={`h-4 w-4 ${
+                                item.status === 'approved' ? 'text-success' :
+                                item.status === 'pending' ? 'text-warning' : 'text-destructive'
+                              }`} />
+                            </div>
+                          )}
+                          <div>
+                            <p className="text-sm font-medium">
+                              {item.type === 'deposit' ? 'Deposit' : 'Withdrawal'}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {item.type === 'withdrawal' && item.network ? item.network.toUpperCase() : 'USDT'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className={`text-sm font-semibold ${
+                            item.type === 'deposit' ? 'text-success' : 'text-foreground'
+                          }`}>
+                            {item.type === 'deposit' ? '+' : '-'}{item.amount} USDT
+                          </p>
+                          {item.type === 'withdrawal' && item.status === 'failed' && !hasOpenTicket ? (
+                            <button
+                              onClick={() => {
+                                setSupportCategory('Withdrawal Problems');
+                                setView('support');
+                              }}
+                              className="text-xs text-primary hover:underline mt-0.5"
+                            >
+                              Contact Support
+                            </button>
+                          ) : (
+                            <p className={`text-xs ${
+                              item.type === 'withdrawal' && item.status === 'pending' ? 'text-warning' :
+                              item.type === 'withdrawal' && (item.status === 'failed' || item.status === 'expired') ? 'text-destructive' :
+                              'text-muted-foreground'
+                            }`}>
+                              {item.type === 'withdrawal' && item.status === 'pending' ? 'Processing' :
+                               item.type === 'withdrawal' && item.status === 'failed' ? 'Failed' :
+                               item.type === 'withdrawal' && item.status === 'expired' ? 'Expired' :
+                               new Date(item.created_at).toLocaleDateString()}
+                            </p>
+                          )}
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className={`text-xs font-medium capitalize ${
-                          w.status === 'approved' ? 'text-success' : 
-                          w.status === 'pending' ? 'text-warning' : 'text-destructive'
-                        }`}>
-                          {getStatusLabel(w.status)}
-                        </p>
-                        {w.status === 'failed' && !hasOpenTicket && (
-                          <button
-                            onClick={() => {
-                              setSupportCategory('Withdrawal Problems');
-                              setView('support');
-                            }}
-                            className="text-xs text-primary hover:underline mt-0.5"
-                          >
-                            Contact Support
-                          </button>
-                        )}
-                        {w.status !== 'failed' && (
-                          <p className="text-xs text-muted-foreground">
-                            {new Date(w.created_at).toLocaleDateString()}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+                    ))}
+                  </div>
+                );
+              })()}
             </div>
           </>
         ) : view === 'withdraw' ? (

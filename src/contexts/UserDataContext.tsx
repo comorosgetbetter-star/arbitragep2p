@@ -10,20 +10,31 @@ interface Withdrawal {
   network: string;
 }
 
+interface Deposit {
+  id: string;
+  amount: number;
+  reason: string | null;
+  created_at: string;
+}
+
 interface UserDataContextType {
   balance: number;
   withdrawals: Withdrawal[];
+  deposits: Deposit[];
   isLoading: boolean;
   refetchBalance: () => Promise<void>;
   refetchWithdrawals: () => Promise<void>;
+  refetchDeposits: () => Promise<void>;
 }
 
 const UserDataContext = createContext<UserDataContextType>({
   balance: 0,
   withdrawals: [],
+  deposits: [],
   isLoading: true,
   refetchBalance: async () => {},
   refetchWithdrawals: async () => {},
+  refetchDeposits: async () => {},
 });
 
 export const useUserData = () => useContext(UserDataContext);
@@ -32,6 +43,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth();
   const [balance, setBalance] = useState(0);
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
+  const [deposits, setDeposits] = useState<Deposit[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchBalance = useCallback(async () => {
@@ -55,17 +67,29 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
     if (data) setWithdrawals(data);
   }, [user]);
 
+  const fetchDeposits = useCallback(async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from('deposits')
+      .select('id, amount, reason, created_at')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(10);
+    if (data) setDeposits(data);
+  }, [user]);
+
   // Eagerly fetch all data on login
   useEffect(() => {
     if (!user) {
       setBalance(0);
       setWithdrawals([]);
+      setDeposits([]);
       setIsLoading(false);
       return;
     }
 
     setIsLoading(true);
-    Promise.all([fetchBalance(), fetchWithdrawals()]).finally(() => setIsLoading(false));
+    Promise.all([fetchBalance(), fetchWithdrawals(), fetchDeposits()]).finally(() => setIsLoading(false));
 
     // Realtime subscriptions for instant updates
     const balanceChannel = supabase
@@ -94,19 +118,34 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
       })
       .subscribe();
 
+    const depositChannel = supabase
+      .channel('global-deposits')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'deposits',
+        filter: `user_id=eq.${user.id}`,
+      }, () => {
+        fetchDeposits();
+      })
+      .subscribe();
+
     return () => {
       supabase.removeChannel(balanceChannel);
       supabase.removeChannel(withdrawalChannel);
+      supabase.removeChannel(depositChannel);
     };
-  }, [user, fetchBalance, fetchWithdrawals]);
+  }, [user, fetchBalance, fetchWithdrawals, fetchDeposits]);
 
   return (
     <UserDataContext.Provider value={{
       balance,
       withdrawals,
+      deposits,
       isLoading,
       refetchBalance: fetchBalance,
       refetchWithdrawals: fetchWithdrawals,
+      refetchDeposits: fetchDeposits,
     }}>
       {children}
     </UserDataContext.Provider>
