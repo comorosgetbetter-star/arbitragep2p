@@ -170,7 +170,12 @@ export const WalletDropdown = ({ isOpen, onClose, onAddFunds }: WalletDropdownPr
     <>
       <div className="fixed inset-0 z-40" onClick={onClose} />
       
-      <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 glass-card rounded-xl border border-border/50 shadow-xl z-50 animate-scale-in overflow-hidden">
+      <div className="fixed inset-x-0 bottom-0 sm:absolute sm:inset-auto sm:right-0 sm:top-full sm:mt-2 w-full sm:w-96 max-h-[85vh] sm:max-h-[80vh] glass-card rounded-t-2xl sm:rounded-xl border border-border/50 shadow-xl z-50 animate-scale-in overflow-hidden flex flex-col">
+        {/* Mobile drag handle */}
+        <div className="sm:hidden flex justify-center pt-3 pb-1">
+          <div className="w-10 h-1 rounded-full bg-muted-foreground/30" />
+        </div>
+        
         {view === 'main' ? (
           <>
             {/* Balance Section */}
@@ -253,7 +258,7 @@ export const WalletDropdown = ({ isOpen, onClose, onAddFunds }: WalletDropdownPr
                 }
 
                 return (
-                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                  <div className="space-y-2 max-h-60 sm:max-h-48 overflow-y-auto">
                     {activities.map((item) => (
                       <div 
                         key={item.id}
