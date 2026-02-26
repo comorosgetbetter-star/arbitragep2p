@@ -170,7 +170,7 @@ export const WalletDropdown = ({ isOpen, onClose, onAddFunds }: WalletDropdownPr
     <>
       <div className="fixed inset-0 z-40" onClick={onClose} />
       
-      <div className="absolute right-0 top-full mt-2 w-[calc(100vw-2rem)] sm:w-96 max-h-[75vh] glass-card rounded-xl border border-border/50 shadow-xl z-50 animate-scale-in overflow-y-auto bg-background">
+      <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 max-h-[75vh] glass-card rounded-xl border border-border/50 shadow-xl z-50 animate-scale-in overflow-y-auto bg-background">
         
         {view === 'main' ? (
           <>
