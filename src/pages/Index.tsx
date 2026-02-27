@@ -46,6 +46,7 @@ const Index = () => {
         <HeroSection />
         <LivePriceTicker />
         <TrustIndicators />
+        <CryptoCalculator />
         
         {/* P2P Section with Tab Toggle */}
         <section id="rates" className="py-16">
@@ -72,8 +73,6 @@ const Index = () => {
             {activeTab === 'express' ? <ExpressP2P /> : <P2POrders />}
           </div>
         </section>
-
-        <CryptoCalculator />
         <Testimonials />
         <PlatformDescription />
         <FAQ />
