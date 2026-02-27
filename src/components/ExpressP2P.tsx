@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { WhyUsdt } from './WhyUsdt';
 import { TradeConflictModal } from './TradeConflictModal';
 import { TradeConfirmationModal } from './TradeConfirmationModal';
+import { CryptoCalculator } from './CryptoCalculator';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTradeSession, TradeSession } from '@/hooks/useTradeSession';
 import { toast } from '@/components/ui/sonner';
@@ -125,6 +126,11 @@ export const ExpressP2P = () => {
           Select a package below to purchase USDT at competitive rates. 
           Fast, secure, and direct to your wallet.
         </p>
+      </div>
+
+      {/* Crypto Calculator - right below the header */}
+      <div className="mb-10">
+        <CryptoCalculator />
       </div>
 
       <div className="flex flex-col gap-3 max-w-2xl mx-auto">

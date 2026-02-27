@@ -6,7 +6,7 @@ import { TrustIndicators } from '@/components/TrustIndicators';
 import { ExpressP2P } from '@/components/ExpressP2P';
 import { P2POrders } from '@/components/P2POrders';
 import { PlatformDescription } from '@/components/PlatformDescription';
-import { CryptoCalculator } from '@/components/CryptoCalculator';
+
 import { Testimonials } from '@/components/Testimonials';
 import { FAQ } from '@/components/FAQ';
 import { Footer } from '@/components/Footer';
@@ -46,7 +46,6 @@ const Index = () => {
         <HeroSection />
         <LivePriceTicker />
         <TrustIndicators />
-        <CryptoCalculator />
         
         {/* P2P Section with Tab Toggle */}
         <section id="rates" className="py-16">

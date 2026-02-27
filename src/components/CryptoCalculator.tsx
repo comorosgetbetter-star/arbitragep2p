@@ -153,23 +153,8 @@ export const CryptoCalculator = () => {
   };
 
   return (
-    <section id="calculator" className="py-16 relative">
-      <div className="container mx-auto px-4">
-        <div className="max-w-3xl mx-auto">
-          {/* Header */}
-          <div className="text-center mb-10">
-            <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
-              <Calculator className="h-7 w-7 text-primary" />
-            </div>
-            <h2 className="text-3xl sm:text-4xl font-display font-bold mb-3">
-              Crypto <span className="gradient-text">Calculator</span>
-            </h2>
-            <p className="text-muted-foreground">
-              Enter any amount to see how much USDT you'll receive
-            </p>
-          </div>
-
-          {/* Conversion Card */}
+    <div id="calculator" className="max-w-3xl mx-auto">
+      {/* Conversion Card */}
           <div className="rounded-2xl border border-border/60 bg-card/80 backdrop-blur-sm p-6 sm:p-8 shadow-lg" style={{
             borderImage: 'linear-gradient(135deg, hsl(var(--primary) / 0.4), hsl(var(--border)) 50%, hsl(var(--primary) / 0.2)) 1',
           }}>
@@ -269,8 +254,6 @@ export const CryptoCalculator = () => {
               Min: ${formatUsd(MIN_AMOUNT)} • Max: ${formatUsd(MAX_AMOUNT)} • Same rates as Express P2P
             </p>
           </div>
-        </div>
-      </div>
 
       <TradeConfirmationModal
         isOpen={showConfirmationModal}
@@ -286,6 +269,6 @@ export const CryptoCalculator = () => {
         onResume={handleResumeExisting}
         onStartNew={handleStartNew}
       />
-    </section>
+    </div>
   );
 };
