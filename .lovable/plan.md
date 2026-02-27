@@ -1,56 +1,30 @@
 
-# Package Section Redesign
 
-## Current State
-The packages are displayed as a 6-column grid of small square cards. Each card shows only "Pay $X" and "Receive Y USDT".
+## Redesign and Reposition Crypto Calculator
 
-## New Design
+### What Changes
 
-### Layout: Vertical stacked rows (top to bottom, $50 to $5,000)
-Each package becomes a full-width horizontal row/card that slides in from left to right with a staggered animation. Each row displays:
+1. **Move Calculator above P2P section** in `src/pages/Index.tsx` -- place `<CryptoCalculator />` between `<TrustIndicators />` and the P2P tab toggle section, instead of after it.
 
-- **Pay amount** (e.g., $50)
-- **Receive amount** (e.g., 60 USDT)
-- **Profit/Bonus** (e.g., +10 USDT)
-- **ROI percentage** (e.g., 20% ROI)
-- **Buy button** on the right side
+2. **Redesign CryptoCalculator for a fintech look** in `src/components/CryptoCalculator.tsx`:
+   - Replace the basic input box with a polished two-panel conversion layout (You Pay on left, You Receive on right, connected by an arrow)
+   - Use a sleek card with subtle gradient border instead of generic glass-card
+   - Add a currency label badge ("USD") next to the input and ("USDT") next to the output for clarity
+   - Use a slider alongside quick-amount chips so users can visually drag between $50-$25,000
+   - Show the profit percentage as a highlighted green pill badge inline with the result
+   - Style the Buy button with the existing `glow` variant for consistency
+   - Format all amounts with proper comma separators (e.g. `12,200.00 USDT`)
+   - Keep all existing trade logic (confirmation modal, conflict modal, session handling) completely intact
 
-### The $1,000 Package - Highlighted
-- Visually distinct with a glowing primary border, a "Most Popular" or "Best ROI" badge
-- Slightly larger or elevated compared to other rows
-- Background tint using the primary color
+### Technical Details
 
-### Row Animation
-- Each row slides in from the left with a staggered delay (50-100ms apart)
-- Smooth `translateX` entrance animation
+**File: `src/pages/Index.tsx`**
+- Move `<CryptoCalculator />` from after the P2P section to before it (between TrustIndicators and the `#rates` section)
 
-### Responsive Behavior
-- On desktop: single horizontal row per package with all details inline
-- On mobile: rows stack with details wrapped neatly, still full-width
+**File: `src/components/CryptoCalculator.tsx`**
+- Redesign the JSX layout to a horizontal two-column conversion card on desktop, stacking vertically on mobile
+- Import and use `Slider` from `@/components/ui/slider` for the amount range selector
+- Add currency badges (USD / USDT) using existing `Badge` component
+- Apply comma formatting via `toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })`
+- Keep the same `calculateUsdtReceived` function, same min/max constants, same trade session logic -- zero functional changes
 
-## Technical Details
-
-### File changed: `src/components/ExpressP2P.tsx`
-
-1. Update the `packages` array to include computed bonus and ROI:
-   - Bonus = `usdt - usd`
-   - ROI = `((usdt - usd) / usd * 100).toFixed(1)`
-
-2. Replace the 6-column grid with a vertical `flex flex-col gap-3` container (max-width ~700px, centered).
-
-3. Each package row:
-   - Horizontal layout using `flex items-center justify-between`
-   - Left side: Pay amount, Receive amount, Bonus, ROI badge
-   - Right side: "Buy" button
-   - Slide-in animation from left (`animate-slide-in-right` reversed or a new `animate-slide-in-left` keyframe)
-
-4. For the $1,000 package:
-   - Add a "Most Popular" badge (top-right or inline)
-   - Apply `border-primary ring-2 ring-primary/30 bg-primary/5` styling
-   - Slightly scale up or add extra padding
-
-### File changed: `src/index.css`
-- Add a `slide-in-left` keyframe animation if not already present (animate from `translateX(-30px), opacity 0` to normal)
-
-### No logic changes
-- All click handlers, modals, and trade session logic remain exactly the same
