@@ -166,13 +166,13 @@ export const CryptoCalculator = () => {
                   <span className="text-sm text-muted-foreground font-medium">You Pay</span>
                   <Badge variant="outline" className="text-xs font-semibold">USD</Badge>
                 </div>
-                <div className="relative">
-                  <span className="absolute left-0 top-1/2 -translate-y-1/2 text-2xl font-display font-bold text-muted-foreground">$</span>
+              <div className="flex items-center gap-1">
+                  <span className="text-2xl font-display font-bold text-muted-foreground shrink-0">$</span>
                   <Input
                     type="number"
                     value={amount}
                     onChange={(e) => handleAmountChange(e.target.value)}
-                    className="pl-7 text-2xl sm:text-3xl font-display font-bold h-12 border-0 bg-transparent shadow-none focus-visible:ring-0 p-0"
+                    className="text-2xl sm:text-3xl font-display font-bold h-12 border-0 bg-transparent shadow-none focus-visible:ring-0 p-0"
                     placeholder="100"
                     min={MIN_AMOUNT}
                   />
