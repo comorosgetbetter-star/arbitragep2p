@@ -153,26 +153,26 @@ export const CryptoCalculator = () => {
   };
 
   return (
-    <div id="calculator" className="max-w-3xl mx-auto">
+    <div id="calculator" className="max-w-xl mx-auto">
       {/* Conversion Card */}
-          <div className="rounded-2xl border border-border/60 bg-card/80 backdrop-blur-sm p-6 sm:p-8 shadow-lg" style={{
+          <div className="rounded-xl border border-border/60 bg-card/80 backdrop-blur-sm p-4 sm:p-5 shadow-md" style={{
             borderImage: 'linear-gradient(135deg, hsl(var(--primary) / 0.4), hsl(var(--border)) 50%, hsl(var(--primary) / 0.2)) 1',
           }}>
             {/* Two-panel conversion */}
-            <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] gap-4 sm:gap-6 items-center mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] gap-3 sm:gap-4 items-center mb-4">
               {/* You Pay */}
-              <div className="rounded-xl bg-secondary/50 border border-border/40 p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-muted-foreground font-medium">You Pay</span>
-                  <Badge variant="outline" className="text-xs font-semibold">USD</Badge>
+              <div className="rounded-lg bg-secondary/50 border border-border/40 p-3">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs text-muted-foreground font-medium">You Pay</span>
+                  <Badge variant="outline" className="text-[10px] font-semibold h-5">USD</Badge>
                 </div>
-              <div className="flex items-center gap-1">
-                  <span className="text-2xl font-display font-bold text-muted-foreground shrink-0">$</span>
+                <div className="flex items-center gap-1">
+                  <span className="text-xl font-display font-bold text-muted-foreground shrink-0">$</span>
                   <Input
                     type="number"
                     value={amount}
                     onChange={(e) => handleAmountChange(e.target.value)}
-                    className="text-2xl sm:text-3xl font-display font-bold h-12 border-0 bg-transparent shadow-none focus-visible:ring-0 p-0"
+                    className="text-xl sm:text-2xl font-display font-bold h-9 border-0 bg-transparent shadow-none focus-visible:ring-0 p-0"
                     placeholder="100"
                     min={MIN_AMOUNT}
                   />
@@ -181,32 +181,32 @@ export const CryptoCalculator = () => {
 
               {/* Arrow */}
               <div className="flex items-center justify-center">
-                <div className="w-10 h-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center sm:rotate-0 rotate-90">
-                  <ArrowRight className="h-5 w-5 text-primary" />
+                <div className="w-8 h-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center sm:rotate-0 rotate-90">
+                  <ArrowRight className="h-4 w-4 text-primary" />
                 </div>
               </div>
 
               {/* You Receive */}
-              <div className="rounded-xl bg-primary/5 border border-primary/20 p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-muted-foreground font-medium">You Receive</span>
-                  <Badge className="text-xs font-semibold bg-primary/15 text-primary border-primary/30 hover:bg-primary/20">USDT</Badge>
+              <div className="rounded-lg bg-primary/5 border border-primary/20 p-3">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs text-muted-foreground font-medium">You Receive</span>
+                  <Badge className="text-[10px] font-semibold h-5 bg-primary/15 text-primary border-primary/30 hover:bg-primary/20">USDT</Badge>
                 </div>
-                <p className="text-2xl sm:text-3xl font-display font-bold text-primary">
+                <p className="text-xl sm:text-2xl font-display font-bold text-primary">
                   {calculations.isValid ? formatUsdt(calculations.usdtReceived) : '—'}
                 </p>
                 {calculations.isValid && (
-                  <Badge variant="secondary" className="mt-2 bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/15">
-                    <TrendingUp className="h-3 w-3 mr-1" />
-                    +{calculations.profitPercent}% profit
+                  <Badge variant="secondary" className="mt-1 text-[10px] bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/15">
+                    <TrendingUp className="h-2.5 w-2.5 mr-0.5" />
+                    +{calculations.profitPercent}%
                   </Badge>
                 )}
               </div>
             </div>
 
             {/* Slider */}
-            <div className="mb-5">
-              <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
+            <div className="mb-3">
+              <div className="flex items-center justify-between text-[10px] text-muted-foreground mb-1">
                 <span>${formatUsd(MIN_AMOUNT)}</span>
                 <span>${formatUsd(MAX_AMOUNT)}</span>
               </div>
@@ -221,12 +221,12 @@ export const CryptoCalculator = () => {
             </div>
 
             {/* Quick amounts */}
-            <div className="flex flex-wrap gap-2 mb-6">
+            <div className="flex flex-wrap gap-1.5 mb-4">
               {[100, 250, 500, 1000, 2500, 5000].map((preset) => (
                 <button
                   key={preset}
                   onClick={() => handleAmountChange(preset.toString())}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                  className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
                     amount === preset.toString()
                       ? 'bg-primary text-primary-foreground'
                       : 'bg-secondary text-muted-foreground hover:text-foreground'
@@ -237,20 +237,20 @@ export const CryptoCalculator = () => {
               ))}
             </div>
 
-            {error && <p className="text-sm text-destructive mb-4">{error}</p>}
+            {error && <p className="text-xs text-destructive mb-3">{error}</p>}
 
             {/* Buy Button */}
             <Button
               variant="glow"
-              className="w-full"
-              size="lg"
+              className="w-full text-sm"
+              size="default"
               onClick={handleCreatePackage}
               disabled={!calculations.isValid}
             >
               Buy {formatUsdt(calculations.usdtReceived)} USDT for ${formatUsd(numAmount)}
             </Button>
 
-            <p className="text-xs text-muted-foreground text-center mt-4">
+            <p className="text-[10px] text-muted-foreground text-center mt-3">
               Min: ${formatUsd(MIN_AMOUNT)} • Max: ${formatUsd(MAX_AMOUNT)} • Same rates as Express P2P
             </p>
           </div>
