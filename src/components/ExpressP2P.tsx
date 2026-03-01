@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 
 // Profit rates: tiered system where larger amounts get slightly better rates
 const packages = [
-  { usd: 50, usdt: 60 },
+  { usd: 50, usdt: 55 },
   { usd: 100, usdt: 121 },
   { usd: 150, usdt: 182 },
   { usd: 500, usdt: 609 },
