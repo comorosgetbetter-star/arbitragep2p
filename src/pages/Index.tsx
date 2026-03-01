@@ -62,7 +62,7 @@ const Index = () => {
               <Button
                 variant={activeTab === 'orders' ? 'default' : 'outline'}
                 onClick={() => setActiveTab('orders')}
-                className="gap-2 w-44 justify-center ring-1 ring-primary/30 shadow-[0_0_12px_hsl(var(--primary)/0.15)]"
+                className="gap-2 w-44 justify-center ring-1 ring-primary/40 shadow-[0_0_18px_hsl(var(--primary)/0.25)]"
               >
                 <ShoppingBag className="h-4 w-4" />
                 P2P Orders
