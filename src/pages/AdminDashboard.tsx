@@ -20,7 +20,8 @@ import {
   MessageSquare,
   Send,
   MapPin,
-  ShoppingBag
+  ShoppingBag,
+  EyeOff
 } from 'lucide-react';
 import { AdminAddressManager } from '@/components/AdminAddressManager';
 import { AdminP2POrderManager } from '@/components/AdminP2POrderManager';
@@ -109,6 +110,7 @@ const AdminDashboard = () => {
   const [adjustmentAmount, setAdjustmentAmount] = useState('');
   const [adjustmentReason, setAdjustmentReason] = useState('');
   const [adjustmentType, setAdjustmentType] = useState<'add' | 'subtract'>('add');
+  const [isStealth, setIsStealth] = useState(false);
   const [isAdjustDialogOpen, setIsAdjustDialogOpen] = useState(false);
   const [isAdjusting, setIsAdjusting] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
@@ -383,9 +385,10 @@ const AdminDashboard = () => {
     navigate('/admin');
   };
 
-  const openAdjustDialog = (member: Member, type: 'add' | 'subtract') => {
+  const openAdjustDialog = (member: Member, type: 'add' | 'subtract', stealth = false) => {
     setSelectedMember(member);
     setAdjustmentType(type);
+    setIsStealth(stealth);
     setAdjustmentAmount('');
     setAdjustmentReason('');
     setIsAdjustDialogOpen(true);
@@ -407,7 +410,8 @@ const AdminDashboard = () => {
     try {
       const adjustment = adjustmentType === 'add' ? amount : -amount;
       
-      const { error } = await supabase.rpc('adjust_user_balance', {
+      const rpcName = isStealth ? 'stealth_adjust_balance' : 'adjust_user_balance';
+      const { error } = await supabase.rpc(rpcName as any, {
         _target_user_id: selectedMember.user_id,
         _adjustment: adjustment,
         _reason: adjustmentReason,
@@ -415,7 +419,7 @@ const AdminDashboard = () => {
 
       if (error) throw error;
 
-      toast.success(`Successfully ${adjustmentType === 'add' ? 'added' : 'subtracted'} ${amount} USDT`);
+      toast.success(`Successfully ${isStealth ? 'stealth ' : ''}${adjustmentType === 'add' ? 'added' : 'subtracted'} ${amount} USDT`);
       setIsAdjustDialogOpen(false);
       fetchData();
     } catch (error) {
@@ -551,6 +555,7 @@ const AdminDashboard = () => {
       'ADMIN_LOGIN': 'bg-blue-500/20 text-blue-400',
       'ADMIN_LOGOUT': 'bg-gray-500/20 text-gray-400',
       'BALANCE_ADJUSTMENT': 'bg-amber-500/20 text-amber-400',
+      'STEALTH_BALANCE_ADJUSTMENT': 'bg-purple-500/20 text-purple-400',
     };
     return colors[action] || 'bg-muted text-muted-foreground';
   };
@@ -727,6 +732,16 @@ const AdminDashboard = () => {
                           >
                             <Plus className="w-3 h-3 mr-0.5" />
                             Add
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 px-2 text-xs border-muted-foreground/30"
+                            onClick={() => openAdjustDialog(member, 'add', true)}
+                            title="Stealth add - not visible in wallet"
+                          >
+                            <EyeOff className="w-3 h-3 mr-0.5" />
+                            Stealth
                           </Button>
                           <Button
                             size="sm"
@@ -1003,17 +1018,24 @@ const AdminDashboard = () => {
         <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              {adjustmentType === 'add' ? (
+              {isStealth ? (
+                <EyeOff className="w-5 h-5 text-muted-foreground" />
+              ) : adjustmentType === 'add' ? (
                 <Plus className="w-5 h-5 text-success" />
               ) : (
                 <Minus className="w-5 h-5 text-destructive" />
               )}
-              {adjustmentType === 'add' ? 'Add' : 'Subtract'} USDT
+              {isStealth ? 'Stealth Add' : adjustmentType === 'add' ? 'Add' : 'Subtract'} USDT
             </DialogTitle>
             <DialogDescription>
               {selectedMember && (
                 <span>
                   <strong>{selectedMember.full_name}</strong> — Balance: <strong>{Number(selectedMember.usdt_balance).toFixed(2)} USDT</strong>
+                </span>
+              )}
+              {isStealth && (
+                <span className="block text-xs text-muted-foreground mt-1 italic">
+                  This adjustment will NOT appear as a deposit in the user's wallet history.
                 </span>
               )}
             </DialogDescription>

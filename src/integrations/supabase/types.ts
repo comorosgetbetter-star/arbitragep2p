@@ -437,6 +437,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      stealth_adjust_balance: {
+        Args: { _adjustment: number; _reason: string; _target_user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "user"
