@@ -11,7 +11,7 @@ import { TradeConfirmationModal } from './TradeConfirmationModal';
 import { TradeConflictModal } from './TradeConflictModal';
 import { toast } from '@/components/ui/sonner';
 
-const MIN_AMOUNT = 50;
+const MIN_AMOUNT = 100;
 const MAX_AMOUNT = 25000;
 
 const formatUsd = (n: number) =>
