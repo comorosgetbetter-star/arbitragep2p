@@ -51,8 +51,8 @@ const Index = () => {
           .tawk-min-container,
           iframe[title="chat widget"],
           iframe[src*="tawk.to"] {
-            bottom: 96px !important;
-            inset-block-end: 96px !important;
+            bottom: calc(112px + env(safe-area-inset-bottom, 0px)) !important;
+            inset-block-end: calc(112px + env(safe-area-inset-bottom, 0px)) !important;
           }
         }
       `;
