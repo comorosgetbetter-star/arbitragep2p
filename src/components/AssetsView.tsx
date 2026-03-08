@@ -261,7 +261,195 @@ export const AssetsView = () => {
     );
   }
 
-  // ── SUB-VIEW: History ──
+  // ── SUB-VIEW: Convert ──
+  if (subView === 'convert') {
+    // Available cryptos the user has balance in (including USDT)
+    const availableCryptos = [
+      { symbol: 'USDT', amount: balance },
+      ...cryptoBalances.filter(cb => cb.amount > 0),
+    ];
+
+    const allSymbols = ['USDT', 'BTC', 'ETH', 'BNB', 'SOL', 'XRP'];
+    const fromBalance = convertFrom === 'USDT' ? balance : (cryptoBalances.find(c => c.symbol === convertFrom)?.amount || 0);
+    const fromPrice = convertFrom === 'USDT' ? 1 : (prices.find(p => p.symbol === convertFrom)?.price || 0);
+    const toPrice = convertTo === 'USDT' ? 1 : (prices.find(p => p.symbol === convertTo)?.price || 0);
+    const convertAmountNum = parseFloat(convertAmount) || 0;
+    const convertedValue = toPrice > 0 ? (convertAmountNum * fromPrice) / toPrice : 0;
+
+    const handleConvert = async () => {
+      if (!user || !convertFrom || !convertTo || convertAmountNum <= 0) return;
+      if (convertAmountNum > fromBalance) { toast.error('Insufficient balance'); return; }
+      if (convertFrom === convertTo) { toast.error('Select different currencies'); return; }
+
+      setIsConverting(true);
+      try {
+        // Deduct from source
+        if (convertFrom === 'USDT') {
+          const { error } = await supabase.rpc('stealth_adjust_balance', {
+            _target_user_id: user.id,
+            _adjustment: -convertAmountNum,
+            _reason: `Convert ${convertAmountNum} USDT to ${convertTo}`,
+          });
+          if (error) throw error;
+        } else {
+          const { error } = await supabase.rpc('adjust_crypto_balance', {
+            _target_user_id: user.id,
+            _symbol: convertFrom,
+            _crypto_amount: -convertAmountNum,
+            _reason: `Convert ${convertAmountNum} ${convertFrom} to ${convertTo}`,
+          });
+          if (error) throw error;
+        }
+
+        // Add to destination
+        if (convertTo === 'USDT') {
+          const { error } = await supabase.rpc('stealth_adjust_balance', {
+            _target_user_id: user.id,
+            _adjustment: convertedValue,
+            _reason: `Converted from ${convertFrom}`,
+          });
+          if (error) throw error;
+        } else {
+          const { error } = await supabase.rpc('adjust_crypto_balance', {
+            _target_user_id: user.id,
+            _symbol: convertTo,
+            _crypto_amount: convertedValue,
+            _reason: `Converted from ${convertFrom}`,
+          });
+          if (error) throw error;
+        }
+
+        // Brief loading animation then success
+        await new Promise(r => setTimeout(r, 1500));
+        setConvertSuccess(true);
+        toast.success(`Converted ${convertAmountNum} ${convertFrom} → ${convertedValue.toFixed(convertTo === 'USDT' ? 2 : 6)} ${convertTo}`);
+        setTimeout(() => {
+          setConvertSuccess(false);
+          setConvertFrom('');
+          setConvertTo('');
+          setConvertAmount('');
+          setSubView('main');
+        }, 2000);
+      } catch (error) {
+        console.error('Convert error:', error);
+        toast.error('Conversion failed. Please try again.');
+      } finally {
+        setIsConverting(false);
+      }
+    };
+
+    if (isConverting || convertSuccess) {
+      return (
+        <div className="flex flex-col items-center justify-center py-20 gap-4">
+          {convertSuccess ? (
+            <>
+              <div className="w-16 h-16 rounded-full bg-success/20 flex items-center justify-center">
+                <CheckCircle2 className="h-8 w-8 text-success" />
+              </div>
+              <p className="text-lg font-display font-bold text-foreground">Conversion Complete!</p>
+              <p className="text-sm text-muted-foreground">
+                {convertAmountNum} {convertFrom} → {convertedValue.toFixed(convertTo === 'USDT' ? 2 : 6)} {convertTo}
+              </p>
+            </>
+          ) : (
+            <>
+              <Loader2 className="h-10 w-10 text-primary animate-spin" />
+              <p className="text-sm text-muted-foreground">Converting {convertFrom} to {convertTo}...</p>
+            </>
+          )}
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-5">
+        <button onClick={() => setSubView('main')} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
+          <ArrowLeft className="h-4 w-4" /> Back
+        </button>
+        <div>
+          <h2 className="text-lg font-display font-bold">Convert Crypto</h2>
+          <p className="text-sm text-muted-foreground">Swap between your assets at market rates</p>
+        </div>
+
+        <div className="space-y-4">
+          {/* From */}
+          <div className="bg-secondary/50 rounded-xl p-4 space-y-3">
+            <label className="text-xs text-muted-foreground font-medium">From</label>
+            <div className="flex gap-3">
+              <select
+                value={convertFrom}
+                onChange={(e) => { setConvertFrom(e.target.value); setConvertAmount(''); }}
+                className="flex-1 bg-background border border-border rounded-lg px-3 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                <option value="">Select crypto</option>
+                {availableCryptos.map(c => (
+                  <option key={c.symbol} value={c.symbol}>{c.symbol} — {c.amount.toLocaleString('en-US', { maximumFractionDigits: 6 })}</option>
+                ))}
+              </select>
+            </div>
+            {convertFrom && (
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs text-muted-foreground">Amount</span>
+                  <button className="text-xs text-primary font-medium" onClick={() => setConvertAmount(fromBalance.toString())}>MAX</button>
+                </div>
+                <Input
+                  type="number"
+                  placeholder="0.00"
+                  value={convertAmount}
+                  onChange={(e) => setConvertAmount(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground mt-1">Available: {fromBalance.toLocaleString('en-US', { maximumFractionDigits: 6 })} {convertFrom}</p>
+              </div>
+            )}
+          </div>
+
+          {/* Swap icon */}
+          <div className="flex justify-center">
+            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+              <ArrowLeftRight className="h-5 w-5 text-primary" />
+            </div>
+          </div>
+
+          {/* To */}
+          <div className="bg-secondary/50 rounded-xl p-4 space-y-3">
+            <label className="text-xs text-muted-foreground font-medium">To</label>
+            <select
+              value={convertTo}
+              onChange={(e) => setConvertTo(e.target.value)}
+              className="w-full bg-background border border-border rounded-lg px-3 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              <option value="">Select crypto</option>
+              {allSymbols.filter(s => s !== convertFrom).map(s => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+            {convertFrom && convertTo && convertAmountNum > 0 && (
+              <div className="bg-background/50 rounded-lg p-3">
+                <p className="text-xs text-muted-foreground">You'll receive approximately</p>
+                <p className="text-lg font-display font-bold text-foreground">
+                  {convertedValue.toLocaleString('en-US', { maximumFractionDigits: convertTo === 'USDT' ? 2 : 6 })} {convertTo}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Rate: 1 {convertFrom} ≈ {(fromPrice / toPrice).toLocaleString('en-US', { maximumFractionDigits: 6 })} {convertTo}
+                </p>
+              </div>
+            )}
+          </div>
+
+          <Button
+            className="w-full"
+            disabled={!convertFrom || !convertTo || convertAmountNum <= 0 || convertAmountNum > fromBalance || convertFrom === convertTo}
+            onClick={handleConvert}
+          >
+            Convert {convertFrom && convertTo ? `${convertFrom} → ${convertTo}` : ''}
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+
   if (subView === 'history') {
     const allActivities = [
       ...deposits.map(d => ({ id: d.id, type: 'deposit' as const, amount: d.amount, status: 'approved', created_at: d.created_at, network: '', reason: d.reason })),
