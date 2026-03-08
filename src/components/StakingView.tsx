@@ -89,7 +89,7 @@ export const StakingView = () => {
     );
   }
 
-
+  const handleStakeClick = (plan: StakingPlan) => {
     if (!user) { navigate('/login'); return; }
     const amount = parseFloat(stakeAmount || String(plan.minAmount));
     if (amount < plan.minAmount) {
