@@ -14,12 +14,9 @@ function validateName(name: string): boolean {
 }
 
 function generateOTP(): string {
-  const digits = '0123456789'
-  let otp = ''
-  for (let i = 0; i < 6; i++) {
-    otp += digits[Math.floor(Math.random() * 10)]
-  }
-  return otp
+  const array = new Uint32Array(6)
+  crypto.getRandomValues(array)
+  return Array.from(array, v => (v % 10).toString()).join('')
 }
 
 const LOGO_URL = 'https://hywqedthwvuiftmfmkjs.supabase.co/storage/v1/object/public/email-assets/logo.png'
