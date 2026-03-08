@@ -558,6 +558,15 @@ export type Database = {
         }
         Returns: boolean
       }
+      start_flywheel: {
+        Args: {
+          _amount: number
+          _daily_return_pct: number
+          _lock_minutes: number
+          _plan_name: string
+        }
+        Returns: string
+      }
       start_staking: {
         Args: {
           _amount: number
