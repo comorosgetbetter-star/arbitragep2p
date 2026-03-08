@@ -132,7 +132,7 @@ const TermsOfService = () => {
 
           <section className="space-y-3">
             <h2 className="text-lg font-semibold text-foreground">13. Governing Law</h2>
-            <p>These Terms shall be governed by and construed in accordance with the laws of the jurisdiction in which ArbitrageP2P operates, without regard to its conflict of law provisions. You agree to submit to the personal and exclusive jurisdiction of the courts located within that jurisdiction.</p>
+            <p>These Terms shall be governed by and construed in accordance with the laws of the jurisdiction in which PeerBitX operates, without regard to its conflict of law provisions. You agree to submit to the personal and exclusive jurisdiction of the courts located within that jurisdiction.</p>
           </section>
 
           <section className="space-y-3">
