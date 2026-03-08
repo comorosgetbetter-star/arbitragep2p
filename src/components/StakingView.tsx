@@ -26,6 +26,8 @@ const stakingPlans: StakingPlan[] = [
   { id: 'growth', name: 'Growth', minAmount: 1000, dailyReturn: 5, lockDays: 14, badge: 'Best Value' },
   { id: 'premium', name: 'Premium', minAmount: 5000, dailyReturn: 5, lockDays: 30, badge: 'High Yield' },
   { id: 'elite', name: 'Elite', minAmount: 10000, dailyReturn: 5, lockDays: 60, badge: 'VIP' },
+  { id: 'pro', name: 'Pro', minAmount: 15000, dailyReturn: 5, lockDays: 90, badge: 'Pro' },
+  { id: 'whale', name: 'Whale', minAmount: 25000, dailyReturn: 5, lockDays: 120, badge: 'Whale 🐳' },
 ];
 
 interface StakingSession {
