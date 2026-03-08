@@ -75,13 +75,22 @@ export const StakingView = () => {
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [user, fetchSessions]);
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
   if (!user) {
     return (
       <div className="flex flex-col items-center justify-center py-20 px-4">
         <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
           <Lock className="h-8 w-8 text-primary" />
         </div>
-        <p className="text-muted-foreground mb-4 text-center">Sign in to start earning with crypto staking</p>
+        <p className="text-foreground font-display font-bold text-lg mb-1">Sign in to continue</p>
+        <p className="text-muted-foreground text-sm mb-4 text-center">Log in to start earning with crypto staking</p>
         <button onClick={() => navigate('/login')} className="px-6 py-2.5 rounded-xl bg-primary text-primary-foreground font-semibold text-sm">
           Sign In
         </button>
