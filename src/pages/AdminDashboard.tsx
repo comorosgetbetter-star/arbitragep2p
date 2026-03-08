@@ -24,7 +24,10 @@ import {
   ShoppingBag,
   EyeOff,
   Coins,
-  Ban
+  Ban,
+  KeyRound,
+  UserCheck,
+  Eye
 } from 'lucide-react';
 // AdminAddressManager is now merged into AdminCryptoManager
 import { AdminCryptoManager } from '@/components/AdminCryptoManager';
