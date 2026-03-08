@@ -173,6 +173,8 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
   const [amount, setAmount] = useState('');
   const [isStarting, setIsStarting] = useState(false);
   const [activeSessions, setActiveSessions] = useState<FlywheelSession[]>([]);
+  const [confirmPlan, setConfirmPlan] = useState<typeof FLYWHEEL_PLANS[0] | null>(null);
+  const [activeSessions, setActiveSessions] = useState<FlywheelSession[]>([]);
 
   const fetchSessions = useCallback(async () => {
     if (!user) return;
