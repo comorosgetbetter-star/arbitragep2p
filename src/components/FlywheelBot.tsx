@@ -341,7 +341,7 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
                   </div>
                   <div className="bg-secondary/50 rounded-lg p-2">
                     <p className="text-[10px] text-muted-foreground">Est. Profit</p>
-                    <p className="text-xs font-bold text-success">+${estProfit.toFixed(2)}</p>
+                    <p className="text-xs font-bold text-success">+${fmt(estProfit)}</p>
                   </div>
                 </div>
 
