@@ -4,6 +4,7 @@ import { PortfolioCard } from '@/components/PortfolioCard';
 import { CryptoGrid } from '@/components/CryptoGrid';
 import { DepositCrypto } from '@/components/DepositCrypto';
 import { ExpressP2P } from '@/components/ExpressP2P';
+import { BotsView } from '@/components/BotsView';
 import { P2POrders } from '@/components/P2POrders';
 import { WhyUsdt } from '@/components/WhyUsdt';
 import { FAQ } from '@/components/FAQ';
