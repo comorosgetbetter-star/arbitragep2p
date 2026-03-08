@@ -521,6 +521,7 @@ export const AssetsView = () => {
   const actionButtons = [
     { icon: Download, label: 'Deposit', action: () => setSubView('deposit') },
     { icon: Upload, label: 'Withdraw', action: () => setSubView('withdraw') },
+    { icon: ArrowLeftRight, label: 'Convert', action: () => setSubView('convert') },
     { icon: Clock, label: 'History', action: () => setSubView('history') },
   ];
 
