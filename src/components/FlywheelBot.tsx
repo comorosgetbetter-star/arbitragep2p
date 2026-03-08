@@ -741,7 +741,7 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
                 </div>
               </div>
               <p className="text-xs text-muted-foreground text-center">
-                ${fmt(parseFloat(amount) || confirmPlan.minAmount)} USDT will be deducted from your balance.
+                ${fmt(balance)} USDT will be deducted from your balance.
               </p>
             </div>
           )}
