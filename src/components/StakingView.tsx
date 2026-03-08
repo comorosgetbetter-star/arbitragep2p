@@ -228,39 +228,25 @@ export const StakingView = () => {
           return (
             <Card
               key={plan.id}
-              className={`border transition-all cursor-pointer ${isSelected ? 'border-primary/50 bg-primary/5' : 'border-border/50 hover:border-border'}`}
-              onClick={() => {
-                if (!user) { navigate('/login'); return; }
-                setSelectedPlan(isSelected ? null : plan.id); setStakeAmount(String(plan.minAmount));
-              }}
+              className={`border transition-all ${isSelected ? 'border-gold/50 bg-gold/5 ring-1 ring-gold/30' : 'border-border/50'}`}
             >
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <div className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center">
-                      <Lock className="h-4 w-4 text-primary" />
+                    <div className="w-9 h-9 rounded-xl bg-gold/15 flex items-center justify-center">
+                      <Lock className="h-4 w-4 text-gold" />
                     </div>
                     <div>
                       <p className="font-semibold text-foreground text-sm">{plan.name}</p>
                       <p className="text-xs text-muted-foreground">{plan.lockDays}-day lock</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Badge className="bg-primary/15 text-primary border-0 text-[10px]">{plan.badge}</Badge>
-                    <Button
-                      size="sm"
-                      variant={isSelected ? 'default' : 'outline'}
-                      className="h-7 text-xs px-3"
-                      onClick={(e) => { e.stopPropagation(); if (!user) { navigate('/login'); return; } setSelectedPlan(isSelected ? null : plan.id); setStakeAmount(String(plan.minAmount)); }}
-                    >
-                      {isSelected ? 'Selected' : 'Select'}
-                    </Button>
-                  </div>
+                  <Badge className="bg-gold/15 text-gold border-0 text-[10px]">{plan.badge}</Badge>
                 </div>
 
                 <div className="grid grid-cols-3 gap-2 mb-3 text-center">
                   <div className="bg-secondary/50 rounded-lg p-2">
-                    <p className="text-[10px] text-muted-foreground">Min Stake</p>
+                    <p className="text-[10px] text-muted-foreground">Stake Amount</p>
                     <p className="text-xs font-bold text-foreground">${plan.minAmount.toLocaleString()}</p>
                   </div>
                   <div className="bg-secondary/50 rounded-lg p-2">
@@ -274,47 +260,49 @@ export const StakingView = () => {
                 </div>
 
                 {isSelected && (
-                  <div className="space-y-3 pt-2 border-t border-border/30">
-                    <div>
-                      <label className="text-xs text-muted-foreground mb-1 block">Stake Amount (USD)</label>
-                      <input
-                        type="number"
-                        value={stakeAmount}
-                        onChange={(e) => setStakeAmount(e.target.value)}
-                        min={plan.minAmount}
-                        className="w-full h-10 rounded-lg bg-input border border-border px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-                        placeholder={`Min $${plan.minAmount.toLocaleString()}`}
-                        onClick={(e) => e.stopPropagation()}
-                      />
+                  <div className="bg-success/5 border border-success/20 rounded-lg p-3 mb-3">
+                    <div className="flex justify-between text-xs mb-1">
+                      <span className="text-muted-foreground">Estimated daily earnings</span>
+                      <span className="text-success font-semibold">
+                        +${dailyEarning.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </span>
                     </div>
-
-                    {stakeAmount && parseFloat(stakeAmount) >= plan.minAmount && (
-                      <div className="bg-success/5 border border-success/20 rounded-lg p-3">
-                        <div className="flex justify-between text-xs mb-1">
-                          <span className="text-muted-foreground">Estimated daily earnings</span>
-                          <span className="text-success font-semibold">
-                            +${(parseFloat(stakeAmount) * 0.05).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                          </span>
-                        </div>
-                        <div className="flex justify-between text-xs">
-                          <span className="text-muted-foreground">Total after {plan.lockDays} days</span>
-                          <span className="text-success font-semibold">
-                            ${(parseFloat(stakeAmount) + parseFloat(stakeAmount) * 0.05 * plan.lockDays).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                          </span>
-                        </div>
-                      </div>
-                    )}
-
-                    <Button
-                      className="w-full h-11"
-                      onClick={(e) => { e.stopPropagation(); handleStakeClick(plan); }}
-                    >
-                      <Lock className="h-4 w-4 mr-1.5" />
-                      Stake Now
-                      <ChevronRight className="h-4 w-4 ml-auto" />
-                    </Button>
+                    <div className="flex justify-between text-xs">
+                      <span className="text-muted-foreground">Total after {plan.lockDays} days</span>
+                      <span className="text-success font-semibold">
+                        ${(plan.minAmount + totalReturn).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </span>
+                    </div>
                   </div>
                 )}
+
+                <Button
+                  className={`w-full h-11 font-semibold text-sm ${
+                    isSelected
+                      ? 'bg-gold hover:bg-gold/90 text-gold-foreground shadow-[0_0_16px_hsl(43_96%_56%/0.3)]'
+                      : 'bg-gold/15 hover:bg-gold/25 text-gold border border-gold/30'
+                  }`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (!user) { navigate('/login'); return; }
+                    if (isSelected) {
+                      handleStakeClick(plan);
+                    } else {
+                      setSelectedPlan(plan.id);
+                      setStakeAmount(String(plan.minAmount));
+                    }
+                  }}
+                >
+                  {isSelected ? (
+                    <>
+                      <Lock className="h-4 w-4 mr-1.5" />
+                      Stake ${plan.minAmount.toLocaleString()} Now
+                      <ChevronRight className="h-4 w-4 ml-auto" />
+                    </>
+                  ) : (
+                    'Select Plan'
+                  )}
+                </Button>
               </CardContent>
             </Card>
           );
