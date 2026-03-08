@@ -52,20 +52,20 @@ const Index = () => {
           <div className="container mx-auto px-4">
             <div className="flex items-center justify-center gap-3 mb-10">
               <Button
-                variant={activeTab === 'express' ? 'default' : 'outline'}
-                onClick={() => setActiveTab('express')}
-                className="gap-2 w-44 justify-center"
-              >
-                <Zap className="h-4 w-4" />
-                P2P Express Rates
-              </Button>
-              <Button
                 variant={activeTab === 'orders' ? 'default' : 'outline'}
                 onClick={() => setActiveTab('orders')}
                 className="gap-2 w-44 justify-center ring-1 ring-primary/40 shadow-[0_0_18px_hsl(var(--primary)/0.25)]"
               >
                 <ShoppingBag className="h-4 w-4" />
                 P2P Orders
+              </Button>
+              <Button
+                variant={activeTab === 'express' ? 'default' : 'outline'}
+                onClick={() => setActiveTab('express')}
+                className="gap-2 w-44 justify-center"
+              >
+                <Zap className="h-4 w-4" />
+                P2P Express Rates
               </Button>
             </div>
 
