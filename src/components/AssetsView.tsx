@@ -77,11 +77,31 @@ export const AssetsView = () => {
   const [showToPicker, setShowToPicker] = useState(false);
 
   // Compute total portfolio value (USDT balance + all crypto holdings at current prices)
+  // Use a stable price snapshot to avoid jumps from simulated price ticks
+  const [stablePrices, setStablePrices] = useState<Record<string, number>>({});
+  useEffect(() => {
+    // Update stable prices only every 30 seconds to prevent visual jumps
+    const updateStable = () => {
+      const map: Record<string, number> = {};
+      prices.forEach(p => { map[p.symbol] = p.price; });
+      setStablePrices(map);
+    };
+    updateStable();
+    const interval = setInterval(updateStable, 30000);
+    return () => clearInterval(interval);
+  }, []);
+  // Also update when crypto balances actually change (conversion, deposit, etc.)
+  useEffect(() => {
+    const map: Record<string, number> = {};
+    prices.forEach(p => { map[p.symbol] = p.price; });
+    setStablePrices(map);
+  }, [balance, cryptoBalances]);
+
   const totalPortfolioValue = (() => {
     let total = balance; // USDT balance
     cryptoBalances.forEach((cb) => {
-      const p = prices.find(pr => pr.symbol === cb.symbol);
-      if (p) total += cb.amount * p.price;
+      const price = stablePrices[cb.symbol] || prices.find(pr => pr.symbol === cb.symbol)?.price || 0;
+      total += cb.amount * price;
     });
     return total;
   })();
