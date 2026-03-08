@@ -76,7 +76,7 @@ export const ReferralSection = () => {
       try {
         await navigator.share({
           title: 'Join PeerBitX',
-          text: `Join PeerBitX and earn $${BONUS_AMOUNT} USDT bonus! Use my referral link:`,
+          text: `Join PeerBitX and earn a ${BONUS_PERCENT}% bonus on deposits! Use my referral link:`,
           url: referralLink,
         });
       } catch {
