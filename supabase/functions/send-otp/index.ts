@@ -124,11 +124,28 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
+    const normalizedEmail = email.toLowerCase().trim()
+
+    // Rate limit: max 5 codes per email in last 10 minutes
+    const tenMinAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString()
+    const { count: recentCount } = await supabase
+      .from('verification_codes')
+      .select('id', { count: 'exact', head: true })
+      .eq('email', normalizedEmail)
+      .gte('created_at', tenMinAgo)
+
+    if (recentCount !== null && recentCount >= 5) {
+      return new Response(JSON.stringify({ error: 'Too many attempts. Please wait before requesting a new code.' }), {
+        status: 429,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
     // Invalidate any existing unused codes for this email
     await supabase
       .from('verification_codes')
       .update({ used: true })
-      .eq('email', email.toLowerCase().trim())
+      .eq('email', normalizedEmail)
       .eq('used', false)
 
     const code = generateOTP()
