@@ -1,9 +1,11 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
-import { ChevronRight, ArrowDownUp, DollarSign, TrendingUp, RefreshCw, Signal, Wallet } from 'lucide-react';
+import { ChevronRight, ArrowDownUp, DollarSign, TrendingUp, RefreshCw, Signal, Wallet, Lock, Loader2 } from 'lucide-react';
 import { useUserData } from '@/contexts/UserDataContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { BotTradingView } from '@/components/BotTradingView';
+import { FlywheelBot } from '@/components/FlywheelBot';
 
 interface BotItem {
   id: string;
@@ -19,6 +21,7 @@ const bots: BotItem[] = [
     name: 'Flywheel',
     description: 'Maximize with dual crypto. Buy low, sell high, and trade in cycles.',
     icon: <ArrowDownUp className="h-5 w-5 text-foreground" />,
+    badge: 'Hot',
   },
   {
     id: 'futures-dca',
@@ -48,18 +51,43 @@ const bots: BotItem[] = [
 ];
 
 export const BotsView = () => {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const { balance } = useUserData();
+  const navigate = useNavigate();
   const [activeBot, setActiveBot] = useState<BotItem | null>(null);
+  const [showFlywheel, setShowFlywheel] = useState(false);
 
-  const handleBotClick = (bot: BotItem) => {
-    if (bot.id === 'flywheel') {
-      // Flywheel has its own behavior (or none yet)
-      return;
-    }
-    setActiveBot(bot);
-  };
+  // Auth loading state
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-8 w-8 text-primary animate-spin" />
+      </div>
+    );
+  }
 
+  // Auth gate
+  if (!user) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 px-4">
+        <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+          <Lock className="h-8 w-8 text-primary" />
+        </div>
+        <p className="text-foreground font-display font-bold text-lg mb-1">Sign in to continue</p>
+        <p className="text-muted-foreground text-sm mb-4 text-center">Log in to use trading bots</p>
+        <button onClick={() => navigate('/login')} className="px-6 py-2.5 rounded-xl bg-primary text-primary-foreground font-semibold text-sm">
+          Sign In
+        </button>
+      </div>
+    );
+  }
+
+  // Flywheel sub-view
+  if (showFlywheel) {
+    return <FlywheelBot onBack={() => setShowFlywheel(false)} />;
+  }
+
+  // Other bot sub-view
   if (activeBot) {
     return (
       <BotTradingView
@@ -69,6 +97,14 @@ export const BotsView = () => {
       />
     );
   }
+
+  const handleBotClick = (bot: BotItem) => {
+    if (bot.id === 'flywheel') {
+      setShowFlywheel(true);
+      return;
+    }
+    setActiveBot(bot);
+  };
 
   return (
     <div className="space-y-4">
@@ -80,7 +116,7 @@ export const BotsView = () => {
         <div>
           <p className="text-[11px] text-muted-foreground uppercase tracking-wider">Available Balance</p>
           <p className="text-xl font-display font-bold text-foreground">
-            {user ? `$${balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '$0.00'}
+            ${balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </p>
         </div>
       </div>
