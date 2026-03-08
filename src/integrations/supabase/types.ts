@@ -409,6 +409,33 @@ export type Database = {
         }
         Relationships: []
       }
+      user_crypto_balances: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          symbol: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          id?: string
+          symbol: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          symbol?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -501,6 +528,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      adjust_crypto_balance: {
+        Args: {
+          _crypto_amount: number
+          _reason: string
+          _symbol: string
+          _target_user_id: string
+        }
+        Returns: boolean
+      }
       adjust_user_balance: {
         Args: { _adjustment: number; _reason: string; _target_user_id: string }
         Returns: boolean
