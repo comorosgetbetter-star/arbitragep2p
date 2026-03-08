@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Save, Loader2, CheckCircle2, Coins, Plus, Trash2, Wallet, ArrowUpRight } from 'lucide-react';
+import { Save, Loader2, CheckCircle2, Coins, Plus, Trash2, ArrowUpRight, Pencil } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -67,19 +67,20 @@ export const AdminCryptoManager = () => {
   const [saving, setSaving] = useState<string | null>(null);
   const [editState, setEditState] = useState<Record<string, { address: string; network: string }>>({});
 
-  // USDT address management state
-  const [usdtAddresses, setUsdtAddresses] = useState<UsdtAddress[]>([]);
-  const [newAddress, setNewAddress] = useState('');
-  const [newNetwork, setNewNetwork] = useState('trc20');
-  const [newType, setNewType] = useState<'deposit' | 'trade'>('deposit');
+  // Trade address management state
+  const [tradeAddresses, setTradeAddresses] = useState<UsdtAddress[]>([]);
+  const [newTradeAddress, setNewTradeAddress] = useState('');
+  const [newTradeNetwork, setNewTradeNetwork] = useState('trc20');
   const [isAdding, setIsAdding] = useState(false);
+  const [editingTradeId, setEditingTradeId] = useState<string | null>(null);
+  const [editingTradeAddr, setEditingTradeAddr] = useState('');
 
   useEffect(() => {
     fetchSettings();
-    fetchUsdtAddresses();
+    fetchTradeAddresses();
     const channel = supabase
-      .channel('admin-addresses-crypto')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'usdt_addresses' }, () => fetchUsdtAddresses())
+      .channel('admin-trade-addresses')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'usdt_addresses' }, () => fetchTradeAddresses())
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, []);
@@ -101,13 +102,13 @@ export const AdminCryptoManager = () => {
     setLoading(false);
   };
 
-  const fetchUsdtAddresses = async () => {
+  const fetchTradeAddresses = async () => {
     const { data } = await supabase
       .from('usdt_addresses')
       .select('*')
-      .order('address_type')
+      .eq('address_type', 'trade')
       .order('display_order');
-    if (data) setUsdtAddresses(data);
+    if (data) setTradeAddresses(data);
   };
 
   const handleToggle = async (crypto: CryptoSetting) => {
@@ -149,21 +150,21 @@ export const AdminCryptoManager = () => {
     setEditState(prev => ({ ...prev, [symbol]: { ...prev[symbol], [field]: value } }));
   };
 
-  // USDT address handlers
-  const handleAddUsdtAddress = async () => {
-    if (!newAddress.trim()) { toast.error('Enter an address'); return; }
+  // Trade address handlers
+  const handleAddTradeAddress = async () => {
+    if (!newTradeAddress.trim()) { toast.error('Enter an address'); return; }
     setIsAdding(true);
     try {
-      const maxOrder = usdtAddresses.filter(a => a.address_type === newType).length;
+      const maxOrder = tradeAddresses.length;
       const { error } = await supabase.from('usdt_addresses').insert({
-        address: newAddress.trim(),
-        network: newNetwork,
-        address_type: newType,
+        address: newTradeAddress.trim(),
+        network: newTradeNetwork,
+        address_type: 'trade',
         display_order: maxOrder,
       });
       if (error) throw error;
-      toast.success('Address added');
-      setNewAddress('');
+      toast.success('Trade address added');
+      setNewTradeAddress('');
     } catch {
       toast.error('Failed to add address');
     } finally {
@@ -171,7 +172,7 @@ export const AdminCryptoManager = () => {
     }
   };
 
-  const handleDeleteUsdtAddress = async (id: string) => {
+  const handleDeleteTradeAddress = async (id: string) => {
     try {
       const { error } = await supabase.from('usdt_addresses').delete().eq('id', id);
       if (error) throw error;
@@ -181,8 +182,17 @@ export const AdminCryptoManager = () => {
     }
   };
 
-  const depositAddresses = usdtAddresses.filter(a => a.address_type === 'deposit');
-  const tradeAddresses = usdtAddresses.filter(a => a.address_type === 'trade');
+  const handleEditTradeAddress = async (id: string) => {
+    if (!editingTradeAddr.trim()) { toast.error('Enter an address'); return; }
+    try {
+      const { error } = await supabase.from('usdt_addresses').update({ address: editingTradeAddr.trim() }).eq('id', id);
+      if (error) throw error;
+      toast.success('Address updated');
+      setEditingTradeId(null);
+    } catch {
+      toast.error('Failed to update');
+    }
+  };
 
   if (loading) {
     return (
@@ -194,14 +204,14 @@ export const AdminCryptoManager = () => {
 
   return (
     <div className="space-y-6">
-      {/* Section 1: Deposit Crypto Toggle */}
+      {/* Section 1: All Deposit Crypto Addresses */}
       <div className="space-y-3">
         <div className="flex items-center gap-2">
           <Coins className="w-4 h-4 text-primary" />
-          <p className="font-semibold text-sm">Deposit Cryptocurrencies</p>
+          <p className="font-semibold text-sm">Deposit Addresses</p>
         </div>
         <p className="text-xs text-muted-foreground">
-          Toggle cryptos on/off for deposits. Non-USDT coins need a wallet address before enabling.
+          Manage deposit addresses for all cryptocurrencies. Each crypto has one deposit address shown to users.
         </p>
 
         {cryptos.map((crypto) => {
@@ -238,157 +248,102 @@ export const AdminCryptoManager = () => {
                   <Switch checked={crypto.is_enabled} onCheckedChange={() => handleToggle(crypto)} disabled={isUsdt} />
                 </div>
 
-                {/* Non-USDT: inline address editor */}
-                {!isUsdt && (
-                  <div className="space-y-2 pt-1 border-t border-border/30">
+                {/* Inline address editor for ALL cryptos */}
+                <div className="space-y-2 pt-1 border-t border-border/30">
+                  <div>
+                    <Label className="text-[10px] text-muted-foreground">Deposit Address</Label>
+                    <Input
+                      placeholder={`Enter ${crypto.symbol} wallet address...`}
+                      value={edit.address}
+                      onChange={(e) => updateEdit(crypto.symbol, 'address', e.target.value)}
+                      className="text-xs font-mono h-9 mt-1"
+                    />
+                  </div>
+                  {NETWORK_OPTIONS[crypto.symbol]?.length > 1 && (
                     <div>
-                      <Label className="text-[10px] text-muted-foreground">Deposit Address</Label>
-                      <Input
-                        placeholder={`Enter ${crypto.symbol} wallet address...`}
-                        value={edit.address}
-                        onChange={(e) => updateEdit(crypto.symbol, 'address', e.target.value)}
-                        className="text-xs font-mono h-9 mt-1"
-                      />
+                      <Label className="text-[10px] text-muted-foreground">Network</Label>
+                      <select
+                        value={edit.network || NETWORK_OPTIONS[crypto.symbol][0]}
+                        onChange={(e) => updateEdit(crypto.symbol, 'network', e.target.value)}
+                        className="w-full h-9 rounded-md border border-input bg-background px-3 text-xs mt-1"
+                      >
+                        {NETWORK_OPTIONS[crypto.symbol].map((net) => (
+                          <option key={net} value={net}>{net.toUpperCase()}</option>
+                        ))}
+                      </select>
                     </div>
-                    {NETWORK_OPTIONS[crypto.symbol]?.length > 1 && (
-                      <div>
-                        <Label className="text-[10px] text-muted-foreground">Network</Label>
-                        <select
-                          value={edit.network || NETWORK_OPTIONS[crypto.symbol][0]}
-                          onChange={(e) => updateEdit(crypto.symbol, 'network', e.target.value)}
-                          className="w-full h-9 rounded-md border border-input bg-background px-3 text-xs mt-1"
-                        >
-                          {NETWORK_OPTIONS[crypto.symbol].map((net) => (
-                            <option key={net} value={net}>{net.toUpperCase()}</option>
-                          ))}
-                        </select>
-                      </div>
-                    )}
-                    <Button
-                      size="sm"
-                      className="w-full h-8 text-xs"
-                      disabled={!edit.address.trim() || saving === crypto.symbol || !hasChanged}
-                      onClick={() => handleSave(crypto)}
-                    >
-                      {saving === crypto.symbol ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Save className="w-3 h-3 mr-1" />}
-                      Save Address
-                    </Button>
-                  </div>
-                )}
-
-                {/* USDT: show managed addresses inline */}
-                {isUsdt && (
-                  <div className="space-y-2 pt-1 border-t border-border/30">
-                    <p className="text-[10px] text-muted-foreground">
-                      USDT uses round-robin rotation for deposit &amp; trade addresses. Manage them below.
-                    </p>
-                  </div>
-                )}
+                  )}
+                  <Button
+                    size="sm"
+                    className="w-full h-8 text-xs"
+                    disabled={!edit.address.trim() || saving === crypto.symbol || !hasChanged}
+                    onClick={() => handleSave(crypto)}
+                  >
+                    {saving === crypto.symbol ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Save className="w-3 h-3 mr-1" />}
+                    Save Address
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           );
         })}
       </div>
 
-      {/* Section 2: USDT Address Management */}
+      {/* Section 2: Trade/Offer Addresses (Independent) */}
       <div className="space-y-4">
         <div className="flex items-center gap-2">
-          <Wallet className="w-4 h-4 text-gold" />
-          <p className="font-semibold text-sm">USDT Addresses</p>
+          <ArrowUpRight className="w-4 h-4 text-warning" />
+          <p className="font-semibold text-sm">Trade/Offer Addresses</p>
+          <Badge className="bg-warning/20 text-warning text-[10px]">{tradeAddresses.length}</Badge>
         </div>
+        <p className="text-xs text-muted-foreground">
+          These addresses rotate on the payment page when users buy USDT. Completely independent from deposit addresses.
+        </p>
 
-        {/* Add New Address */}
+        {/* Add New Trade Address */}
         <Card className="border-border/50 bg-card/80">
           <CardContent className="p-3 space-y-3">
-            <p className="font-medium text-sm">Add New USDT Address</p>
+            <p className="font-medium text-sm">Add Trade Address</p>
             <Input
               placeholder="USDT wallet address..."
-              value={newAddress}
-              onChange={(e) => setNewAddress(e.target.value)}
+              value={newTradeAddress}
+              onChange={(e) => setNewTradeAddress(e.target.value)}
               className="text-sm font-mono"
             />
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <Label className="text-[10px] text-muted-foreground">Network</Label>
-                <Select value={newNetwork} onValueChange={setNewNetwork}>
-                  <SelectTrigger className="h-8 text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="trc20">TRC20</SelectItem>
-                    <SelectItem value="erc20">ERC20</SelectItem>
-                    <SelectItem value="bep20">BEP20</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label className="text-[10px] text-muted-foreground">Type</Label>
-                <Select value={newType} onValueChange={(v) => setNewType(v as 'deposit' | 'trade')}>
-                  <SelectTrigger className="h-8 text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="deposit">Add Funds</SelectItem>
-                    <SelectItem value="trade">Trade/Offer</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            <div>
+              <Label className="text-[10px] text-muted-foreground">Network</Label>
+              <Select value={newTradeNetwork} onValueChange={setNewTradeNetwork}>
+                <SelectTrigger className="h-8 text-xs mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="trc20">TRC20</SelectItem>
+                  <SelectItem value="erc20">ERC20</SelectItem>
+                  <SelectItem value="bep20">BEP20</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <Button
               size="sm"
               className="w-full h-8 bg-gold hover:bg-gold/90 text-gold-foreground text-xs"
-              disabled={isAdding || !newAddress.trim()}
-              onClick={handleAddUsdtAddress}
+              disabled={isAdding || !newTradeAddress.trim()}
+              onClick={handleAddTradeAddress}
             >
               <Plus className="w-3 h-3 mr-1" />
-              Add Address
+              Add Trade Address
             </Button>
           </CardContent>
         </Card>
 
-        {/* Deposit Addresses */}
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <Wallet className="w-4 h-4 text-primary" />
-            <p className="font-medium text-sm">Add Funds Addresses</p>
-            <Badge className="bg-primary/20 text-primary text-[10px]">{depositAddresses.length}</Badge>
-          </div>
-          {depositAddresses.length === 0 ? (
-            <p className="text-xs text-muted-foreground text-center py-4">No deposit addresses added</p>
-          ) : (
-            <div className="space-y-1.5">
-              {depositAddresses.map((addr) => (
-                <Card key={addr.id} className="border-border/50 bg-card/80">
-                  <CardContent className="p-2.5 flex items-center justify-between gap-2">
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs font-mono truncate">{addr.address}</p>
-                      <Badge variant="secondary" className="text-[9px] mt-0.5">{addr.network.toUpperCase()}</Badge>
-                    </div>
-                    <Button variant="destructive" size="icon" className="h-7 w-7 shrink-0" onClick={() => handleDeleteUsdtAddress(addr.id)}>
-                      <Trash2 className="w-3 h-3" />
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Trade Addresses */}
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <ArrowUpRight className="w-4 h-4 text-warning" />
-            <p className="font-medium text-sm">Trade/Offer Addresses</p>
-            <Badge className="bg-warning/20 text-warning text-[10px]">{tradeAddresses.length}</Badge>
-          </div>
-          <p className="text-[10px] text-muted-foreground mb-2">These rotate in order on the payment page</p>
-          {tradeAddresses.length === 0 ? (
-            <p className="text-xs text-muted-foreground text-center py-4">No trade addresses added</p>
-          ) : (
-            <div className="space-y-1.5">
-              {tradeAddresses.map((addr, idx) => (
-                <Card key={addr.id} className="border-border/50 bg-card/80">
-                  <CardContent className="p-2.5 flex items-center justify-between gap-2">
+        {/* Trade Address List */}
+        {tradeAddresses.length === 0 ? (
+          <p className="text-xs text-muted-foreground text-center py-4">No trade addresses added</p>
+        ) : (
+          <div className="space-y-1.5">
+            {tradeAddresses.map((addr, idx) => (
+              <Card key={addr.id} className="border-border/50 bg-card/80">
+                <CardContent className="p-2.5 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5">
                         <span className="text-[10px] font-bold text-warning">#{idx + 1}</span>
@@ -396,15 +351,43 @@ export const AdminCryptoManager = () => {
                       </div>
                       <Badge variant="secondary" className="text-[9px] mt-0.5">{addr.network.toUpperCase()}</Badge>
                     </div>
-                    <Button variant="destructive" size="icon" className="h-7 w-7 shrink-0" onClick={() => handleDeleteUsdtAddress(addr.id)}>
-                      <Trash2 className="w-3 h-3" />
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </div>
+                    <div className="flex gap-1 shrink-0">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-7 w-7"
+                        onClick={() => {
+                          setEditingTradeId(addr.id);
+                          setEditingTradeAddr(addr.address);
+                        }}
+                      >
+                        <Pencil className="w-3 h-3" />
+                      </Button>
+                      <Button variant="destructive" size="icon" className="h-7 w-7" onClick={() => handleDeleteTradeAddress(addr.id)}>
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  </div>
+                  {editingTradeId === addr.id && (
+                    <div className="flex gap-2">
+                      <Input
+                        value={editingTradeAddr}
+                        onChange={(e) => setEditingTradeAddr(e.target.value)}
+                        className="text-xs font-mono h-8 flex-1"
+                      />
+                      <Button size="sm" className="h-8 text-xs" onClick={() => handleEditTradeAddress(addr.id)}>
+                        <Save className="w-3 h-3 mr-1" /> Save
+                      </Button>
+                      <Button size="sm" variant="ghost" className="h-8 text-xs" onClick={() => setEditingTradeId(null)}>
+                        Cancel
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

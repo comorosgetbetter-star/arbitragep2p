@@ -31,45 +31,17 @@ const NETWORK_META: Record<string, { name: string; chain: string; fee: string; t
   xrp: { name: 'XRP', chain: 'XRP Ledger', fee: '~0.00001 XRP', time: '~5 sec' },
 };
 
-const getRotatedDepositAddress = async () => {
-  const { data: addresses } = await supabase
-    .from('usdt_addresses')
-    .select('id, address, network')
-    .eq('address_type', 'deposit')
-    .eq('is_active', true)
-    .order('display_order');
-
-  if (!addresses || addresses.length === 0) return null;
-
-  const { data: rotation } = await supabase
-    .from('address_rotation')
-    .select('last_used_index')
-    .eq('address_type', 'deposit')
-    .single();
-
-  const lastIndex = rotation?.last_used_index ?? 0;
-  const nextIndex = (lastIndex + 1) % addresses.length;
-
-  await supabase
-    .from('address_rotation')
-    .update({ last_used_index: nextIndex, updated_at: new Date().toISOString() })
-    .eq('address_type', 'deposit');
-
-  return addresses[nextIndex];
-};
-
 export const DepositCrypto = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [cryptoOptions, setCryptoOptions] = useState<CryptoOption[]>([]);
   const [selectedCrypto, setSelectedCrypto] = useState<string>('USDT');
-  const [usdtAddr, setUsdtAddr] = useState<{ id: string; address: string; network: string } | null>(null);
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Fetch enabled cryptos
   useEffect(() => {
     const fetchCryptos = async () => {
+      setLoading(true);
       const { data } = await supabase
         .from('deposit_crypto_settings')
         .select('symbol, name, deposit_address, network, is_enabled')
@@ -78,43 +50,18 @@ export const DepositCrypto = () => {
       if (data) {
         setCryptoOptions(data as CryptoOption[]);
       }
+      setLoading(false);
     };
     fetchCryptos();
   }, []);
 
-  // Fetch USDT rotated address when selected
-  useEffect(() => {
-    if (!user || selectedCrypto !== 'USDT') {
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
-    getRotatedDepositAddress().then((addr) => {
-      setUsdtAddr(addr);
-      setLoading(false);
-    });
-  }, [user, selectedCrypto]);
-
-  const getCurrentAddress = () => {
-    if (selectedCrypto === 'USDT') {
-      return usdtAddr?.address || '';
-    }
-    const crypto = cryptoOptions.find(c => c.symbol === selectedCrypto);
-    return crypto?.deposit_address || '';
-  };
-
-  const getCurrentNetwork = () => {
-    if (selectedCrypto === 'USDT') {
-      return usdtAddr?.network || 'trc20';
-    }
-    const crypto = cryptoOptions.find(c => c.symbol === selectedCrypto);
-    return crypto?.network || '';
-  };
+  const currentCrypto = cryptoOptions.find(c => c.symbol === selectedCrypto);
+  const address = currentCrypto?.deposit_address || '';
+  const network = currentCrypto?.network || '';
 
   const handleCopy = () => {
-    const addr = getCurrentAddress();
-    if (addr) {
-      navigator.clipboard.writeText(addr);
+    if (address) {
+      navigator.clipboard.writeText(address);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
@@ -133,7 +80,7 @@ export const DepositCrypto = () => {
     );
   }
 
-  if (loading && selectedCrypto === 'USDT') {
+  if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-12 gap-3">
         <Loader2 className="h-8 w-8 text-primary animate-spin" />
@@ -142,8 +89,6 @@ export const DepositCrypto = () => {
     );
   }
 
-  const address = getCurrentAddress();
-  const network = getCurrentNetwork();
   const meta = NETWORK_META[network] || {
     name: network.toUpperCase(),
     chain: network,

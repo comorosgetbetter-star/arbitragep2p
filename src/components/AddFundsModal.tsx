@@ -14,67 +14,44 @@ const NETWORK_META: Record<string, { name: string; chain: string; fee: string; t
   bep20: { name: 'BEP20', chain: 'BNB Smart Chain', fee: '~0.5 USDT', time: '~3 min' },
 };
 
-// Get next rotated deposit address
-const getRotatedDepositAddress = async () => {
-  const { data: addresses } = await supabase
-    .from('usdt_addresses')
-    .select('id, address, network')
-    .eq('address_type', 'deposit')
-    .eq('is_active', true)
-    .order('display_order');
-
-  if (!addresses || addresses.length === 0) return null;
-
-  const { data: rotation } = await supabase
-    .from('address_rotation')
-    .select('last_used_index')
-    .eq('address_type', 'deposit')
-    .single();
-
-  const lastIndex = rotation?.last_used_index ?? 0;
-  const nextIndex = (lastIndex + 1) % addresses.length;
-
-  // Update rotation
-  await supabase
-    .from('address_rotation')
-    .update({ last_used_index: nextIndex, updated_at: new Date().toISOString() })
-    .eq('address_type', 'deposit');
-
-  return addresses[nextIndex];
-};
-
 export const AddFundsModal = ({ isOpen, onClose }: AddFundsModalProps) => {
-  const [selectedAddr, setSelectedAddr] = useState<{ id: string; address: string; network: string } | null>(null);
+  const [usdtSetting, setUsdtSetting] = useState<{ deposit_address: string; network: string } | null>(null);
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!isOpen) return;
     setLoading(true);
-    getRotatedDepositAddress().then((addr) => {
-      setSelectedAddr(addr);
-      setLoading(false);
-    });
+    supabase
+      .from('deposit_crypto_settings')
+      .select('deposit_address, network')
+      .eq('symbol', 'USDT')
+      .eq('is_enabled', true)
+      .single()
+      .then(({ data }) => {
+        setUsdtSetting(data as any);
+        setLoading(false);
+      });
   }, [isOpen]);
 
   const handleCopy = () => {
-    if (selectedAddr) {
-      navigator.clipboard.writeText(selectedAddr.address);
+    if (usdtSetting?.deposit_address) {
+      navigator.clipboard.writeText(usdtSetting.deposit_address);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
   };
 
   const handleClose = () => {
-    setSelectedAddr(null);
+    setUsdtSetting(null);
     onClose();
   };
 
   if (!isOpen) return null;
 
-  const meta = selectedAddr
-    ? NETWORK_META[selectedAddr.network] || { name: selectedAddr.network.toUpperCase(), chain: selectedAddr.network, fee: 'Variable', time: '~5 min' }
-    : null;
+  const address = usdtSetting?.deposit_address || '';
+  const network = usdtSetting?.network || 'trc20';
+  const meta = NETWORK_META[network] || { name: network.toUpperCase(), chain: network, fee: 'Variable', time: '~5 min' };
 
   return (
     <>
@@ -102,7 +79,7 @@ export const AddFundsModal = ({ isOpen, onClose }: AddFundsModalProps) => {
                 <Loader2 className="h-8 w-8 text-primary animate-spin" />
                 <p className="text-sm text-muted-foreground">Loading deposit address...</p>
               </div>
-            ) : !selectedAddr ? (
+            ) : !address ? (
               <p className="text-sm text-muted-foreground text-center py-6">No deposit addresses available. Please contact support.</p>
             ) : (
               <>
@@ -110,26 +87,26 @@ export const AddFundsModal = ({ isOpen, onClose }: AddFundsModalProps) => {
                   <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-3">
                     <span className="text-2xl font-bold text-primary">₮</span>
                   </div>
-                  <p className="font-display font-semibold text-foreground">USDT ({meta?.name})</p>
-                  <p className="text-sm text-muted-foreground">{meta?.chain}</p>
+                  <p className="font-display font-semibold text-foreground">USDT ({meta.name})</p>
+                  <p className="text-sm text-muted-foreground">{meta.chain}</p>
                 </div>
                 <div className="glass-card rounded-xl p-4 mb-4">
                   <p className="text-xs text-muted-foreground mb-2">Deposit Address</p>
                   <div className="flex items-center gap-2">
-                    <code className="flex-1 text-sm font-mono text-foreground break-all">{selectedAddr.address}</code>
+                    <code className="flex-1 text-sm font-mono text-foreground break-all">{address}</code>
                     <Button variant="ghost" size="icon" onClick={handleCopy} className="shrink-0">
                       {copied ? <Check className="h-4 w-4 text-success" /> : <Copy className="h-4 w-4" />}
                     </Button>
                   </div>
                 </div>
                 <div className="space-y-2 text-sm">
-                  <div className="flex justify-between"><span className="text-muted-foreground">Network</span><span className="text-foreground">{meta?.chain}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Network</span><span className="text-foreground">{meta.chain}</span></div>
                   <div className="flex justify-between"><span className="text-muted-foreground">Minimum Deposit</span><span className="text-foreground">1 USDT</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">Network Fee</span><span className="text-foreground">{meta?.fee}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">Arrival Time</span><span className="text-foreground">{meta?.time}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Network Fee</span><span className="text-foreground">{meta.fee}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Arrival Time</span><span className="text-foreground">{meta.time}</span></div>
                 </div>
                 <div className="mt-4 p-3 rounded-lg bg-warning/10 border border-warning/20">
-                  <p className="text-xs text-warning">⚠️ Only send USDT on the {meta?.chain}. Sending other tokens or using a different network may result in permanent loss of funds.</p>
+                  <p className="text-xs text-warning">⚠️ Only send USDT on the {meta.chain}. Sending other tokens or using a different network may result in permanent loss of funds.</p>
                 </div>
               </>
             )}
