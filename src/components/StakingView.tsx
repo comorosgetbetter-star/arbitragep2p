@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { StakingConfirmModal } from '@/components/StakingConfirmModal';
 import { ActiveStakingCard } from '@/components/ActiveStakingCard';
+import { StakingSkeleton } from '@/components/skeletons/StakingSkeleton';
 
 interface StakingPlan {
   id: string;
@@ -76,11 +77,7 @@ export const StakingView = () => {
     return () => { supabase.removeChannel(channel); };
   }, [user, fetchSessions]);
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
+    return <StakingSkeleton />;
   }
 
   if (!user) {

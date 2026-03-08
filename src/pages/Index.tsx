@@ -16,7 +16,9 @@ import { StakingView } from '@/components/StakingView';
 import { AssetsView } from '@/components/AssetsView';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
-import { Download, Zap, ShoppingBag, ArrowLeft, Bot, Loader2, Lock } from 'lucide-react';
+import { Download, Zap, ShoppingBag, ArrowLeft, Bot, Lock } from 'lucide-react';
+import { PortfolioSkeleton } from '@/components/skeletons/PortfolioSkeleton';
+import { TradeSkeleton } from '@/components/skeletons/TradeSkeleton';
 
 type ExploreTab = 'staking' | 'bots';
 
@@ -140,9 +142,7 @@ const Index = () => {
         <div className="container mx-auto px-4 max-w-lg">
           <h2 className="text-lg font-display font-bold mb-4 pt-2">Trade</h2>
           {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 text-primary animate-spin" />
-            </div>
+            <TradeSkeleton />
           ) : !user ? (
             <div className="text-center py-12 rounded-xl border border-border bg-card/50">
               <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-3">

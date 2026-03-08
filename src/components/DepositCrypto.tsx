@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { DepositSkeleton } from '@/components/skeletons/DepositSkeleton';
 
 interface CryptoOption {
   symbol: string;
@@ -76,12 +77,7 @@ export const DepositCrypto = () => {
   };
 
   if (authLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center py-12 gap-3">
-        <Loader2 className="h-8 w-8 text-primary animate-spin" />
-        <p className="text-sm text-muted-foreground">Checking account...</p>
-      </div>
-    );
+    return <DepositSkeleton />;
   }
 
   if (!user) {
@@ -98,12 +94,7 @@ export const DepositCrypto = () => {
   }
 
   if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center py-12 gap-3">
-        <Loader2 className="h-8 w-8 text-primary animate-spin" />
-        <p className="text-sm text-muted-foreground">Loading deposit address...</p>
-      </div>
-    );
+    return <DepositSkeleton />;
   }
 
   const meta = NETWORK_META[network] || {

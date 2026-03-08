@@ -6,6 +6,7 @@ import { useUserData } from '@/contexts/UserDataContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { BotTradingView } from '@/components/BotTradingView';
 import { FlywheelBot } from '@/components/FlywheelBot';
+import { BotsSkeleton } from '@/components/skeletons/BotsSkeleton';
 
 interface BotItem {
   id: string;
@@ -59,11 +60,7 @@ export const BotsView = () => {
 
   // Auth loading state
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 text-primary animate-spin" />
-      </div>
-    );
+    return <BotsSkeleton />;
   }
 
   // Auth gate
