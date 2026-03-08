@@ -640,14 +640,11 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
                       </div>
                     </div>
                     <div>
-                      <label className="text-xs text-muted-foreground mb-1 block">Amount (USDT)</label>
-                      <Input
-                        type="number"
-                        placeholder={`Min $${fmt(plan.minAmount)}`}
-                        value={amount}
-                        onChange={e => setAmount(e.target.value)}
-                        className="bg-secondary/50 border-border/50"
-                      />
+                      <label className="text-xs text-muted-foreground mb-1 block">Trading Amount (USDT)</label>
+                      <div className="bg-secondary/50 border border-border/50 rounded-md px-3 py-2 text-sm font-bold text-foreground">
+                        ${fmt(balance)}
+                      </div>
+                      <p className="text-[10px] text-muted-foreground mt-1">Your full balance will be used for trading</p>
                     </div>
                     <div className="flex gap-2">
                       <Button
