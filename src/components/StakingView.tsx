@@ -227,7 +227,10 @@ export const StakingView = () => {
             <Card
               key={plan.id}
               className={`border transition-all cursor-pointer ${isSelected ? 'border-primary/50 bg-primary/5' : 'border-border/50 hover:border-border'}`}
-              onClick={() => { setSelectedPlan(isSelected ? null : plan.id); setStakeAmount(String(plan.minAmount)); }}
+              onClick={() => {
+                if (!user) { navigate('/login'); return; }
+                setSelectedPlan(isSelected ? null : plan.id); setStakeAmount(String(plan.minAmount));
+              }}
             >
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-3">
