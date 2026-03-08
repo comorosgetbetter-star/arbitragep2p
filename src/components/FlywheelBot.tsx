@@ -207,11 +207,20 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
       return;
     }
     if (amountNum > balance) {
-      toast({ title: 'Insufficient balance', description: `Your balance is $${balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, variant: 'destructive' });
+      toast({ title: 'Insufficient balance', description: `Your balance is $${fmt(balance)}`, variant: 'destructive' });
       return;
     }
 
+    // Show confirmation dialog
+    setConfirmPlan(plan);
+  };
+
+  const handleConfirmStart = async () => {
+    if (!confirmPlan || !user) return;
+    const amountNum = parseFloat(amount || String(confirmPlan.minAmount));
+
     setIsStarting(true);
+    setConfirmPlan(null);
     try {
       const { error } = await supabase.rpc('start_flywheel', {
         _plan_name: plan.name,
