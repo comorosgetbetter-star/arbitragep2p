@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { ArrowLeft, ArrowDownUp, Wallet, Clock, TrendingUp, Zap, X, AlertTriangle, CheckCircle2, XCircle, Trophy } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
@@ -404,7 +404,6 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
   const { toast } = useToast();
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [selectedDuration, setSelectedDuration] = useState(DURATION_OPTIONS[0]);
-  const [amount, setAmount] = useState('');
   const [isStarting, setIsStarting] = useState(false);
   const [activeSessions, setActiveSessions] = useState<FlywheelSession[]>([]);
   const [confirmPlan, setConfirmPlan] = useState<typeof FLYWHEEL_PLANS[0] | null>(null);
@@ -449,12 +448,11 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
 
   const handleStart = async (plan: typeof FLYWHEEL_PLANS[0]) => {
     if (!user) return;
-    const amountNum = parseFloat(amount || String(plan.minAmount));
-    if (amountNum < plan.minAmount) {
+    if (balance < plan.minAmount) {
       toast({ title: 'Minimum not met', description: `Minimum is $${fmt(plan.minAmount)}`, variant: 'destructive' });
       return;
     }
-    if (amountNum > balance) {
+    if (balance <= 0) {
       toast({ title: 'Insufficient balance', description: `Your balance is $${fmt(balance)}`, variant: 'destructive' });
       return;
     }
@@ -463,22 +461,20 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
 
   const handleConfirmStart = async () => {
     if (!confirmPlan || !user) return;
-    const amountNum = parseFloat(amount || String(confirmPlan.minAmount));
 
     setIsStarting(true);
     setConfirmPlan(null);
     try {
       const { error } = await supabase.rpc('start_flywheel', {
         _plan_name: confirmPlan.name,
-        _amount: amountNum,
+        _amount: balance,
         _daily_return_pct: confirmPlan.dailyReturnPct,
         _lock_minutes: selectedDuration.minutes,
       });
       if (error) throw error;
-      toast({ title: 'Flywheel started! 🚀', description: `$${fmt(amountNum)} deployed on ${confirmPlan.name}` });
+      toast({ title: 'Flywheel started! 🚀', description: `$${fmt(balance)} deployed on ${confirmPlan.name}` });
       setSelectedPlan(null);
       setSelectedDuration(DURATION_OPTIONS[0]);
-      setAmount('');
       refetchBalance();
       fetchSessions();
     } catch (err: any) {
@@ -640,20 +636,17 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
                       </div>
                     </div>
                     <div>
-                      <label className="text-xs text-muted-foreground mb-1 block">Amount (USDT)</label>
-                      <Input
-                        type="number"
-                        placeholder={`Min $${fmt(plan.minAmount)}`}
-                        value={amount}
-                        onChange={e => setAmount(e.target.value)}
-                        className="bg-secondary/50 border-border/50"
-                      />
+                      <label className="text-xs text-muted-foreground mb-1 block">Trading Amount (USDT)</label>
+                      <div className="bg-secondary/50 border border-border/50 rounded-md px-3 py-2 text-sm font-bold text-foreground">
+                        ${fmt(balance)}
+                      </div>
+                      <p className="text-[10px] text-muted-foreground mt-1">Your full balance will be used for trading</p>
                     </div>
                     <div className="flex gap-2">
                       <Button
                         variant="outline"
                         className="flex-1 h-11 font-semibold text-sm border-border/50"
-                        onClick={() => { setSelectedPlan(null); setAmount(''); }}
+                        onClick={() => { setSelectedPlan(null); }}
                       >
                         Cancel
                       </Button>
@@ -662,14 +655,14 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
                         onClick={() => handleStart(plan)}
                         disabled={isStarting}
                       >
-                        {isStarting ? 'Starting…' : `Deploy $${fmt(parseFloat(amount) || plan.minAmount)}`}
+                        {isStarting ? 'Starting…' : `Deploy $${fmt(balance)}`}
                       </Button>
                     </div>
                   </div>
                 ) : (
                   <Button
                     className="w-full h-11 font-semibold text-sm bg-gold/15 hover:bg-gold/25 text-gold border border-gold/30"
-                    onClick={() => { setSelectedPlan(plan.id); setAmount(String(plan.minAmount)); }}
+                    onClick={() => { setSelectedPlan(plan.id); }}
                   >
                     Start Trading
                   </Button>
@@ -740,7 +733,7 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
                 </div>
                 <div className="bg-secondary/50 rounded-lg p-3 text-center">
                   <p className="text-[10px] text-muted-foreground">Amount</p>
-                  <p className="text-sm font-bold text-primary">${fmt(parseFloat(amount) || confirmPlan.minAmount)}</p>
+                  <p className="text-sm font-bold text-primary">${fmt(balance)}</p>
                 </div>
                 <div className="bg-secondary/50 rounded-lg p-3 text-center">
                   <p className="text-[10px] text-muted-foreground">Daily Rate</p>
@@ -748,7 +741,7 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
                 </div>
               </div>
               <p className="text-xs text-muted-foreground text-center">
-                ${fmt(parseFloat(amount) || confirmPlan.minAmount)} USDT will be deducted from your balance.
+                ${fmt(balance)} USDT will be deducted from your balance.
               </p>
             </div>
           )}
