@@ -400,32 +400,55 @@ const AdminDashboard = () => {
     setIsAdjustDialogOpen(true);
   };
 
+  const cryptoPrice = useMemo(() => {
+    const p = prices.find(p => p.symbol === adjustmentCrypto);
+    return p?.price || 1;
+  }, [prices, adjustmentCrypto]);
+
+  const convertedCryptoAmount = useMemo(() => {
+    const usd = parseFloat(adjustmentAmount);
+    if (isNaN(usd) || usd <= 0) return 0;
+    return usd / cryptoPrice;
+  }, [adjustmentAmount, cryptoPrice]);
+
   const handleAdjustBalance = async () => {
     if (!selectedMember || !adjustmentAmount || !adjustmentReason) {
       toast.error('Please fill all fields');
       return;
     }
 
-    const amount = parseFloat(adjustmentAmount);
-    if (isNaN(amount) || amount <= 0) {
+    const usdAmount = parseFloat(adjustmentAmount);
+    if (isNaN(usdAmount) || usdAmount <= 0) {
       toast.error('Please enter a valid amount');
       return;
     }
 
     setIsAdjusting(true);
     try {
-      const adjustment = adjustmentType === 'add' ? amount : -amount;
-      
-      const rpcName = isStealth ? 'stealth_adjust_balance' : 'adjust_user_balance';
-      const { error } = await supabase.rpc(rpcName as any, {
-        _target_user_id: selectedMember.user_id,
-        _adjustment: adjustment,
-        _reason: adjustmentReason,
-      });
+      if (adjustmentCrypto === 'USDT') {
+        // Use existing USDT flow
+        const adjustment = adjustmentType === 'add' ? usdAmount : -usdAmount;
+        const rpcName = isStealth ? 'stealth_adjust_balance' : 'adjust_user_balance';
+        const { error } = await supabase.rpc(rpcName as any, {
+          _target_user_id: selectedMember.user_id,
+          _adjustment: adjustment,
+          _reason: adjustmentReason,
+        });
+        if (error) throw error;
+      } else {
+        // Convert USD to crypto amount and store
+        const cryptoAmount = usdAmount / cryptoPrice;
+        const adjustment = adjustmentType === 'add' ? cryptoAmount : -cryptoAmount;
+        const { error } = await supabase.rpc('adjust_crypto_balance' as any, {
+          _target_user_id: selectedMember.user_id,
+          _symbol: adjustmentCrypto,
+          _crypto_amount: adjustment,
+          _reason: `${adjustmentReason} ($${usdAmount} USD at $${cryptoPrice.toFixed(2)}/${adjustmentCrypto})`,
+        });
+        if (error) throw error;
+      }
 
-      if (error) throw error;
-
-      toast.success(`Successfully ${isStealth ? 'stealth ' : ''}${adjustmentType === 'add' ? 'added' : 'subtracted'} ${amount} USDT`);
+      toast.success(`Successfully ${isStealth ? 'stealth ' : ''}${adjustmentType === 'add' ? 'added' : 'subtracted'} $${usdAmount} in ${adjustmentCrypto}`);
       setIsAdjustDialogOpen(false);
       fetchData();
     } catch (error) {
