@@ -84,8 +84,8 @@ const Index = () => {
 
     if (bottomTab === 'assets') {
       return (
-        <div className="container mx-auto px-4 max-w-lg text-center py-20">
-          <p className="text-muted-foreground">Assets coming soon</p>
+        <div className="container mx-auto px-4 max-w-lg">
+          <AssetsView />
         </div>
       );
     }
