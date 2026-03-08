@@ -73,6 +73,8 @@ export const AssetsView = () => {
   const [convertAmount, setConvertAmount] = useState('');
   const [isConverting, setIsConverting] = useState(false);
   const [convertSuccess, setConvertSuccess] = useState(false);
+  const [showFromPicker, setShowFromPicker] = useState(false);
+  const [showToPicker, setShowToPicker] = useState(false);
 
   // Compute total portfolio value (USDT balance + all crypto holdings at current prices)
   const totalPortfolioValue = (() => {
@@ -270,6 +272,7 @@ export const AssetsView = () => {
     ];
 
     const allSymbols = ['USDT', 'BTC', 'ETH', 'BNB', 'SOL', 'XRP'];
+    const cryptoNames: Record<string, string> = { USDT: 'Tether', BTC: 'Bitcoin', ETH: 'Ethereum', BNB: 'BNB', SOL: 'Solana', XRP: 'XRP' };
     const fromBalance = convertFrom === 'USDT' ? balance : (cryptoBalances.find(c => c.symbol === convertFrom)?.amount || 0);
     const fromPrice = convertFrom === 'USDT' ? 1 : (prices.find(p => p.symbol === convertFrom)?.price || 0);
     const toPrice = convertTo === 'USDT' ? 1 : (prices.find(p => p.symbol === convertTo)?.price || 0);
