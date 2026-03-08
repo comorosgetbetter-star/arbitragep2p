@@ -54,6 +54,7 @@ const FLYWHEEL_PLANS = [
 const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSession; onCancelled: () => void; onBack: () => void }) => {
   const { toast } = useToast();
   const [cancelling, setCancelling] = useState(false);
+  const [collected, setCollected] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [now, setNow] = useState(Date.now());
   const [trades, setTrades] = useState<TradeRound[]>([]);
