@@ -21,9 +21,11 @@ import {
   Send,
   MapPin,
   ShoppingBag,
-  EyeOff
+  EyeOff,
+  Coins
 } from 'lucide-react';
 import { AdminAddressManager } from '@/components/AdminAddressManager';
+import { AdminCryptoManager } from '@/components/AdminCryptoManager';
 import { AdminP2POrderManager } from '@/components/AdminP2POrderManager';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
