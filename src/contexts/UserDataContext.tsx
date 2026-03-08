@@ -56,6 +56,9 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
   const [deposits, setDeposits] = useState<Deposit[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Request deduplication: track in-flight promises
+  const inflightRef = useRef<Record<string, Promise<void>>>({});
+
   const fetchBalance = useCallback(async () => {
     if (!user) return;
     const { data } = await supabase
