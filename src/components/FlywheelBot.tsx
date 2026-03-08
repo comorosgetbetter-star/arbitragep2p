@@ -54,6 +54,7 @@ const FLYWHEEL_PLANS = [
 const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSession; onCancelled: () => void; onBack: () => void }) => {
   const { toast } = useToast();
   const [cancelling, setCancelling] = useState(false);
+  const [collected, setCollected] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [now, setNow] = useState(Date.now());
   const [trades, setTrades] = useState<TradeRound[]>([]);
@@ -138,14 +139,14 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
     try {
       const { error } = await supabase.rpc('cancel_staking', { _session_id: session.id });
       if (error) throw error;
-      toast({ title: 'Bot stopped ✅', description: `Profits of $${fmt(Math.max(0, totalWinnings))} returned to your balance.` });
-      onCancelled();
+      toast({ title: 'Profits collected ✅', description: `$${fmt(Math.max(0, totalWinnings))} profit returned to your balance.` });
+      setCollected(true);
     } catch (err: any) {
-      toast({ title: 'Error', description: err.message || 'Failed to stop bot', variant: 'destructive' });
+      toast({ title: 'Error', description: err.message || 'Failed to collect', variant: 'destructive' });
     } finally {
       setCancelling(false);
     }
-  }, [session.id, onCancelled, toast, totalWinnings]);
+  }, [session.id, toast, totalWinnings]);
 
   return (
     <div className="fixed inset-0 z-50 bg-background flex flex-col animate-fade-in">
@@ -297,7 +298,16 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
 
       {/* Bottom action bar */}
       <div className="p-4 border-t border-border/30 bg-card/80 backdrop-blur-sm space-y-2">
-        {!isCompleted && session.status === 'active' ? (
+        {collected ? (
+          /* Profits collected — show only Back button */
+          <Button
+            className="w-full h-12 font-semibold"
+            onClick={onCancelled}
+          >
+            <ArrowLeft className="h-4 w-4 mr-1.5" />
+            Back to Packages
+          </Button>
+        ) : !isCompleted && session.status === 'active' ? (
           /* Bot is still running — show only Cancel button */
           <Button
             variant="outline"
@@ -309,24 +319,14 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
             {cancelling ? 'Stopping…' : 'Cancel Bot'}
           </Button>
         ) : (
-          /* Bot finished or was cancelled — show Collect + Back */
-          <div className="space-y-2">
-            <Button
-              className="w-full h-12 bg-success hover:bg-success/90 text-success-foreground font-semibold"
-              onClick={() => setShowCancelConfirm(true)}
-            >
-              <Trophy className="h-4 w-4 mr-1.5" />
-              Collect Profits
-            </Button>
-            <Button
-              variant="outline"
-              className="w-full h-10 font-medium"
-              onClick={onBack}
-            >
-              <ArrowLeft className="h-4 w-4 mr-1.5" />
-              Back to Packages
-            </Button>
-          </div>
+          /* Bot finished — show Collect Profits */
+          <Button
+            className="w-full h-12 bg-success hover:bg-success/90 text-success-foreground font-semibold"
+            onClick={() => setShowCancelConfirm(true)}
+          >
+            <Trophy className="h-4 w-4 mr-1.5" />
+            Collect Profits
+          </Button>
         )}
       </div>
 
