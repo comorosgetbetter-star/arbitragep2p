@@ -449,9 +449,22 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
   };
 
   const handleSessionDone = () => {
+    setViewingSession(null);
     refetchBalance();
     fetchSessions();
   };
+
+  // Auto-open first active session, or open newly created one
+  useEffect(() => {
+    if (activeSessions.length > 0 && !viewingSession) {
+      setViewingSession(activeSessions[0]);
+    }
+  }, [activeSessions]);
+
+  // If viewing a session, show full-page bot view
+  if (viewingSession) {
+    return <ActiveBotView session={viewingSession} onCancelled={handleSessionDone} />;
+  }
 
   return (
     <div className="space-y-4 pb-4">
