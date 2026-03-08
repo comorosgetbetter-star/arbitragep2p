@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 type AssetsSubView = 'main' | 'deposit' | 'withdraw' | 'history';
+type HistoryFilter = 'all' | 'deposits' | 'withdrawals';
 
 const NETWORK_META: Record<string, { name: string; chain: string; fee: string; time: string }> = {
   trc20: { name: 'TRC20', chain: 'Tron Network', fee: '~1 USDT', time: '~3 min' },
@@ -64,6 +65,7 @@ export const AssetsView = () => {
   const [walletAddress, setWalletAddress] = useState('');
   const [selectedNetwork, setSelectedNetwork] = useState('trc20');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [historyFilter, setHistoryFilter] = useState<HistoryFilter>('all');
 
   const displayBalance = hidden
     ? '****'
@@ -234,10 +236,12 @@ export const AssetsView = () => {
 
   // ── SUB-VIEW: History ──
   if (subView === 'history') {
-    const activities = [
+    const allActivities = [
       ...deposits.map(d => ({ id: d.id, type: 'deposit' as const, amount: d.amount, status: 'approved', created_at: d.created_at, network: '', reason: d.reason })),
       ...withdrawals.map(w => ({ id: w.id, type: 'withdrawal' as const, amount: w.amount, status: w.status, created_at: w.created_at, network: w.network, reason: null })),
     ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+    const activities = historyFilter === 'all' ? allActivities : allActivities.filter(a => a.type === (historyFilter === 'deposits' ? 'deposit' : 'withdrawal'));
 
     return (
       <div className="space-y-4">
@@ -245,6 +249,17 @@ export const AssetsView = () => {
           <ArrowLeft className="h-4 w-4" /> Back
         </button>
         <h2 className="text-lg font-display font-bold">Transaction History</h2>
+        <div className="flex gap-2">
+          {(['all', 'deposits', 'withdrawals'] as const).map((f) => (
+            <button
+              key={f}
+              onClick={() => setHistoryFilter(f)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${historyFilter === f ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground hover:text-foreground'}`}
+            >
+              {f === 'all' ? 'All' : f === 'deposits' ? 'Deposits' : 'Withdrawals'}
+            </button>
+          ))}
+        </div>
         {activities.length === 0 ? (
           <div className="text-center py-12">
             <div className="w-12 h-12 rounded-xl bg-muted/50 flex items-center justify-center mx-auto mb-3">
