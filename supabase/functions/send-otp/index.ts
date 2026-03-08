@@ -73,7 +73,7 @@ function getEmailHTML(code: string, fullName: string): string {
                 </p>
               </div>
               <p style="margin:0;font-size:13px;color:#6b7280;line-height:1.6;">
-                If you did not create an account with ArbitrageP2P, you can safely ignore this email.
+                If you did not create an account with PeerBitX, you can safely ignore this email.
               </p>
             </td>
           </tr>
