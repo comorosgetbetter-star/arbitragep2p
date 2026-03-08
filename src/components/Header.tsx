@@ -37,9 +37,6 @@ export const Header = ({ isDark, toggleTheme }: HeaderProps) => {
 
           {/* Desktop Nav */}
           <nav className="hidden md:flex items-center gap-6">
-            <button onClick={() => scrollTo('calculator')} className="text-muted-foreground hover:text-foreground transition-colors text-sm">
-              Calculator
-            </button>
             <button onClick={() => scrollTo('why-usdt')} className="text-muted-foreground hover:text-foreground transition-colors text-sm">
               Why USDT
             </button>
@@ -97,9 +94,6 @@ export const Header = ({ isDark, toggleTheme }: HeaderProps) => {
         {isMobileMenuOpen && (
           <div className="md:hidden glass-card border-t border-border/30 animate-fade-in-up">
             <nav className="container mx-auto px-4 py-4 flex flex-col gap-4">
-              <button onClick={() => scrollTo('calculator')} className="text-muted-foreground hover:text-foreground transition-colors py-2 text-left">
-                Calculator
-              </button>
               <button onClick={() => scrollTo('why-usdt')} className="text-muted-foreground hover:text-foreground transition-colors py-2 text-left">
                 Why USDT
               </button>
