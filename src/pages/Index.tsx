@@ -10,6 +10,7 @@ import { FAQ } from '@/components/FAQ';
 import { Footer } from '@/components/Footer';
 import { BottomNav, BottomNavTab } from '@/components/BottomNav';
 import { MarketsView } from '@/components/MarketsView';
+import { StakingView } from '@/components/StakingView';
 import { Button } from '@/components/ui/button';
 import { Download, Zap, ShoppingBag, ArrowLeft } from 'lucide-react';
 
