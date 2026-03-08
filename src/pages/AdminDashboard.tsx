@@ -861,6 +861,12 @@ const AdminDashboard = () => {
                         <div className="min-w-0">
                           <p className="font-medium text-sm truncate">{member.full_name}</p>
                           <p className="text-xs text-muted-foreground truncate">{member.email}</p>
+                          <button
+                            onClick={() => openManageUser(member)}
+                            className="text-[10px] text-primary hover:underline mt-0.5 flex items-center gap-0.5"
+                          >
+                            <KeyRound className="w-2.5 h-2.5" /> Manage Account
+                          </button>
                         </div>
                         <div className="text-right shrink-0">
                           <p className="font-mono text-sm font-bold">${member.total_usd_balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
