@@ -14,12 +14,9 @@ function validateName(name: string): boolean {
 }
 
 function generateOTP(): string {
-  const digits = '0123456789'
-  let otp = ''
-  for (let i = 0; i < 6; i++) {
-    otp += digits[Math.floor(Math.random() * 10)]
-  }
-  return otp
+  const array = new Uint32Array(6)
+  crypto.getRandomValues(array)
+  return Array.from(array, v => (v % 10).toString()).join('')
 }
 
 const LOGO_URL = 'https://hywqedthwvuiftmfmkjs.supabase.co/storage/v1/object/public/email-assets/logo.png'
@@ -127,11 +124,28 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
+    const normalizedEmail = email.toLowerCase().trim()
+
+    // Rate limit: max 5 codes per email in last 10 minutes
+    const tenMinAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString()
+    const { count: recentCount } = await supabase
+      .from('verification_codes')
+      .select('id', { count: 'exact', head: true })
+      .eq('email', normalizedEmail)
+      .gte('created_at', tenMinAgo)
+
+    if (recentCount !== null && recentCount >= 5) {
+      return new Response(JSON.stringify({ error: 'Too many attempts. Please wait before requesting a new code.' }), {
+        status: 429,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
     // Invalidate any existing unused codes for this email
     await supabase
       .from('verification_codes')
       .update({ used: true })
-      .eq('email', email.toLowerCase().trim())
+      .eq('email', normalizedEmail)
       .eq('used', false)
 
     const code = generateOTP()
@@ -140,7 +154,7 @@ Deno.serve(async (req) => {
     const { error: insertError } = await supabase
       .from('verification_codes')
       .insert({
-        email: email.toLowerCase().trim(),
+        email: normalizedEmail,
         code,
         expires_at: expiresAt,
       })
@@ -161,7 +175,7 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({
         from: 'PeerBitX <noreply@contact.peerbitx.com>',
-        to: [email.toLowerCase().trim()],
+        to: [normalizedEmail],
         subject: `${code} is your PeerBitX verification code`,
         html: getEmailHTML(code, safeName),
       }),
