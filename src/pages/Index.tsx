@@ -77,7 +77,38 @@ const Index = () => {
       return (
         <div className="container mx-auto px-4 max-w-lg">
           <h2 className="text-lg font-display font-bold mb-4 pt-2">Explore</h2>
-          <StakingView />
+          <div className="flex gap-2 mb-4">
+            <Button
+              className={`flex-1 h-10 rounded-xl text-sm font-semibold transition-all ${
+                exploreTab === 'staking'
+                  ? 'bg-primary text-primary-foreground shadow-md'
+                  : 'bg-card border border-border text-foreground hover:border-primary/40'
+              }`}
+              onClick={() => setExploreTab('staking')}
+            >
+              Crypto Staking
+            </Button>
+            <Button
+              className={`flex-1 h-10 rounded-xl text-sm font-semibold transition-all ${
+                exploreTab === 'bots'
+                  ? 'bg-primary text-primary-foreground shadow-md'
+                  : 'bg-card border border-border text-foreground hover:border-primary/40'
+              }`}
+              onClick={() => setExploreTab('bots')}
+            >
+              Bots
+            </Button>
+          </div>
+          {exploreTab === 'staking' && <StakingView />}
+          {exploreTab === 'bots' && (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+                <Zap className="h-7 w-7 text-primary" />
+              </div>
+              <h3 className="text-lg font-display font-bold text-foreground mb-1">Trading Bots</h3>
+              <p className="text-sm text-muted-foreground">Coming soon — automated trading strategies at your fingertips.</p>
+            </div>
+          )}
         </div>
       );
     }
