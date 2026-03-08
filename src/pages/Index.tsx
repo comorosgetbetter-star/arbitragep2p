@@ -99,6 +99,7 @@ const Index = () => {
               }`}
               onClick={() => setExploreTab('bots')}
             >
+              <Bot className="h-4 w-4 mr-1.5" />
               Bots
             </Button>
           </div>
