@@ -15,7 +15,7 @@ import { Zap, ShoppingBag } from 'lucide-react';
 
 const Index = () => {
   const [isDark, setIsDark] = useState(true);
-  const [activeTab, setActiveTab] = useState<'express' | 'orders'>('express');
+  const [activeTab, setActiveTab] = useState<'express' | 'orders'>('orders');
 
   useEffect(() => {
     if (isDark) {
