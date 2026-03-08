@@ -62,7 +62,7 @@ export const P2POrders = () => {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [pendingOrder, setPendingOrder] = useState<{ order: P2POrder; amount: number; usdt: number } | null>(null);
   const [existingSession, setExistingSession] = useState<TradeSession | null>(null);
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { startSession, clearSession, getStoredSession } = useTradeSession();
 
@@ -87,12 +87,9 @@ export const P2POrders = () => {
 
     const usdt = getUsdtAmount(amount);
 
+    if (authLoading) return;
     if (!user) {
-      localStorage.setItem('pendingTrade', JSON.stringify({
-        usd: amount, usdt, isCustom: false,
-        p2pOrderId: order.id, p2pPaymentAddress: order.payment_address,
-        p2pPaymentWindowMinutes: order.payment_window_minutes,
-      }));
+      toast.info('Please sign in to start a trade');
       navigate('/login');
       return;
     }

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Header } from '@/components/Header';
 import { PortfolioCard } from '@/components/PortfolioCard';
 import { CryptoGrid } from '@/components/CryptoGrid';
@@ -14,7 +15,8 @@ import { MarketsView } from '@/components/MarketsView';
 import { StakingView } from '@/components/StakingView';
 import { AssetsView } from '@/components/AssetsView';
 import { Button } from '@/components/ui/button';
-import { Download, Zap, ShoppingBag, ArrowLeft, Bot } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { Download, Zap, ShoppingBag, ArrowLeft, Bot, Loader2, Lock } from 'lucide-react';
 
 type ExploreTab = 'staking' | 'bots';
 
@@ -32,6 +34,8 @@ const Index = () => {
   const [activeSection, setActiveSection] = useState<ActiveSection>('home');
   const [exploreTab, setExploreTab] = useState<ExploreTab>('staking');
   const [bottomTab, setBottomTab] = useState<BottomNavTab>(getTabFromHash);
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (isDark) {
@@ -41,9 +45,22 @@ const Index = () => {
     }
   }, [isDark]);
 
+  useEffect(() => {
+    if (!loading && !user && activeSection !== 'home') {
+      setActiveSection('home');
+    }
+  }, [loading, user, activeSection]);
+
   const toggleTheme = () => setIsDark(!isDark);
 
-
+  const openProtectedSection = (section: Exclude<ActiveSection, 'home'>) => {
+    if (loading) return;
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    setActiveSection(activeSection === section ? 'home' : section);
+  };
   const handleBottomTab = (tab: BottomNavTab) => {
     setBottomTab(tab);
     window.location.hash = tab === 'home' ? '' : tab;
@@ -119,11 +136,25 @@ const Index = () => {
     }
 
     if (bottomTab === 'trade') {
-      // Trade tab shows the Express P2P directly
       return (
         <div className="container mx-auto px-4 max-w-lg">
           <h2 className="text-lg font-display font-bold mb-4 pt-2">Trade</h2>
-          <ExpressP2P />
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 text-primary animate-spin" />
+            </div>
+          ) : !user ? (
+            <div className="text-center py-12 rounded-xl border border-border bg-card/50">
+              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-3">
+                <Lock className="h-6 w-6 text-primary" />
+              </div>
+              <p className="font-semibold mb-1">Sign in to start trading</p>
+              <p className="text-sm text-muted-foreground mb-4">Express and P2P trades are available only for logged-in users.</p>
+              <Button onClick={() => navigate('/login')}>Sign In</Button>
+            </div>
+          ) : (
+            <ExpressP2P />
+          )}
         </div>
       );
     }
@@ -137,21 +168,21 @@ const Index = () => {
           <div className="grid grid-cols-3 gap-2">
             <Button
               className={btnClass('deposit')}
-              onClick={() => setActiveSection(activeSection === 'deposit' ? 'home' : 'deposit')}
+              onClick={() => openProtectedSection('deposit')}
             >
               <Download className="h-4 w-4 mr-1.5" />
               Deposit
             </Button>
             <Button
               className={btnClass('express')}
-              onClick={() => setActiveSection(activeSection === 'express' ? 'home' : 'express')}
+              onClick={() => openProtectedSection('express')}
             >
               <Zap className="h-4 w-4 mr-1.5" />
               Express
             </Button>
             <Button
               className={btnClass('p2p')}
-              onClick={() => setActiveSection(activeSection === 'p2p' ? 'home' : 'p2p')}
+              onClick={() => openProtectedSection('p2p')}
             >
               <ShoppingBag className="h-4 w-4 mr-1.5" />
               P2P
@@ -169,9 +200,19 @@ const Index = () => {
               </button>
             )}
             {activeSection === 'home' && <CryptoGrid />}
-            {activeSection === 'deposit' && <DepositCrypto />}
-            {activeSection === 'express' && <ExpressP2P />}
-            {activeSection === 'p2p' && <P2POrders />}
+            {activeSection !== 'home' && !user && (
+              <div className="text-center py-12 rounded-xl border border-border bg-card/50">
+                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-3">
+                  <Lock className="h-6 w-6 text-primary" />
+                </div>
+                <p className="font-semibold mb-1">Sign in to continue</p>
+                <p className="text-sm text-muted-foreground mb-4">This action is available only to logged-in users.</p>
+                <Button onClick={() => navigate('/login')}>Sign In</Button>
+              </div>
+            )}
+            {activeSection === 'deposit' && user && <DepositCrypto />}
+            {activeSection === 'express' && user && <ExpressP2P />}
+            {activeSection === 'p2p' && user && <P2POrders />}
           </div>
         </div>
 
