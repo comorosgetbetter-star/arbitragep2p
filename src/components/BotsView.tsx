@@ -46,8 +46,24 @@ const bots: BotItem[] = [
 ];
 
 export const BotsView = () => {
+  const { user } = useAuth();
+  const { balance } = useUserData();
+
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
+      {/* Balance card */}
+      <div className="bg-card border border-border/50 rounded-2xl p-4 flex items-center gap-3">
+        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+          <Wallet className="h-5 w-5 text-primary" />
+        </div>
+        <div>
+          <p className="text-[11px] text-muted-foreground uppercase tracking-wider">Available Balance</p>
+          <p className="text-xl font-display font-bold text-foreground">
+            {user ? `$${balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '$0.00'}
+          </p>
+        </div>
+      </div>
+
       <h3 className="text-base font-display font-bold text-foreground">Popular bots</h3>
       <div className="space-y-1">
         {bots.map((bot) => (
