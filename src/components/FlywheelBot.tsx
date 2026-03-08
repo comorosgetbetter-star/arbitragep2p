@@ -203,7 +203,7 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
     if (!user) return;
     const amountNum = parseFloat(amount || String(plan.minAmount));
     if (amountNum < plan.minAmount) {
-      toast({ title: 'Minimum not met', description: `Minimum is $${plan.minAmount}`, variant: 'destructive' });
+      toast({ title: 'Minimum not met', description: `Minimum is $${fmt(plan.minAmount)}`, variant: 'destructive' });
       return;
     }
     if (amountNum > balance) {
