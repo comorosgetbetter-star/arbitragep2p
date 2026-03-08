@@ -51,7 +51,7 @@ const FLYWHEEL_PLANS = [
 ];
 
 // Full-page Deriv-style active bot view
-const ActiveBotView = ({ session, onCancelled }: { session: FlywheelSession; onCancelled: () => void }) => {
+const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSession; onCancelled: () => void; onBack: () => void }) => {
   const { toast } = useToast();
   const [cancelling, setCancelling] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
