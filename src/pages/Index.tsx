@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Header } from '@/components/Header';
 import { PortfolioCard } from '@/components/PortfolioCard';
 import { CryptoGrid } from '@/components/CryptoGrid';
@@ -14,7 +15,8 @@ import { MarketsView } from '@/components/MarketsView';
 import { StakingView } from '@/components/StakingView';
 import { AssetsView } from '@/components/AssetsView';
 import { Button } from '@/components/ui/button';
-import { Download, Zap, ShoppingBag, ArrowLeft, Bot } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { Download, Zap, ShoppingBag, ArrowLeft, Bot, Loader2, Lock } from 'lucide-react';
 
 type ExploreTab = 'staking' | 'bots';
 
