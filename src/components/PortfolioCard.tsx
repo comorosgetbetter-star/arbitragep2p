@@ -8,7 +8,7 @@ export const PortfolioCard = () => {
   const { balance } = useUserData();
   const [hidden, setHidden] = useState(false);
 
-  const displayBalance = user ? balance.toFixed(2) : '0.00';
+  const displayBalance = user ? balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00';
 
   return (
     <div className="mb-6">

@@ -55,7 +55,7 @@ export const StakingView = () => {
     if (amount > balance) {
       toast({
         title: 'Insufficient balance',
-        description: `Your balance is $${balance.toFixed(2)}. Please deposit more funds.`,
+        description: `Your balance is $${balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}. Please deposit more funds.`,
         variant: 'destructive',
       });
       return;
@@ -104,7 +104,7 @@ export const StakingView = () => {
           <CardContent className="p-4 flex items-center justify-between">
             <div>
               <p className="text-xs text-muted-foreground">Available Balance</p>
-              <p className="text-xl font-bold font-display text-foreground">${balance.toFixed(2)}</p>
+              <p className="text-xl font-bold font-display text-foreground">${balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
             </div>
             <Badge variant="outline" className="text-success border-success/30 bg-success/10">
               10% Daily
