@@ -395,7 +395,12 @@ export const AssetsView = () => {
             <span>Value/Spot PnL</span>
           </div>
           <div className="space-y-1">
-            {[...prices].sort((a, b) => b.price - a.price).map((crypto) => {
+            {[...prices].map((crypto) => {
+              // USDT value = user's actual balance, others = 0 (no holdings)
+              const holdingValue = crypto.symbol === 'USDT' ? balance : 0;
+              const holdingAmount = crypto.symbol === 'USDT' ? balance / crypto.price : 0;
+              return { ...crypto, holdingValue, holdingAmount };
+            }).sort((a, b) => b.holdingValue - a.holdingValue || b.price - a.price).map((crypto) => {
               const logo = cryptoLogos[crypto.symbol];
               const icon = cryptoIcons[crypto.symbol] || '•';
               const apr = aprRates[crypto.symbol];
@@ -413,11 +418,19 @@ export const AssetsView = () => {
                         <span className="text-sm font-semibold text-foreground">{crypto.symbol}</span>
                         {apr && <span className="text-[10px] px-1.5 py-0.5 rounded border border-primary/30 text-primary font-medium">{apr}</span>}
                       </div>
-                      <p className="text-xs text-muted-foreground mt-0.5">{hidden ? '****' : '<0.00000001'}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {hidden ? '****' : crypto.holdingAmount > 0
+                          ? crypto.holdingAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                          : '<0.00000001'}
+                      </p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-semibold text-foreground">{hidden ? '****' : '$<0.01'}</p>
+                    <p className="text-sm font-semibold text-foreground">
+                      {hidden ? '****' : crypto.holdingValue > 0
+                        ? `$${crypto.holdingValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                        : '$<0.01'}
+                    </p>
                   </div>
                 </div>
               );
