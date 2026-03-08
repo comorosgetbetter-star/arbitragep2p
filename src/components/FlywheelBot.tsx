@@ -165,47 +165,55 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
         </Badge>
       </div>
 
-      {/* Main content - scrollable */}
+      {/* Main content - stable layout, no jumping */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {/* Result flash */}
-        {lastResult && (
-          <div className={`rounded-xl p-4 text-center animate-scale-in ${
-            lastResult.isWin ? 'bg-success/15 border border-success/30' : 'bg-destructive/15 border border-destructive/30'
-          }`}>
-            <div className="flex items-center justify-center gap-2 mb-1">
-              {lastResult.isWin ? (
-                <CheckCircle2 className="h-6 w-6 text-success" />
-              ) : (
-                <XCircle className="h-6 w-6 text-destructive" />
-              )}
-              <span className={`text-lg font-bold ${lastResult.isWin ? 'text-success' : 'text-destructive'}`}>
-                {lastResult.isWin ? 'WIN' : 'LOSS'}
-              </span>
+        {/* Result flash / Trading indicator - fixed height container to prevent layout shift */}
+        <div className="h-[76px] relative">
+          {lastResult ? (
+            <div className={`absolute inset-0 rounded-xl p-4 text-center ${
+              lastResult.isWin ? 'bg-success/15 border border-success/30' : 'bg-destructive/15 border border-destructive/30'
+            }`}>
+              <div className="flex items-center justify-center gap-2 mb-1">
+                {lastResult.isWin ? (
+                  <CheckCircle2 className="h-6 w-6 text-success" />
+                ) : (
+                  <XCircle className="h-6 w-6 text-destructive" />
+                )}
+                <span className={`text-lg font-bold ${lastResult.isWin ? 'text-success' : 'text-destructive'}`}>
+                  {lastResult.isWin ? 'WIN' : 'LOSS'}
+                </span>
+              </div>
+              <p className={`text-2xl font-bold font-display tabular-nums ${lastResult.isWin ? 'text-success' : 'text-destructive'}`}>
+                {lastResult.isWin ? '+' : '-'}${fmt(lastResult.amount)}
+              </p>
             </div>
-            <p className={`text-2xl font-bold font-display tabular-nums ${lastResult.isWin ? 'text-success' : 'text-destructive'}`}>
-              {lastResult.isWin ? '+' : '-'}${fmt(lastResult.amount)}
-            </p>
-          </div>
-        )}
-
-        {/* Trading indicator */}
-        {isTrading && !isCompleted && !lastResult && (
-          <div className="bg-primary/10 border border-primary/20 rounded-xl p-4 flex items-center gap-3 animate-pulse">
-            <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-              <Zap className="h-5 w-5 text-primary animate-bounce" />
+          ) : isTrading && !isCompleted ? (
+            <div className="absolute inset-0 bg-primary/10 border border-primary/20 rounded-xl p-4 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                <Zap className="h-5 w-5 text-primary" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-primary">Bot is trading...</p>
+                <p className="text-xs text-muted-foreground">Analyzing market patterns • {tradingCountdown}s</p>
+              </div>
+              <div className="flex gap-0.5 items-end">
+                <div className="w-1.5 h-4 bg-primary/40 rounded-full animate-[pulse_0.6s_ease-in-out_infinite]" />
+                <div className="w-1.5 h-6 bg-primary/60 rounded-full animate-[pulse_0.6s_ease-in-out_infinite_0.1s]" />
+                <div className="w-1.5 h-3 bg-primary/30 rounded-full animate-[pulse_0.6s_ease-in-out_infinite_0.2s]" />
+                <div className="w-1.5 h-5 bg-primary/50 rounded-full animate-[pulse_0.6s_ease-in-out_infinite_0.3s]" />
+              </div>
             </div>
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-primary">Bot is trading...</p>
-              <p className="text-xs text-muted-foreground">Analyzing market patterns • {tradingCountdown}s</p>
+          ) : isCompleted ? (
+            <div className="absolute inset-0 bg-success/10 border border-success/30 rounded-xl p-4 flex items-center justify-center gap-2">
+              <Trophy className="h-6 w-6 text-success" />
+              <span className="text-lg font-bold text-success">Trading Complete!</span>
             </div>
-            <div className="flex gap-0.5">
-              <div className="w-1.5 h-4 bg-primary/40 rounded-full animate-[pulse_0.6s_ease-in-out_infinite]" />
-              <div className="w-1.5 h-6 bg-primary/60 rounded-full animate-[pulse_0.6s_ease-in-out_infinite_0.1s]" />
-              <div className="w-1.5 h-3 bg-primary/30 rounded-full animate-[pulse_0.6s_ease-in-out_infinite_0.2s]" />
-              <div className="w-1.5 h-5 bg-primary/50 rounded-full animate-[pulse_0.6s_ease-in-out_infinite_0.3s]" />
+          ) : (
+            <div className="absolute inset-0 bg-secondary/30 border border-border/20 rounded-xl p-4 flex items-center justify-center">
+              <p className="text-sm text-muted-foreground">Waiting for first trade...</p>
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Total profit card */}
         <Card className="border-border/30">
