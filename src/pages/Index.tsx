@@ -16,7 +16,9 @@ import { StakingView } from '@/components/StakingView';
 import { AssetsView } from '@/components/AssetsView';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
-import { Download, Zap, ShoppingBag, ArrowLeft, Bot, Loader2, Lock } from 'lucide-react';
+import { Download, Zap, ShoppingBag, ArrowLeft, Bot, Lock } from 'lucide-react';
+import { PortfolioSkeleton } from '@/components/skeletons/PortfolioSkeleton';
+import { TradeSkeleton } from '@/components/skeletons/TradeSkeleton';
 
 type ExploreTab = 'staking' | 'bots';
 
