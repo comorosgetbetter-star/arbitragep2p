@@ -335,10 +335,17 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Trophy className="h-5 w-5 text-gold" />
-              Collect Profits
+              {isCompleted ? (
+                <><Trophy className="h-5 w-5 text-gold" /> Collect Profits</>
+              ) : (
+                <><AlertTriangle className="h-5 w-5 text-warning" /> Cancel Bot?</>
+              )}
             </DialogTitle>
-            <DialogDescription>Review your trading session results.</DialogDescription>
+            <DialogDescription>
+              {isCompleted
+                ? 'Your trading session is complete. Review your results.'
+                : 'Are you sure you want to stop the bot early? You can still collect any profits earned so far.'}
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 py-2">
             <div className="grid grid-cols-2 gap-3">
@@ -375,14 +382,14 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
           </div>
           <DialogFooter className="flex gap-2 sm:gap-2">
             <Button variant="outline" onClick={() => setShowCancelConfirm(false)} className="flex-1">
-              Keep Trading
+              {isCompleted ? 'Back' : 'Keep Trading'}
             </Button>
             <Button
-              className="flex-1 bg-success hover:bg-success/90 text-success-foreground"
+              className={`flex-1 ${isCompleted ? 'bg-success hover:bg-success/90 text-success-foreground' : 'bg-destructive hover:bg-destructive/90 text-destructive-foreground'}`}
               onClick={handleConfirmCancel}
               disabled={cancelling}
             >
-              {cancelling ? 'Collecting…' : 'Collect Profits'}
+              {cancelling ? 'Processing…' : isCompleted ? 'Collect Profits' : 'Stop & Collect'}
             </Button>
           </DialogFooter>
         </DialogContent>
