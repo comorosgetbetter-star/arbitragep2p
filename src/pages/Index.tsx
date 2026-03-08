@@ -13,7 +13,7 @@ import { MarketsView } from '@/components/MarketsView';
 import { StakingView } from '@/components/StakingView';
 import { AssetsView } from '@/components/AssetsView';
 import { Button } from '@/components/ui/button';
-import { Download, Zap, ShoppingBag, ArrowLeft } from 'lucide-react';
+import { Download, Zap, ShoppingBag, ArrowLeft, Bot } from 'lucide-react';
 
 type ExploreTab = 'staking' | 'bots';
 
