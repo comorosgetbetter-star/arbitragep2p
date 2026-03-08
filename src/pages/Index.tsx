@@ -16,10 +16,17 @@ import { Download, Zap, ShoppingBag, ArrowLeft } from 'lucide-react';
 
 type ActiveSection = 'home' | 'deposit' | 'express' | 'p2p';
 
+const VALID_TABS: BottomNavTab[] = ['home', 'markets', 'trade', 'explore', 'assets'];
+
+const getTabFromHash = (): BottomNavTab => {
+  const hash = window.location.hash.replace('#', '') as BottomNavTab;
+  return VALID_TABS.includes(hash) ? hash : 'home';
+};
+
 const Index = () => {
   const [isDark, setIsDark] = useState(true);
   const [activeSection, setActiveSection] = useState<ActiveSection>('home');
-  const [bottomTab, setBottomTab] = useState<BottomNavTab>('home');
+  const [bottomTab, setBottomTab] = useState<BottomNavTab>(getTabFromHash);
 
   useEffect(() => {
     if (isDark) {
