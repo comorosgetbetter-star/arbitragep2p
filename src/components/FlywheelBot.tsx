@@ -209,21 +209,11 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
 
     setIsStarting(true);
     try {
-      // lock_days is fractional to represent hours (e.g. 1h = 1/24 day ≈ 0.0417)
-      // But the DB function uses integer lock_days for ends_at calc. We'll use 1 day minimum 
-      // and rely on the actual ends_at being set correctly.
-      // Actually we pass lock_days=1 as minimum and the start_staking function sets ends_at = now() + lock_days days
-      // We need a different approach: use lock_days = 1 and the high daily_return_pct will generate fast profits
-      // But the countdown would be wrong. Let me re-think...
-      // The start_staking function does: ends_at = now() + (lock_days || ' days')::interval
-      // lock_days is integer so we can't pass fractional. We'd need a new approach.
-      // For now, let's just pass lock_days=1 (1 day) which gives fast profits with high daily rate.
-      
-      const { error } = await supabase.rpc('start_staking', {
+      const { error } = await supabase.rpc('start_flywheel', {
         _plan_name: plan.name,
         _amount: amountNum,
         _daily_return_pct: plan.dailyReturnPct,
-        _lock_days: 1, // 1 day, high daily rate makes profits fast
+        _lock_minutes: plan.lockMinutes,
       });
       if (error) throw error;
       toast({ title: 'Flywheel started! 🚀', description: `$${amountNum.toLocaleString()} deployed on ${plan.name}` });
