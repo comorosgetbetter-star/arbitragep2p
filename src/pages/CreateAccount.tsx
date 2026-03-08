@@ -133,6 +133,17 @@ const CreateAccount = () => {
         return;
       }
 
+      // Check if email already exists before sending OTP
+      const { data: emailCheckData } = await supabase.functions.invoke('check-email-exists', {
+        body: { email: validatedData.email },
+      });
+
+      if (emailCheckData?.exists) {
+        setErrors(prev => ({ ...prev, email: 'This email is already registered. Please sign in or use a different email.' }));
+        setIsSubmitting(false);
+        return;
+      }
+
       // Send OTP code via Resend
       const { data, error: sendError } = await supabase.functions.invoke('send-otp', {
         body: { email: validatedData.email, fullName: validatedData.fullName },
