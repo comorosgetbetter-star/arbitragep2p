@@ -75,6 +75,14 @@ const Index = () => {
             {activeSection === 'p2p' && <P2POrders />}
           </div>
         </div>
+
+        {/* Why USDT & FAQ - always visible below */}
+        <div className="container mx-auto px-4 max-w-lg">
+          <div id="why-usdt">
+            <WhyUsdt />
+          </div>
+        </div>
+        <FAQ />
       </main>
 
       <Footer />
