@@ -45,7 +45,7 @@ const TermsOfService = () => {
 
           <section className="space-y-3">
             <h2 className="text-lg font-semibold text-foreground">4. Platform Services</h2>
-            <p>ArbitrageP2P provides a peer-to-peer (P2P) cryptocurrency trading platform that enables users to buy and sell USDT (Tether) and other supported digital assets. The Platform facilitates transactions between buyers and sellers but does not act as a counterparty to any trade.</p>
+            <p>PeerBitX provides a peer-to-peer (P2P) cryptocurrency trading platform that enables users to buy and sell USDT (Tether) and other supported digital assets. The Platform facilitates transactions between buyers and sellers but does not act as a counterparty to any trade.</p>
             <p>Our services include but are not limited to:</p>
             <ul className="list-disc pl-6 space-y-1">
               <li>Matching buyers and sellers for P2P cryptocurrency transactions.</li>
