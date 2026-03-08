@@ -55,6 +55,21 @@ Deno.serve(async (req) => {
 
     const normalizedEmail = email.toLowerCase().trim()
 
+    // Rate limit: max 10 verify attempts per email in 10 minutes
+    const tenMinAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString()
+    const { count: recentAttempts } = await supabase
+      .from('verification_codes')
+      .select('id', { count: 'exact', head: true })
+      .eq('email', normalizedEmail)
+      .eq('used', true)
+      .gte('created_at', tenMinAgo)
+
+    if (recentAttempts !== null && recentAttempts >= 10) {
+      return new Response(JSON.stringify({ error: 'Too many verification attempts. Please wait and try again.' }), {
+        status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
     // Check code validity
     const { data: codeRecord, error: fetchError } = await supabase
       .from('verification_codes')
