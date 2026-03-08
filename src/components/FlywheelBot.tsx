@@ -351,7 +351,7 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
                       <label className="text-xs text-muted-foreground mb-1 block">Amount (USDT)</label>
                       <Input
                         type="number"
-                        placeholder={`Min $${plan.minAmount}`}
+                        placeholder={`Min $${fmt(plan.minAmount)}`}
                         value={amount}
                         onChange={e => setAmount(e.target.value)}
                         className="bg-secondary/50 border-border/50"
