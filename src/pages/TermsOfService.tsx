@@ -110,7 +110,7 @@ const TermsOfService = () => {
 
           <section className="space-y-3">
             <h2 className="text-lg font-semibold text-foreground">10. Limitation of Liability</h2>
-            <p>To the maximum extent permitted by applicable law, ArbitrageP2P and its directors, officers, employees, agents, and affiliates shall not be liable for any indirect, incidental, special, consequential, or punitive damages, including but not limited to loss of profits, data, use, goodwill, or other intangible losses, resulting from:</p>
+            <p>To the maximum extent permitted by applicable law, PeerBitX and its directors, officers, employees, agents, and affiliates shall not be liable for any indirect, incidental, special, consequential, or punitive damages, including but not limited to loss of profits, data, use, goodwill, or other intangible losses, resulting from:</p>
             <ul className="list-disc pl-6 space-y-1">
               <li>Your access to, use of, or inability to access or use the Platform.</li>
               <li>Any conduct or content of any third party on the Platform.</li>
