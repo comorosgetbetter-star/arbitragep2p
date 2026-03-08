@@ -462,22 +462,20 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
 
   const handleConfirmStart = async () => {
     if (!confirmPlan || !user) return;
-    const amountNum = parseFloat(amount || String(confirmPlan.minAmount));
 
     setIsStarting(true);
     setConfirmPlan(null);
     try {
       const { error } = await supabase.rpc('start_flywheel', {
         _plan_name: confirmPlan.name,
-        _amount: amountNum,
+        _amount: balance,
         _daily_return_pct: confirmPlan.dailyReturnPct,
         _lock_minutes: selectedDuration.minutes,
       });
       if (error) throw error;
-      toast({ title: 'Flywheel started! 🚀', description: `$${fmt(amountNum)} deployed on ${confirmPlan.name}` });
+      toast({ title: 'Flywheel started! 🚀', description: `$${fmt(balance)} deployed on ${confirmPlan.name}` });
       setSelectedPlan(null);
       setSelectedDuration(DURATION_OPTIONS[0]);
-      setAmount('');
       refetchBalance();
       fetchSessions();
     } catch (err: any) {
