@@ -47,7 +47,7 @@ const getRotatedDepositAddress = async () => {
 };
 
 export const AssetsView = () => {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const { balance, cryptoBalances, deposits, withdrawals } = useUserData();
   const { prices } = useCryptoPrices();
   const navigate = useNavigate();
@@ -161,10 +161,22 @@ export const AssetsView = () => {
     LTC: 'bg-slate-500/20 text-slate-400', DOGE: 'bg-amber-500/20 text-amber-400',
   };
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-8 w-8 text-primary animate-spin" />
+      </div>
+    );
+  }
+
   if (!user) {
     return (
       <div className="flex flex-col items-center justify-center py-20 px-4">
-        <p className="text-muted-foreground mb-4">Sign in to view your assets</p>
+        <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+          <Wallet className="h-8 w-8 text-primary" />
+        </div>
+        <p className="text-foreground font-display font-bold text-lg mb-1">Sign in to continue</p>
+        <p className="text-muted-foreground text-sm mb-4 text-center">Log in to access deposits, withdrawals, conversions and transaction history</p>
         <button onClick={() => navigate('/login')} className="px-6 py-2.5 rounded-xl bg-primary text-primary-foreground font-semibold text-sm">
           Sign In
         </button>
