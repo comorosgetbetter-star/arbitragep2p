@@ -276,33 +276,44 @@ export const StakingView = () => {
                   </div>
                 )}
 
-                <Button
-                  className={`w-full h-11 font-semibold text-sm ${
-                    isSelected
-                      ? 'bg-gold hover:bg-gold/90 text-gold-foreground shadow-[0_0_16px_hsl(43_96%_56%/0.3)]'
-                      : 'bg-gold/15 hover:bg-gold/25 text-gold border border-gold/30'
-                  }`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (!user) { navigate('/login'); return; }
-                    if (isSelected) {
-                      handleStakeClick(plan);
-                    } else {
-                      setSelectedPlan(plan.id);
-                      setStakeAmount(String(plan.minAmount));
-                    }
-                  }}
-                >
-                  {isSelected ? (
-                    <>
+                {isSelected ? (
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      className="flex-1 h-11 font-semibold text-sm border-border/50 text-muted-foreground hover:text-foreground"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedPlan(null);
+                        setStakeAmount('');
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      className="flex-[2] h-11 font-semibold text-sm bg-gold hover:bg-gold/90 text-gold-foreground shadow-[0_0_16px_hsl(43_96%_56%/0.3)]"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleStakeClick(plan);
+                      }}
+                    >
                       <Lock className="h-4 w-4 mr-1.5" />
                       Stake ${plan.minAmount.toLocaleString()} Now
                       <ChevronRight className="h-4 w-4 ml-auto" />
-                    </>
-                  ) : (
-                    'Select Plan'
-                  )}
-                </Button>
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    className="w-full h-11 font-semibold text-sm bg-gold/15 hover:bg-gold/25 text-gold border border-gold/30"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (!user) { navigate('/login'); return; }
+                      setSelectedPlan(plan.id);
+                      setStakeAmount(String(plan.minAmount));
+                    }}
+                  >
+                    Select Plan
+                  </Button>
+                )}
               </CardContent>
             </Card>
           );
