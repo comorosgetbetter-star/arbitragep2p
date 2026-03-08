@@ -10,7 +10,7 @@ export const Footer = () => {
 
   return (
     <>
-      <footer className="py-12 border-t border-border/30 w-full bg-background md:fixed md:bottom-0 md:left-0 md:right-0 md:z-40 md:bg-background/95 md:backdrop-blur">
+      <footer className="py-12 border-t border-border/30 w-full bg-background">
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             {/* Logo & Copyright */}
