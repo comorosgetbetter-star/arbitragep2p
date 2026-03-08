@@ -139,14 +139,14 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
     try {
       const { error } = await supabase.rpc('cancel_staking', { _session_id: session.id });
       if (error) throw error;
-      toast({ title: 'Bot stopped ✅', description: `Profits of $${fmt(Math.max(0, totalWinnings))} returned to your balance.` });
-      onCancelled();
+      toast({ title: 'Profits collected ✅', description: `$${fmt(Math.max(0, totalWinnings))} profit returned to your balance.` });
+      setCollected(true);
     } catch (err: any) {
-      toast({ title: 'Error', description: err.message || 'Failed to stop bot', variant: 'destructive' });
+      toast({ title: 'Error', description: err.message || 'Failed to collect', variant: 'destructive' });
     } finally {
       setCancelling(false);
     }
-  }, [session.id, onCancelled, toast, totalWinnings]);
+  }, [session.id, toast, totalWinnings]);
 
   return (
     <div className="fixed inset-0 z-50 bg-background flex flex-col animate-fade-in">
