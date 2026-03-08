@@ -40,10 +40,18 @@ const Index = () => {
 
   const handleBottomTab = (tab: BottomNavTab) => {
     setBottomTab(tab);
+    window.location.hash = tab === 'home' ? '' : tab;
     if (tab === 'home') {
       setActiveSection('home');
     }
   };
+
+  // Listen for browser back/forward
+  useEffect(() => {
+    const onHashChange = () => setBottomTab(getTabFromHash());
+    window.addEventListener('hashchange', onHashChange);
+    return () => window.removeEventListener('hashchange', onHashChange);
+  }, []);
 
   const btnClass = (section: ActiveSection) =>
     `h-12 rounded-xl text-sm font-semibold transition-all ${
