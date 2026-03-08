@@ -315,7 +315,7 @@ const AdminDashboard = () => {
       setStats({
         totalMembers: membersData.length,
         totalTrades: completedTrades.length,
-        totalVolume: balances?.reduce((sum, b) => sum + Number(b.usdt_balance), 0) || 0,
+        totalVolume: membersData.reduce((sum, m) => sum + m.total_usd_balance, 0),
       });
 
       const { data: logs } = await supabase
