@@ -549,6 +549,25 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
 
                 {isSelected ? (
                   <div className="space-y-3">
+                    {/* Duration selector */}
+                    <div>
+                      <label className="text-xs text-muted-foreground mb-1.5 block">Duration</label>
+                      <div className="grid grid-cols-4 gap-1.5">
+                        {DURATION_OPTIONS.map((opt) => (
+                          <button
+                            key={opt.minutes}
+                            onClick={() => setSelectedDuration(opt)}
+                            className={`py-2 px-1 rounded-lg text-xs font-semibold border transition-all ${
+                              selectedDuration.minutes === opt.minutes
+                                ? 'bg-gold/20 border-gold/50 text-gold'
+                                : 'bg-secondary/50 border-border/30 text-muted-foreground hover:border-border'
+                            }`}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                     <div>
                       <label className="text-xs text-muted-foreground mb-1 block">Amount (USDT)</label>
                       <Input
