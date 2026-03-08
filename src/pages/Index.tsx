@@ -1,15 +1,19 @@
 import { useState, useEffect } from 'react';
 import { Header } from '@/components/Header';
 import { PortfolioCard } from '@/components/PortfolioCard';
-import { ActionButtons } from '@/components/ActionButtons';
 import { CryptoGrid } from '@/components/CryptoGrid';
+import { DepositCrypto } from '@/components/DepositCrypto';
 import { ExpressP2P } from '@/components/ExpressP2P';
 import { P2POrders } from '@/components/P2POrders';
 import { Footer } from '@/components/Footer';
+import { Button } from '@/components/ui/button';
+import { Download, Zap, ShoppingBag } from 'lucide-react';
+
+type ActiveSection = 'home' | 'deposit' | 'express' | 'p2p';
 
 const Index = () => {
   const [isDark, setIsDark] = useState(true);
-  const [activeTab, setActiveTab] = useState<'favorites' | 'p2p-orders' | 'p2p-express'>('favorites');
+  const [activeSection, setActiveSection] = useState<ActiveSection>('home');
 
   useEffect(() => {
     if (isDark) {
@@ -19,61 +23,64 @@ const Index = () => {
     }
   }, [isDark]);
 
-  const toggleTheme = () => {
-    setIsDark(!isDark);
-  };
+  const toggleTheme = () => setIsDark(!isDark);
+
+  const btnClass = (section: ActiveSection) =>
+    `h-12 rounded-xl text-sm font-semibold transition-all ${
+      activeSection === section
+        ? 'bg-[hsl(80,85%,55%)] hover:bg-[hsl(80,85%,48%)] text-[hsl(0,0%,6%)]'
+        : 'bg-card border border-border text-foreground hover:border-primary/40'
+    }`;
 
   return (
     <div className="min-h-screen bg-background text-foreground relative">
       <Header isDark={isDark} toggleTheme={toggleTheme} />
-      
+
       <main className="relative z-10 pt-20 pb-8">
         <div className="container mx-auto px-4 max-w-lg">
-          {/* Portfolio Card */}
           <PortfolioCard />
 
-          {/* Action Buttons */}
-          <ActionButtons />
-
-          {/* Category Tabs */}
-          <div className="flex items-center gap-1 mt-8 mb-4 overflow-x-auto scrollbar-hide">
-            {[
-              { key: 'favorites', label: 'Favorites' },
-              { key: 'p2p-orders', label: 'P2P Orders' },
-              { key: 'p2p-express', label: 'Express' },
-            ].map((tab) => (
-              <button
-                key={tab.key}
-                onClick={() => setActiveTab(tab.key as typeof activeTab)}
-                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-                  activeTab === tab.key
-                    ? 'bg-foreground text-background'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
+          {/* 3 Action Buttons */}
+          <div className="grid grid-cols-3 gap-2">
+            <Button
+              className={btnClass('deposit')}
+              onClick={() => setActiveSection(activeSection === 'deposit' ? 'home' : 'deposit')}
+            >
+              <Download className="h-4 w-4 mr-1.5" />
+              Deposit
+            </Button>
+            <Button
+              className={btnClass('express')}
+              onClick={() => setActiveSection(activeSection === 'express' ? 'home' : 'express')}
+            >
+              <Zap className="h-4 w-4 mr-1.5" />
+              Express
+            </Button>
+            <Button
+              className={btnClass('p2p')}
+              onClick={() => setActiveSection(activeSection === 'p2p' ? 'home' : 'p2p')}
+            >
+              <ShoppingBag className="h-4 w-4 mr-1.5" />
+              P2P
+            </Button>
           </div>
 
-          {/* Content based on active tab */}
-          {activeTab === 'favorites' && (
-            <>
-              <h3 className="text-base font-semibold mb-3">Select crypto</h3>
-              <CryptoGrid />
-            </>
-          )}
+          {/* Content */}
+          <div className="mt-6">
+            {activeSection === 'home' && (
+              <>
+                <h3 className="text-base font-semibold mb-3">Select crypto</h3>
+                <CryptoGrid />
+              </>
+            )}
 
-          {activeTab === 'p2p-orders' && (
-            <P2POrders />
-          )}
-
-          {activeTab === 'p2p-express' && (
-            <ExpressP2P />
-          )}
+            {activeSection === 'deposit' && <DepositCrypto />}
+            {activeSection === 'express' && <ExpressP2P />}
+            {activeSection === 'p2p' && <P2POrders />}
+          </div>
         </div>
       </main>
-      
+
       <Footer />
     </div>
   );
