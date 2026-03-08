@@ -137,13 +137,13 @@ const ActiveFlywheelCard = ({ session, onCancelled }: { session: FlywheelSession
           <div className="bg-secondary/50 rounded-lg p-2 text-center">
             <p className="text-[10px] text-muted-foreground">Invested</p>
             <p className="text-xs font-bold text-foreground">
-              ${session.staked_amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              ${fmt(session.staked_amount)}
             </p>
           </div>
           <div className="bg-secondary/50 rounded-lg p-2 text-center">
             <p className="text-[10px] text-muted-foreground">Est. Final</p>
             <p className="text-xs font-bold text-success">
-              ${(session.staked_amount + session.staked_amount * (session.daily_return_pct / 100) * (session.lock_days)).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              ${fmt(session.staked_amount + session.staked_amount * (session.daily_return_pct / 100) * session.lock_days)}
             </p>
           </div>
         </div>
