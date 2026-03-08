@@ -113,6 +113,7 @@ const AdminDashboard = () => {
   const [adjustmentAmount, setAdjustmentAmount] = useState('');
   const [adjustmentReason, setAdjustmentReason] = useState('');
   const [adjustmentType, setAdjustmentType] = useState<'add' | 'subtract'>('add');
+  const [adjustmentCrypto, setAdjustmentCrypto] = useState('USDT');
   const [isStealth, setIsStealth] = useState(false);
   const [isAdjustDialogOpen, setIsAdjustDialogOpen] = useState(false);
   const [isAdjusting, setIsAdjusting] = useState(false);
@@ -120,6 +121,7 @@ const AdminDashboard = () => {
   const [ticketMessages, setTicketMessages] = useState<TicketMessage[]>([]);
   const [replyMessage, setReplyMessage] = useState('');
   const [isSendingReply, setIsSendingReply] = useState(false);
+  const { prices } = useCryptoPrices();
   const [stats, setStats] = useState({
     totalMembers: 0,
     totalTrades: 0,
