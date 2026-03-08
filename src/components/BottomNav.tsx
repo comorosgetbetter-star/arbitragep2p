@@ -1,7 +1,7 @@
 import { Home, BarChart3, ArrowLeftRight, LineChart, Wallet } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export type BottomNavTab = 'home' | 'markets' | 'trade' | 'futures' | 'assets';
+export type BottomNavTab = 'home' | 'markets' | 'trade' | 'explore' | 'assets';
 
 interface BottomNavProps {
   activeTab: BottomNavTab;
