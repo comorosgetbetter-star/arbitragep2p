@@ -370,7 +370,7 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
                         onClick={() => handleStart(plan)}
                         disabled={isStarting}
                       >
-                        {isStarting ? 'Starting…' : `Deploy $${amount || plan.minAmount}`}
+                        {isStarting ? 'Starting…' : `Deploy $${fmt(parseFloat(amount) || plan.minAmount)}`}
                       </Button>
                     </div>
                   </div>
