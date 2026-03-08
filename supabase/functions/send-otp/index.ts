@@ -154,7 +154,7 @@ Deno.serve(async (req) => {
     const { error: insertError } = await supabase
       .from('verification_codes')
       .insert({
-        email: email.toLowerCase().trim(),
+        email: normalizedEmail,
         code,
         expires_at: expiresAt,
       })
