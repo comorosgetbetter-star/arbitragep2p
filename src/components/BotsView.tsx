@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { ChevronRight, ArrowDownUp, DollarSign, TrendingUp, RefreshCw, Signal, Wallet } from 'lucide-react';
 import { useUserData } from '@/contexts/UserDataContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { BotTradingView } from '@/components/BotTradingView';
 
 interface BotItem {
   id: string;
@@ -48,6 +50,25 @@ const bots: BotItem[] = [
 export const BotsView = () => {
   const { user } = useAuth();
   const { balance } = useUserData();
+  const [activeBot, setActiveBot] = useState<BotItem | null>(null);
+
+  const handleBotClick = (bot: BotItem) => {
+    if (bot.id === 'flywheel') {
+      // Flywheel has its own behavior (or none yet)
+      return;
+    }
+    setActiveBot(bot);
+  };
+
+  if (activeBot) {
+    return (
+      <BotTradingView
+        botName={activeBot.name}
+        botId={activeBot.id}
+        onBack={() => setActiveBot(null)}
+      />
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -69,6 +90,7 @@ export const BotsView = () => {
         {bots.map((bot) => (
           <button
             key={bot.id}
+            onClick={() => handleBotClick(bot)}
             className="w-full flex items-center gap-3.5 p-3.5 rounded-xl hover:bg-secondary/50 transition-colors text-left"
           >
             <div className="w-11 h-11 rounded-full bg-secondary border border-border/50 flex items-center justify-center shrink-0">
