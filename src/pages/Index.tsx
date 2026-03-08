@@ -136,11 +136,25 @@ const Index = () => {
     }
 
     if (bottomTab === 'trade') {
-      // Trade tab shows the Express P2P directly
       return (
         <div className="container mx-auto px-4 max-w-lg">
           <h2 className="text-lg font-display font-bold mb-4 pt-2">Trade</h2>
-          <ExpressP2P />
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 text-primary animate-spin" />
+            </div>
+          ) : !user ? (
+            <div className="text-center py-12 rounded-xl border border-border bg-card/50">
+              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-3">
+                <Lock className="h-6 w-6 text-primary" />
+              </div>
+              <p className="font-semibold mb-1">Sign in to start trading</p>
+              <p className="text-sm text-muted-foreground mb-4">Express and P2P trades are available only for logged-in users.</p>
+              <Button onClick={() => navigate('/login')}>Sign In</Button>
+            </div>
+          ) : (
+            <ExpressP2P />
+          )}
         </div>
       );
     }
