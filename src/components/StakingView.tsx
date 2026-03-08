@@ -218,6 +218,74 @@ export const StakingView = () => {
         })}
       </div>
 
+      {/* Live Market Prices */}
+      <div className="space-y-3">
+        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Live Markets</h3>
+
+        {/* Horizontal scrolling ticker */}
+        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-1 px-1">
+          {prices.map((crypto) => {
+            const isUp = crypto.change24h >= 0;
+            return (
+              <div
+                key={crypto.symbol}
+                className="flex-shrink-0 bg-card border border-border/50 rounded-xl px-3.5 py-2.5 min-w-[120px]"
+              >
+                <div className="flex items-center gap-1.5 mb-1">
+                  <span className="text-base">{crypto.icon}</span>
+                  <span className="text-xs font-semibold text-foreground">{crypto.symbol}</span>
+                </div>
+                <p className="text-sm font-bold font-display text-foreground">
+                  ${crypto.price.toLocaleString('en-US', {
+                    minimumFractionDigits: crypto.price < 1 ? 4 : 2,
+                    maximumFractionDigits: crypto.price < 1 ? 4 : 2,
+                  })}
+                </p>
+                <span className={`text-[10px] font-medium ${isUp ? 'text-success' : 'text-destructive'}`}>
+                  {isUp ? '+' : ''}{crypto.change24h.toFixed(2)}%
+                </span>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Detailed list view */}
+        <Card className="border-border/50 overflow-hidden">
+          <div className="divide-y divide-border/30">
+            {prices.map((crypto) => {
+              const isUp = crypto.change24h >= 0;
+              return (
+                <div key={crypto.symbol} className="flex items-center justify-between px-4 py-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center text-lg">
+                      {crypto.icon}
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">
+                        {crypto.symbol}<span className="text-muted-foreground font-normal">/USDT</span>
+                      </p>
+                      <p className="text-[11px] text-muted-foreground">{crypto.name}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-bold font-display text-foreground">
+                      ${crypto.price.toLocaleString('en-US', {
+                        minimumFractionDigits: crypto.price < 1 ? 4 : 2,
+                        maximumFractionDigits: crypto.price < 1 ? 4 : 2,
+                      })}
+                    </p>
+                    <div className={`flex items-center justify-end gap-0.5 text-[11px] font-medium ${isUp ? 'text-success' : 'text-destructive'}`}>
+                      {isUp ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                      <span>{isUp ? '+' : ''}{crypto.change24h.toFixed(2)}%</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+      </div>
+
       {/* Disclaimer */}
       <p className="text-[10px] text-muted-foreground text-center px-4 pb-4">
         Staking rewards are subject to market conditions. Past performance does not guarantee future results. Staked assets are locked for the selected duration.
