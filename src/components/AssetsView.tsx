@@ -65,6 +65,7 @@ export const AssetsView = () => {
   const [walletAddress, setWalletAddress] = useState('');
   const [selectedNetwork, setSelectedNetwork] = useState('trc20');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [historyFilter, setHistoryFilter] = useState<HistoryFilter>('all');
 
   const displayBalance = hidden
     ? '****'
