@@ -22,8 +22,6 @@ export const BottomNav = ({ activeTab, onTabChange }: BottomNavProps) => {
       <div className="flex items-center justify-around h-16 max-w-lg mx-auto pl-2 pr-20">
         {tabs.map(({ id, label, icon: Icon }) => {
           const isActive = activeTab === id;
-          const isCenter = id === 'trade';
-
           return (
             <button
               key={id}
@@ -33,20 +31,8 @@ export const BottomNav = ({ activeTab, onTabChange }: BottomNavProps) => {
                 isActive ? 'text-primary' : 'text-muted-foreground'
               )}
             >
-              {isCenter ? (
-                <div className={cn(
-                  'w-10 h-10 rounded-xl flex items-center justify-center -mt-3 mb-0.5',
-                  isActive ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
-                )}>
-                  <Icon className="h-5 w-5" />
-                </div>
-              ) : (
-                <Icon className="h-5 w-5" />
-              )}
-              <span className={cn(
-                'text-[10px] font-medium',
-                isCenter && '-mt-0.5'
-              )}>{label}</span>
+              <Icon className="h-5 w-5" />
+              <span className="text-[10px] font-medium">{label}</span>
             </button>
           );
         })}
