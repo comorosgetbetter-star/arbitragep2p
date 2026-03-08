@@ -105,7 +105,7 @@ const TermsOfService = () => {
 
           <section className="space-y-3">
             <h2 className="text-lg font-semibold text-foreground">9. Intellectual Property</h2>
-            <p>All content, features, and functionality of the Platform, including but not limited to text, graphics, logos, icons, images, audio clips, digital downloads, data compilations, and software, are the exclusive property of ArbitrageP2P or its licensors and are protected by international copyright, trademark, patent, trade secret, and other intellectual property laws.</p>
+            <p>All content, features, and functionality of the Platform, including but not limited to text, graphics, logos, icons, images, audio clips, digital downloads, data compilations, and software, are the exclusive property of PeerBitX or its licensors and are protected by international copyright, trademark, patent, trade secret, and other intellectual property laws.</p>
           </section>
 
           <section className="space-y-3">
