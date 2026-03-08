@@ -18,30 +18,47 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const initialSessionHandled = useRef(false);
 
   useEffect(() => {
-    // Set up auth state listener FIRST
+    let isMounted = true;
+
+    const applySession = (sessionUser: User | null) => {
+      if (!isMounted) return;
+      setUser(sessionUser);
+    };
+
+    const finishInit = () => {
+      if (!isMounted || initialSessionHandled.current) return;
+      initialSessionHandled.current = true;
+      setLoading(false);
+    };
+
+    // Listen for auth changes first
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       console.log('[Auth] event:', event, 'authenticated:', !!session?.user);
-      setUser(session?.user ?? null);
+      applySession(session?.user ?? null);
 
-      if (event === 'INITIAL_SESSION' || !initialSessionHandled.current) {
-        initialSessionHandled.current = true;
-        setLoading(false);
+      if (event === 'INITIAL_SESSION') {
+        finishInit();
       }
     });
 
-    // Fallback: if onAuthStateChange doesn't fire INITIAL_SESSION within 2 seconds,
-    // manually check the session to prevent the app from being stuck in loading state
-    const fallbackTimer = setTimeout(async () => {
-      if (!initialSessionHandled.current) {
-        console.log('[Auth] Fallback: checking session manually');
-        const { data: { session } } = await supabase.auth.getSession();
-        setUser(session?.user ?? null);
-        initialSessionHandled.current = true;
-        setLoading(false);
-      }
-    }, 2000);
+    // Resolve auth readiness immediately from persisted session
+    void supabase.auth.getSession()
+      .then(({ data: { session } }) => {
+        applySession(session?.user ?? null);
+        finishInit();
+      })
+      .catch((error) => {
+        console.error('[Auth] getSession error:', error);
+        finishInit();
+      });
+
+    // Safety net: never keep UI blocked in loading state
+    const fallbackTimer = setTimeout(() => {
+      finishInit();
+    }, 1200);
 
     return () => {
+      isMounted = false;
       subscription.unsubscribe();
       clearTimeout(fallbackTimer);
     };
