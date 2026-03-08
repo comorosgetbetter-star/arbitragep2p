@@ -19,7 +19,7 @@ function generateOTP(): string {
   return Array.from(array, v => (v % 10).toString()).join('')
 }
 
-const LOGO_URL = 'https://hywqedthwvuiftmfmkjs.supabase.co/storage/v1/object/public/email-assets/logo.png'
+const LOGO_URL = 'https://hywqedthwvuiftmfmkjs.supabase.co/storage/v1/object/public/email-assets/logo-new.png'
 
 function getEmailHTML(code: string, fullName: string): string {
   return `
