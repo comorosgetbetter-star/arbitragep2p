@@ -29,6 +29,7 @@ const getTabFromHash = (): BottomNavTab => {
 const Index = () => {
   const [isDark, setIsDark] = useState(true);
   const [activeSection, setActiveSection] = useState<ActiveSection>('home');
+  const [exploreTab, setExploreTab] = useState<ExploreTab>('staking');
   const [bottomTab, setBottomTab] = useState<BottomNavTab>(getTabFromHash);
 
   useEffect(() => {
