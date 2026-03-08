@@ -577,6 +577,32 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleBanUser = async () => {
+    if (!banTarget) return;
+    setIsBanning(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Not authenticated');
+
+      const { data, error } = await supabase.functions.invoke('ban-user', {
+        body: { targetUserId: banTarget.user_id, reason: banReason || 'Banned by admin' },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      toast.success(`${banTarget.full_name} has been banned and all data deleted`);
+      setBanTarget(null);
+      setBanReason('');
+      fetchData();
+    } catch (err: any) {
+      console.error('Ban error:', err);
+      toast.error(err.message || 'Failed to ban user');
+    } finally {
+      setIsBanning(false);
+    }
+  };
+
   const filteredMembers = members.filter(member =>
     member.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     member.email.toLowerCase().includes(searchQuery.toLowerCase())
