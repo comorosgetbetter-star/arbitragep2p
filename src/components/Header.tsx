@@ -37,9 +37,6 @@ export const Header = ({ isDark, toggleTheme }: HeaderProps) => {
 
           {/* Desktop Nav */}
           <nav className="hidden md:flex items-center gap-6">
-            <button onClick={() => scrollTo('calculator')} className="text-muted-foreground hover:text-foreground transition-colors text-sm">
-              Calculator
-            </button>
             <button onClick={() => scrollTo('why-usdt')} className="text-muted-foreground hover:text-foreground transition-colors text-sm">
               Why USDT
             </button>
