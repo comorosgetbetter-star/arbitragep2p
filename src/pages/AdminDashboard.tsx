@@ -45,6 +45,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
+interface CryptoHolding {
+  symbol: string;
+  amount: number;
+}
+
 interface Member {
   id: string;
   user_id: string;
@@ -54,6 +59,8 @@ interface Member {
   country: string | null;
   created_at: string;
   usdt_balance: number;
+  crypto_holdings: CryptoHolding[];
+  total_usd_balance: number;
   trade_count: number;
 }
 
