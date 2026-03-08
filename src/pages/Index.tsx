@@ -5,6 +5,8 @@ import { CryptoGrid } from '@/components/CryptoGrid';
 import { DepositCrypto } from '@/components/DepositCrypto';
 import { ExpressP2P } from '@/components/ExpressP2P';
 import { P2POrders } from '@/components/P2POrders';
+import { WhyUsdt } from '@/components/WhyUsdt';
+import { FAQ } from '@/components/FAQ';
 import { Footer } from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Download, Zap, ShoppingBag } from 'lucide-react';
