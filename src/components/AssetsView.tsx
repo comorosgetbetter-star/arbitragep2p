@@ -67,9 +67,19 @@ export const AssetsView = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [historyFilter, setHistoryFilter] = useState<HistoryFilter>('all');
 
+  // Compute total portfolio value (USDT balance + all crypto holdings at current prices)
+  const totalPortfolioValue = (() => {
+    let total = balance; // USDT balance
+    cryptoBalances.forEach((cb) => {
+      const p = prices.find(pr => pr.symbol === cb.symbol);
+      if (p) total += cb.amount * p.price;
+    });
+    return total;
+  })();
+
   const displayBalance = hidden
     ? '****'
-    : balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    : totalPortfolioValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   const recentDeposits = deposits.filter((d) => {
     const age = Date.now() - new Date(d.created_at).getTime();
