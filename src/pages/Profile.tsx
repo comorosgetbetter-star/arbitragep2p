@@ -154,6 +154,12 @@ const Profile = () => {
           </div>
         </div>
 
+        {/* Account Settings - Change Email & Password */}
+        <AccountSettings
+          currentEmail={profile?.email || ''}
+          onEmailUpdated={(newEmail) => setProfile(prev => prev ? { ...prev, email: newEmail } : prev)}
+        />
+
         {/* 2FA Setup */}
         <TwoFactorSetup />
 
