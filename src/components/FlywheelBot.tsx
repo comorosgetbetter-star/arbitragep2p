@@ -223,13 +223,13 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
     setConfirmPlan(null);
     try {
       const { error } = await supabase.rpc('start_flywheel', {
-        _plan_name: plan.name,
+        _plan_name: confirmPlan.name,
         _amount: amountNum,
-        _daily_return_pct: plan.dailyReturnPct,
-        _lock_minutes: plan.lockMinutes,
+        _daily_return_pct: confirmPlan.dailyReturnPct,
+        _lock_minutes: confirmPlan.lockMinutes,
       });
       if (error) throw error;
-      toast({ title: 'Flywheel started! 🚀', description: `$${amountNum.toLocaleString()} deployed on ${plan.name}` });
+      toast({ title: 'Flywheel started! 🚀', description: `$${fmt(amountNum)} deployed on ${confirmPlan.name}` });
       setSelectedPlan(null);
       setAmount('');
       refetchBalance();
