@@ -29,6 +29,7 @@ const stakingPlans: StakingPlan[] = [
 export const StakingView = () => {
   const { user } = useAuth();
   const { balance } = useUserData();
+  const { prices } = useCryptoPrices();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
