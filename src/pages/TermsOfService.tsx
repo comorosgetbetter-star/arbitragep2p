@@ -122,7 +122,7 @@ const TermsOfService = () => {
           <section className="space-y-3">
             <h2 className="text-lg font-semibold text-foreground">11. Dispute Resolution</h2>
             <p>Any dispute arising out of or relating to these Terms or the Platform shall first be attempted to be resolved through good-faith negotiation. If the dispute cannot be resolved through negotiation, it shall be submitted to binding arbitration in accordance with the rules of the applicable arbitration body in our jurisdiction.</p>
-            <p>For trade-related disputes between users, ArbitrageP2P may provide mediation services at its sole discretion. The decision of ArbitrageP2P in such disputes shall be final and binding.</p>
+            <p>For trade-related disputes between users, PeerBitX may provide mediation services at its sole discretion. The decision of PeerBitX in such disputes shall be final and binding.</p>
           </section>
 
           <section className="space-y-3">
