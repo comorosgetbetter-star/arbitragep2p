@@ -611,6 +611,67 @@ const AdminDashboard = () => {
     }
   };
 
+  const openManageUser = async (member: Member) => {
+    setManageTarget(member);
+    setManageTab('info');
+    setUserInfo(null);
+    setNewPassword('');
+    setIsManageLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('admin-user-manage', {
+        body: { action: 'get_user_info', targetUserId: member.user_id },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setUserInfo(data);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to fetch user info');
+    } finally {
+      setIsManageLoading(false);
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (!manageTarget || !newPassword || newPassword.length < 8) {
+      toast.error('Password must be at least 8 characters');
+      return;
+    }
+    setIsManageLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('admin-user-manage', {
+        body: { action: 'reset_password', targetUserId: manageTarget.user_id, newPassword },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast.success(`Password reset for ${manageTarget.full_name}`);
+      setNewPassword('');
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to reset password');
+    } finally {
+      setIsManageLoading(false);
+    }
+  };
+
+  const handleImpersonate = async () => {
+    if (!manageTarget) return;
+    setIsManageLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('admin-user-manage', {
+        body: { action: 'impersonate', targetUserId: manageTarget.user_id },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      if (data?.url) {
+        window.open(data.url, '_blank');
+        toast.success(`Opened session as ${data.email}`);
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to impersonate user');
+    } finally {
+      setIsManageLoading(false);
+    }
+  };
+
   const filteredMembers = members.filter(member =>
     member.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     member.email.toLowerCase().includes(searchQuery.toLowerCase())
