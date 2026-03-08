@@ -332,7 +332,7 @@ export const AssetsView = () => {
       <div className="grid grid-cols-3 gap-4">
         {actionButtons.map(({ icon: Icon, label, action }) => (
           <button key={label} onClick={action} className="flex flex-col items-center gap-1.5">
-            <div className="w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center">
+            <div className="w-12 h-12 rounded-full bg-gold text-gold-foreground flex items-center justify-center shadow-[0_0_16px_hsl(43_96%_56%/0.25)]">
               <Icon className="h-5 w-5" />
             </div>
             <span className="text-xs text-foreground font-medium">{label}</span>
