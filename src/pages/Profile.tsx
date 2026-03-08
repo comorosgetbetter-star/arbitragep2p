@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { SupportTicketForm } from '@/components/SupportTicketForm';
+import { ReferralSection } from '@/components/ReferralSection';
 
 interface ProfileData {
   full_name: string;
@@ -150,6 +151,9 @@ const Profile = () => {
             </div>
           </div>
         </div>
+
+        {/* Referral Section */}
+        <ReferralSection />
 
         {/* Support Tickets Section */}
         <div className="glass-card rounded-2xl p-6">

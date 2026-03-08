@@ -3,7 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useUserData } from '@/contexts/UserDataContext';
 import { useCryptoPrices } from '@/hooks/useCryptoPrices';
 import { supabase } from '@/integrations/supabase/client';
-import { Eye, EyeOff, Download, Upload, Clock, ChevronRight, ChevronDown, ChevronUp, SlidersHorizontal, Sparkles, ArrowLeft, Copy, Check, Loader2, Wallet, ArrowDownLeft, ArrowUpRight, XCircle, CheckCircle2, ArrowLeftRight } from 'lucide-react';
+import { Eye, EyeOff, Download, Upload, Clock, ChevronRight, ChevronDown, ChevronUp, SlidersHorizontal, Sparkles, ArrowLeft, Copy, Check, Loader2, Wallet, ArrowDownLeft, ArrowUpRight, XCircle, CheckCircle2, ArrowLeftRight, FileDown, TrendingUp, TrendingDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useNavigate } from 'react-router-dom';
@@ -455,11 +455,41 @@ export const AssetsView = () => {
 
     const activities = historyFilter === 'all' ? allActivities : allActivities.filter(a => a.type === (historyFilter === 'deposits' ? 'deposit' : 'withdrawal'));
 
+    const exportCSV = () => {
+      const rows = [['Type', 'Amount (USDT)', 'Status', 'Network', 'Reason', 'Date']];
+      activities.forEach(a => {
+        rows.push([
+          a.type === 'deposit' ? 'Deposit' : 'Withdrawal',
+          `${a.type === 'deposit' ? '+' : '-'}${a.amount.toFixed(2)}`,
+          a.status,
+          a.type === 'withdrawal' ? (a.network || '').toUpperCase() : 'USDT',
+          a.reason || '',
+          new Date(a.created_at).toLocaleString(),
+        ]);
+      });
+      const csv = rows.map(r => r.map(c => `"${c}"`).join(',')).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `peerbitx-transactions-${new Date().toISOString().split('T')[0]}.csv`;
+      link.click();
+      URL.revokeObjectURL(url);
+      toast.success('Transaction history exported');
+    };
+
     return (
       <div className="space-y-4">
-        <button onClick={() => setSubView('main')} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
-          <ArrowLeft className="h-4 w-4" /> Back
-        </button>
+        <div className="flex items-center justify-between">
+          <button onClick={() => setSubView('main')} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
+            <ArrowLeft className="h-4 w-4" /> Back
+          </button>
+          {activities.length > 0 && (
+            <button onClick={exportCSV} className="flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 font-medium transition-colors">
+              <FileDown className="h-3.5 w-3.5" /> Export CSV
+            </button>
+          )}
+        </div>
         <h2 className="text-lg font-display font-bold">Transaction History</h2>
         <div className="flex gap-2">
           {(['all', 'deposits', 'withdrawals'] as const).map((f) => (
@@ -514,6 +544,13 @@ export const AssetsView = () => {
     );
   }
 
+  // ── P/L Calculation ──
+  const totalDeposited = deposits.reduce((sum, d) => sum + d.amount, 0);
+  const totalWithdrawn = withdrawals.filter(w => w.status === 'approved').reduce((sum, w) => sum + w.amount, 0);
+  const netPnL = totalPortfolioValue - totalDeposited + totalWithdrawn;
+  const pnlPct = totalDeposited > 0 ? (netPnL / totalDeposited) * 100 : 0;
+  const isPnlPositive = netPnL >= 0;
+
   // ── MAIN VIEW ──
   const actionButtons = [
     { icon: Download, label: 'Deposit', action: () => setSubView('deposit') },
@@ -537,7 +574,17 @@ export const AssetsView = () => {
           <span className="text-lg text-muted-foreground">USD</span>
         </div>
         <p className="text-sm text-muted-foreground mt-1">
-          Today's PnL <span className="text-destructive">-$0.11 (0.00%)</span> <ChevronRight className="h-3 w-3 inline" />
+          {hidden ? (
+            'P&L ****'
+          ) : (
+            <>
+              Total P&L{' '}
+              <span className={isPnlPositive ? 'text-success' : 'text-destructive'}>
+                {isPnlPositive ? '+' : ''}{netPnL.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ({pnlPct.toFixed(2)}%)
+              </span>
+              {isPnlPositive ? <TrendingUp className="h-3 w-3 inline ml-1" /> : <TrendingDown className="h-3 w-3 inline ml-1" />}
+            </>
+          )}
         </p>
       </div>
 
@@ -552,6 +599,29 @@ export const AssetsView = () => {
           </button>
         ))}
       </div>
+
+      {/* P/L Summary Card */}
+      {!hidden && totalDeposited > 0 && (
+        <div className="bg-secondary/60 rounded-2xl p-4 space-y-3">
+          <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Portfolio Summary</h4>
+          <div className="grid grid-cols-3 gap-2 text-center">
+            <div>
+              <p className="text-[10px] text-muted-foreground">Deposited</p>
+              <p className="text-sm font-bold text-foreground">${totalDeposited.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+            </div>
+            <div>
+              <p className="text-[10px] text-muted-foreground">Withdrawn</p>
+              <p className="text-sm font-bold text-foreground">${totalWithdrawn.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+            </div>
+            <div>
+              <p className="text-[10px] text-muted-foreground">Net P&L</p>
+              <p className={`text-sm font-bold ${isPnlPositive ? 'text-success' : 'text-destructive'}`}>
+                {isPnlPositive ? '+' : ''}${netPnL.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Earn Promo */}
       <div className="bg-secondary/80 rounded-2xl p-4 flex items-center justify-between">
