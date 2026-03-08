@@ -211,7 +211,7 @@ const AdminDashboard = () => {
 
     if (!roleData) {
       toast.error('Access denied');
-      navigate('/admin');
+      navigate('/alpha02');
       return;
     }
 
