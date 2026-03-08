@@ -80,7 +80,7 @@ function getEmailHTML(code: string, fullName: string): string {
           <tr>
             <td style="padding:24px 40px;border-top:1px solid #1f2937;text-align:center;">
               <p style="margin:0 0 8px;font-size:12px;color:#6b7280;">
-                © ${new Date().getFullYear()} ArbitrageP2P. All rights reserved.
+                © ${new Date().getFullYear()} PeerBitX. All rights reserved.
               </p>
               <p style="margin:0;font-size:11px;color:#4b5563;">
                 This is an automated message. Please do not reply to this email.
