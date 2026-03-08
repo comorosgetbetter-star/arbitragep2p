@@ -9,7 +9,7 @@ import { Footer } from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Download, Zap, ShoppingBag } from 'lucide-react';
 
-export type ActiveSection = 'home' | 'deposit' | 'express' | 'p2p';
+type ActiveSection = 'home' | 'deposit' | 'express' | 'p2p';
 
 const Index = () => {
   const [isDark, setIsDark] = useState(true);
