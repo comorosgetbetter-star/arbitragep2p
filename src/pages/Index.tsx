@@ -38,6 +38,42 @@ const Index = () => {
 
   const toggleTheme = () => setIsDark(!isDark);
 
+  // Keep Tawk widget above bottom nav on mobile (re-apply because widget rewrites inline styles)
+  useEffect(() => {
+    const applyTawkOffset = () => {
+      const isMobile = window.matchMedia('(max-width: 768px)').matches;
+      const bottomOffset = isMobile ? '96px' : '24px';
+
+      const selectors = [
+        '#tawk-bubble-container',
+        '#tawkchat-container',
+        '.tawk-min-container',
+        'iframe[title="chat widget"]',
+        'iframe[src*="tawk.to"]',
+      ];
+
+      selectors.forEach((selector) => {
+        document.querySelectorAll<HTMLElement>(selector).forEach((el) => {
+          el.style.setProperty('bottom', bottomOffset, 'important');
+          el.style.setProperty('inset-block-end', bottomOffset, 'important');
+        });
+      });
+    };
+
+    applyTawkOffset();
+    const observer = new MutationObserver(applyTawkOffset);
+    observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'class'] });
+
+    const intervalId = window.setInterval(applyTawkOffset, 1000);
+    window.addEventListener('resize', applyTawkOffset);
+
+    return () => {
+      observer.disconnect();
+      window.clearInterval(intervalId);
+      window.removeEventListener('resize', applyTawkOffset);
+    };
+  }, []);
+
   const handleBottomTab = (tab: BottomNavTab) => {
     setBottomTab(tab);
     window.location.hash = tab === 'home' ? '' : tab;
