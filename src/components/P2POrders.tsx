@@ -87,12 +87,9 @@ export const P2POrders = () => {
 
     const usdt = getUsdtAmount(amount);
 
+    if (authLoading) return;
     if (!user) {
-      localStorage.setItem('pendingTrade', JSON.stringify({
-        usd: amount, usdt, isCustom: false,
-        p2pOrderId: order.id, p2pPaymentAddress: order.payment_address,
-        p2pPaymentWindowMinutes: order.payment_window_minutes,
-      }));
+      toast.info('Please sign in to start a trade');
       navigate('/login');
       return;
     }

@@ -50,12 +50,7 @@ export const ExpressP2P = () => {
   }, [user]);
 
   const proceedWithPackage = (usd: number, usdt: number) => {
-    if (!user) {
-      // Save pending trade for after login — don't start session yet
-      localStorage.setItem('pendingTrade', JSON.stringify({ usd, usdt, isCustom: false }));
-      navigate('/login');
-      return;
-    }
+    if (!user) return;
     startSession(usd, usdt, false, user.id);
     toast.success('Trade started!', {
       description: `$${usd} → ${usdt} USDT`,
@@ -64,15 +59,15 @@ export const ExpressP2P = () => {
   };
 
   const handleSelectPackage = (usd: number, usdt: number) => {
-    setSelectedPackage(usd);
-    setPendingPackage({ usd, usdt });
-
-    // If the user is logged out, never reference any previous trade state.
+    if (loading) return;
     if (!user) {
-      clearSession();
-      setShowConfirmationModal(true);
+      toast.info('Please sign in to start a trade');
+      navigate('/login');
       return;
     }
+
+    setSelectedPackage(usd);
+    setPendingPackage({ usd, usdt });
     
     // Check for existing active session
     const existing = getStoredSession();

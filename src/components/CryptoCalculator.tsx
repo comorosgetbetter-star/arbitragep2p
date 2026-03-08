@@ -95,11 +95,7 @@ export const CryptoCalculator = () => {
   };
 
   const proceedWithPackage = (usd: number, usdt: number) => {
-    if (!user) {
-      localStorage.setItem('pendingTrade', JSON.stringify({ usd, usdt, isCustom: true }));
-      navigate('/login');
-      return;
-    }
+    if (!user) return;
     startSession(usd, usdt, true, user.id);
     toast.success('Trade started!', { description: `$${usd} → ${formatUsdt(usdt)} USDT` });
     navigate('/payment');
@@ -110,14 +106,15 @@ export const CryptoCalculator = () => {
       setError(`Minimum amount is $${MIN_AMOUNT}`);
       return;
     }
-    const usdt = calculateUsdtReceived(numAmount);
-    setPendingPackage({ usd: numAmount, usdt });
-
+    if (loading) return;
     if (!user) {
-      clearSession();
-      setShowConfirmationModal(true);
+      toast.info('Please sign in to start a trade');
+      navigate('/login');
       return;
     }
+
+    const usdt = calculateUsdtReceived(numAmount);
+    setPendingPackage({ usd: numAmount, usdt });
     const existing = getStoredSession();
     if (existing?.userId && existing.userId !== user.id) {
       clearSession();
