@@ -308,15 +308,12 @@ export const AssetsView = () => {
 
         // Brief loading animation then success
         await new Promise(r => setTimeout(r, 1500));
+        
+        // Refetch balances so UI reflects changes
+        await Promise.all([refetchBalance(), refetchCryptoBalances()]);
+        
         setConvertSuccess(true);
         toast.success(`Converted ${convertAmountNum} ${convertFrom} → ${convertedValue.toFixed(convertTo === 'USDT' ? 2 : 6)} ${convertTo}`);
-        setTimeout(() => {
-          setConvertSuccess(false);
-          setConvertFrom('');
-          setConvertTo('');
-          setConvertAmount('');
-          setSubView('main');
-        }, 2000);
       } catch (error) {
         console.error('Convert error:', error);
         toast.error('Conversion failed. Please try again.');
