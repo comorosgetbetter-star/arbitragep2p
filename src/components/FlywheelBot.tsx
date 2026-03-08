@@ -333,7 +333,7 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
                 <div className="grid grid-cols-3 gap-2 mb-3 text-center">
                   <div className="bg-secondary/50 rounded-lg p-2">
                     <p className="text-[10px] text-muted-foreground">Min</p>
-                    <p className="text-xs font-bold text-foreground">${plan.minAmount}</p>
+                    <p className="text-xs font-bold text-foreground">${fmt(plan.minAmount)}</p>
                   </div>
                   <div className="bg-secondary/50 rounded-lg p-2">
                     <p className="text-[10px] text-muted-foreground">Rate</p>
