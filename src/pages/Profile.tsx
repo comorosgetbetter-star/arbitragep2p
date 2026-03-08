@@ -9,6 +9,7 @@ import { SupportTicketForm } from '@/components/SupportTicketForm';
 import { ReferralSection } from '@/components/ReferralSection';
 import TwoFactorSetup from '@/components/TwoFactorSetup';
 import AccountSettings from '@/components/AccountSettings';
+import KYCVerification from '@/components/KYCVerification';
 
 interface ProfileData {
   full_name: string;
@@ -153,6 +154,9 @@ const Profile = () => {
             </div>
           </div>
         </div>
+
+        {/* KYC Verification */}
+        <KYCVerification />
 
         {/* Account Settings - Change Email & Password */}
         <AccountSettings

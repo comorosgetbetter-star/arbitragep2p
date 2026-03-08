@@ -31,6 +31,7 @@ import {
 } from 'lucide-react';
 // AdminAddressManager is now merged into AdminCryptoManager
 import { AdminCryptoManager } from '@/components/AdminCryptoManager';
+import { AdminKYCManager } from '@/components/AdminKYCManager';
 import { AdminP2POrderManager } from '@/components/AdminP2POrderManager';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -798,7 +799,7 @@ const AdminDashboard = () => {
 
         {/* Main Tabs */}
         <Tabs defaultValue="members" className="space-y-3">
-          <TabsList className="w-full grid grid-cols-6 h-auto p-1 bg-card border border-border/50">
+          <TabsList className="w-full grid grid-cols-7 h-auto p-1 bg-card border border-border/50">
             <TabsTrigger value="members" className="flex flex-col items-center gap-0.5 py-2 text-[10px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-semibold">
               <Users className="w-3.5 h-3.5" />
               Members
@@ -820,6 +821,10 @@ const AdminDashboard = () => {
                   {openTickets.length}
                 </span>
               )}
+            </TabsTrigger>
+            <TabsTrigger value="kyc" className="flex flex-col items-center gap-0.5 py-2 text-[10px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-semibold">
+              <UserCheck className="w-3.5 h-3.5" />
+              KYC
             </TabsTrigger>
             <TabsTrigger value="p2p-orders" className="flex flex-col items-center gap-0.5 py-2 text-[10px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-semibold">
               <ShoppingBag className="w-3.5 h-3.5" />
@@ -1134,6 +1139,11 @@ const AdminDashboard = () => {
                 )}
               </div>
             )}
+          </TabsContent>
+
+          {/* KYC Tab */}
+          <TabsContent value="kyc" className="space-y-3">
+            <AdminKYCManager members={members.map(m => ({ user_id: m.user_id, full_name: m.full_name, email: m.email }))} />
           </TabsContent>
 
           {/* P2P Orders Tab */}
