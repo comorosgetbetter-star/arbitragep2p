@@ -152,6 +152,9 @@ const Profile = () => {
           </div>
         </div>
 
+        {/* Referral Section */}
+        <ReferralSection />
+
         {/* Support Tickets Section */}
         <div className="glass-card rounded-2xl p-6">
           <div className="flex items-center justify-between mb-4">
