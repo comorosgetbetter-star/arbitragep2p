@@ -216,10 +216,7 @@ export const AssetsView = () => {
         </button>
         <h2 className="text-lg font-display font-bold">Deposit USDT</h2>
         {depositLoading ? (
-          <div className="flex flex-col items-center justify-center py-12 gap-3">
-            <Loader2 className="h-8 w-8 text-primary animate-spin" />
-            <p className="text-sm text-muted-foreground">Loading deposit address...</p>
-          </div>
+          <DepositSkeleton />
         ) : !depositAddr ? (
           <p className="text-sm text-muted-foreground text-center py-6">No deposit addresses available. Please contact support.</p>
         ) : (

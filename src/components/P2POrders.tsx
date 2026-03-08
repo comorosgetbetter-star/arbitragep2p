@@ -139,11 +139,7 @@ export const P2POrders = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
-      </div>
-    );
+    return <P2POrdersSkeleton />;
   }
 
   if (orders.length === 0) {

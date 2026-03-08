@@ -60,11 +60,7 @@ export const BotsView = () => {
 
   // Auth loading state
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 text-primary animate-spin" />
-      </div>
-    );
+    return <BotsSkeleton />;
   }
 
   // Auth gate

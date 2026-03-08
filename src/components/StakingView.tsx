@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { StakingConfirmModal } from '@/components/StakingConfirmModal';
 import { ActiveStakingCard } from '@/components/ActiveStakingCard';
+import { StakingSkeleton } from '@/components/skeletons/StakingSkeleton';
 
 interface StakingPlan {
   id: string;
