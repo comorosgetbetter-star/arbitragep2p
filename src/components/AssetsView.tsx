@@ -47,7 +47,7 @@ const getRotatedDepositAddress = async () => {
 };
 
 export const AssetsView = () => {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const { balance, cryptoBalances, deposits, withdrawals } = useUserData();
   const { prices } = useCryptoPrices();
   const navigate = useNavigate();
