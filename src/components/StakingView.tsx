@@ -89,7 +89,7 @@ export const StakingView = () => {
   };
 
   const handleConfirmStake = async () => {
-    if (!confirmModal) return;
+    if (!confirmModal || !user) return;
     setIsStaking(true);
     try {
       const { error } = await supabase.rpc('start_staking', {
