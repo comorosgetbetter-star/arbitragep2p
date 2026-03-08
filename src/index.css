@@ -253,15 +253,3 @@
   }
 }
 
-/* Keep Tawk widget above the mobile bottom navigation */
-@media (max-width: 768px) {
-  body #tawk-bubble-container,
-  body #tawkchat-container,
-  body .tawk-min-container,
-  body iframe[title="chat widget"],
-  body iframe[title="chat widget"][src*="tawk.to"],
-  body iframe[src*="tawk.to"] {
-    bottom: calc(112px + env(safe-area-inset-bottom, 0px)) !important;
-    inset-block-end: calc(112px + env(safe-area-inset-bottom, 0px)) !important;
-  }
-}
