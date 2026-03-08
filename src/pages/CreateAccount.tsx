@@ -305,7 +305,16 @@ const CreateAccount = () => {
                       className="pl-10"
                     />
                   </div>
-                  {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
+                  {errors.email && (
+                    <div>
+                      <p className="text-sm text-destructive">{errors.email}</p>
+                      {errors.email.includes('already registered') && (
+                        <p className="text-xs mt-1">
+                          <Link to="/login" className="text-primary hover:underline font-medium">Go to Login</Link>
+                        </p>
+                      )}
+                    </div>
+                  )}
                   {!errors.email && formData.email.length > 0 && (() => {
                     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
                     if (emailRegex.test(formData.email)) return (
