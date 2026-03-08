@@ -168,21 +168,21 @@ const Index = () => {
           <div className="grid grid-cols-3 gap-2">
             <Button
               className={btnClass('deposit')}
-              onClick={() => setActiveSection(activeSection === 'deposit' ? 'home' : 'deposit')}
+              onClick={() => openProtectedSection('deposit')}
             >
               <Download className="h-4 w-4 mr-1.5" />
               Deposit
             </Button>
             <Button
               className={btnClass('express')}
-              onClick={() => setActiveSection(activeSection === 'express' ? 'home' : 'express')}
+              onClick={() => openProtectedSection('express')}
             >
               <Zap className="h-4 w-4 mr-1.5" />
               Express
             </Button>
             <Button
               className={btnClass('p2p')}
-              onClick={() => setActiveSection(activeSection === 'p2p' ? 'home' : 'p2p')}
+              onClick={() => openProtectedSection('p2p')}
             >
               <ShoppingBag className="h-4 w-4 mr-1.5" />
               P2P
