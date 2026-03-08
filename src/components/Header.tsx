@@ -1,9 +1,8 @@
 import { useState } from 'react';
-import { Wallet, Menu, X, Sun, Moon, Plus, Home, BarChart3, ArrowLeftRight, Compass, Wallet as WalletIcon2 } from 'lucide-react';
+import { Menu, X, Sun, Moon, Home, BarChart3, ArrowLeftRight, Compass, Wallet as WalletIcon2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { WalletDropdown } from './WalletDropdown';
-import { AddFundsModal } from './AddFundsModal';
 import { AccountDropdown } from './AccountDropdown';
+import { useAuth } from '@/contexts/AuthContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 
