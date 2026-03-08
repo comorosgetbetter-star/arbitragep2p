@@ -396,6 +396,7 @@ const AdminDashboard = () => {
     setIsStealth(stealth);
     setAdjustmentAmount('');
     setAdjustmentReason('');
+    setAdjustmentCrypto('USDT');
     setIsAdjustDialogOpen(true);
   };
 
