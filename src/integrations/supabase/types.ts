@@ -648,6 +648,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_email_banned: { Args: { _email: string }; Returns: boolean }
       start_flywheel: {
         Args: {
           _amount: number
