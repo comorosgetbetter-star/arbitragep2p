@@ -126,16 +126,16 @@ Deno.serve(async (req) => {
 
     const normalizedEmail = email.toLowerCase().trim()
 
-    // Rate limit: max 5 codes per email in last 10 minutes
-    const tenMinAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString()
+    // Rate limit: max 4 codes per email in last 1 hour (1 initial + 3 resends)
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString()
     const { count: recentCount } = await supabase
       .from('verification_codes')
       .select('id', { count: 'exact', head: true })
       .eq('email', normalizedEmail)
-      .gte('created_at', tenMinAgo)
+      .gte('created_at', oneHourAgo)
 
-    if (recentCount !== null && recentCount >= 5) {
-      return new Response(JSON.stringify({ error: 'Too many attempts. Please wait before requesting a new code.' }), {
+    if (recentCount !== null && recentCount >= 4) {
+      return new Response(JSON.stringify({ error: 'rate_limited', message: 'Too many requests. Please try again later.' }), {
         status: 429,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
