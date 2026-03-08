@@ -15,6 +15,8 @@ import { AssetsView } from '@/components/AssetsView';
 import { Button } from '@/components/ui/button';
 import { Download, Zap, ShoppingBag, ArrowLeft } from 'lucide-react';
 
+type ExploreTab = 'staking' | 'bots';
+
 type ActiveSection = 'home' | 'deposit' | 'express' | 'p2p';
 
 const VALID_TABS: BottomNavTab[] = ['home', 'markets', 'trade', 'explore', 'assets'];
