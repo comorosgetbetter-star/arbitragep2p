@@ -77,12 +77,7 @@ export const DepositCrypto = () => {
   };
 
   if (authLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center py-12 gap-3">
-        <Loader2 className="h-8 w-8 text-primary animate-spin" />
-        <p className="text-sm text-muted-foreground">Checking account...</p>
-      </div>
-    );
+    return <DepositSkeleton />;
   }
 
   if (!user) {
