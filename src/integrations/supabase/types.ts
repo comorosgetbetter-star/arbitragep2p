@@ -65,6 +65,39 @@ export type Database = {
         }
         Relationships: []
       }
+      deposit_crypto_settings: {
+        Row: {
+          created_at: string
+          deposit_address: string | null
+          id: string
+          is_enabled: boolean
+          name: string
+          network: string | null
+          symbol: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          deposit_address?: string | null
+          id?: string
+          is_enabled?: boolean
+          name: string
+          network?: string | null
+          symbol: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          deposit_address?: string | null
+          id?: string
+          is_enabled?: boolean
+          name?: string
+          network?: string | null
+          symbol?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       deposits: {
         Row: {
           amount: number
