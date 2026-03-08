@@ -67,12 +67,7 @@ const Index = () => {
 
           {/* Content */}
           <div className="mt-6">
-            {activeSection === 'home' && (
-              <>
-                <h3 className="text-base font-semibold mb-3">Select crypto</h3>
-                <CryptoGrid />
-              </>
-            )}
+          {activeSection === 'home' && <CryptoGrid />}
 
             {activeSection === 'deposit' && <DepositCrypto />}
             {activeSection === 'express' && <ExpressP2P />}

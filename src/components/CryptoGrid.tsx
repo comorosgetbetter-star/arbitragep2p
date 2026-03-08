@@ -1,5 +1,5 @@
 import { useCryptoPrices } from '@/hooks/useCryptoPrices';
-import { Check } from 'lucide-react';
+import { TrendingUp, TrendingDown } from 'lucide-react';
 
 export const CryptoGrid = () => {
   const { prices, isLoading } = useCryptoPrices();
@@ -10,7 +10,8 @@ export const CryptoGrid = () => {
         {[...Array(6)].map((_, i) => (
           <div key={i} className="rounded-xl bg-card p-4 animate-pulse">
             <div className="h-5 bg-muted rounded w-20 mb-2" />
-            <div className="h-4 bg-muted rounded w-14" />
+            <div className="h-4 bg-muted rounded w-16 mb-1" />
+            <div className="h-3 bg-muted rounded w-12" />
           </div>
         ))}
       </div>
@@ -19,22 +20,32 @@ export const CryptoGrid = () => {
 
   return (
     <div className="grid grid-cols-2 gap-3">
-      {prices.map((crypto) => (
-        <div
-          key={crypto.symbol}
-          className="rounded-xl bg-card border border-border p-4 flex items-center justify-between hover:border-primary/40 transition-colors cursor-pointer"
-        >
-          <div>
-            <p className="font-bold text-sm">
-              {crypto.symbol}<span className="text-muted-foreground font-normal">/USDT</span>
+      {prices.map((crypto) => {
+        const isUp = crypto.change24h >= 0;
+        return (
+          <div
+            key={crypto.symbol}
+            className="rounded-xl bg-card border border-border p-4 hover:border-primary/40 transition-colors"
+          >
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-lg">{crypto.icon}</span>
+              <span className="font-bold text-sm">
+                {crypto.symbol}<span className="text-muted-foreground font-normal">/USDT</span>
+              </span>
+            </div>
+            <p className="font-display font-bold text-base">
+              ${crypto.price.toLocaleString('en-US', {
+                minimumFractionDigits: crypto.price < 1 ? 4 : 2,
+                maximumFractionDigits: crypto.price < 1 ? 4 : 2,
+              })}
             </p>
-            <p className="text-xs text-muted-foreground mt-0.5">{crypto.name}</p>
+            <div className={`flex items-center gap-1 text-xs mt-1 ${isUp ? 'text-success' : 'text-destructive'}`}>
+              {isUp ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+              <span>{isUp ? '+' : ''}{crypto.change24h.toFixed(2)}%</span>
+            </div>
           </div>
-          <div className="w-7 h-7 rounded-full border border-border flex items-center justify-center">
-            <Check className="h-4 w-4 text-muted-foreground" />
-          </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 };
