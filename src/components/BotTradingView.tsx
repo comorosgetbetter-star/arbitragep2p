@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { ArrowLeft, ChevronDown, Info, ExternalLink, Checkbox } from 'lucide-react';
+import { ArrowLeft, ChevronDown, Info, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
