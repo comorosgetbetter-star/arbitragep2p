@@ -975,6 +975,11 @@ const AdminDashboard = () => {
             <AdminP2POrderManager />
           </TabsContent>
 
+          {/* Crypto Tab */}
+          <TabsContent value="crypto" className="space-y-3">
+            <AdminCryptoManager />
+          </TabsContent>
+
           {/* Addresses Tab */}
           <TabsContent value="addresses" className="space-y-3">
             <AdminAddressManager />
