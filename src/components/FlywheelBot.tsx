@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-import { ArrowLeft, ArrowDownUp, Wallet, Clock, TrendingUp, Zap, X, AlertTriangle } from 'lucide-react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { ArrowLeft, ArrowDownUp, Wallet, Clock, TrendingUp, Zap, X, AlertTriangle, CheckCircle2, XCircle, Trophy } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useUserData } from '@/contexts/UserDataContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const fmt = (n: number, decimals = 2) => n.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
 
@@ -28,6 +29,13 @@ interface FlywheelSession {
   status: string;
 }
 
+interface TradeRound {
+  id: number;
+  isWin: boolean;
+  amount: number;
+  timestamp: number;
+}
+
 const FLYWHEEL_PLANS = [
   { id: 'turbo-1h', name: 'Turbo 1H', duration: '1 hour', lockMinutes: 60, dailyReturnPct: 120, minAmount: 100, badge: 'Fast' },
   { id: 'turbo-3h', name: 'Turbo 3H', duration: '3 hours', lockMinutes: 180, dailyReturnPct: 80, minAmount: 250, badge: 'Popular' },
@@ -35,15 +43,21 @@ const FLYWHEEL_PLANS = [
   { id: 'turbo-12h', name: 'Turbo 12H', duration: '12 hours', lockMinutes: 720, dailyReturnPct: 40, minAmount: 1000, badge: 'Safe' },
 ];
 
-// Active session card with fast ticking profits
+// Deriv-style active session card with round-by-round win/loss
 const ActiveFlywheelCard = ({ session, onCancelled }: { session: FlywheelSession; onCancelled: () => void }) => {
   const { toast } = useToast();
   const [cancelling, setCancelling] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [now, setNow] = useState(Date.now());
+  const [trades, setTrades] = useState<TradeRound[]>([]);
+  const [isTrading, setIsTrading] = useState(false);
+  const [tradingCountdown, setTradingCountdown] = useState(0);
+  const roundIdRef = useRef(0);
+  const tradesEndRef = useRef<HTMLDivElement>(null);
 
-  // Fast tick every 100ms for rapid profit display
+  // Tick for countdown and progress
   useEffect(() => {
-    const interval = setInterval(() => setNow(Date.now()), 100);
+    const interval = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(interval);
   }, []);
 
@@ -54,114 +68,295 @@ const ActiveFlywheelCard = ({ session, onCancelled }: { session: FlywheelSession
   const progressPct = totalDurationMs > 0 ? (elapsedMs / totalDurationMs) * 100 : 0;
   const isCompleted = now >= endsAt;
 
-  // Calculate earnings (daily_return_pct is high, so profits build fast)
-  const elapsedDays = elapsedMs / (1000 * 60 * 60 * 24);
-  const currentEarnings = session.staked_amount * (session.daily_return_pct / 100) * elapsedDays;
-  const currentTotal = session.staked_amount + currentEarnings;
-
   // Time remaining
   const remainingMs = Math.max(0, endsAt - now);
   const remainingHours = Math.floor(remainingMs / (1000 * 60 * 60));
   const remainingMinutes = Math.floor((remainingMs % (1000 * 60 * 60)) / (1000 * 60));
   const remainingSeconds = Math.floor((remainingMs % (1000 * 60)) / 1000);
 
-  const handleCancel = useCallback(async () => {
+  // Calculate total from trades
+  const totalWinnings = trades.reduce((sum, t) => sum + (t.isWin ? t.amount : -t.amount), 0);
+
+  // Generate trade rounds at intervals (every 3-6 seconds)
+  useEffect(() => {
+    if (isCompleted || session.status !== 'active') return;
+
+    const runTradeRound = () => {
+      // Start "trading" animation
+      setIsTrading(true);
+      const tradeDuration = 2000 + Math.random() * 2000; // 2-4 seconds of "trading"
+      setTradingCountdown(Math.ceil(tradeDuration / 1000));
+
+      const countdownInterval = setInterval(() => {
+        setTradingCountdown(prev => {
+          if (prev <= 1) {
+            clearInterval(countdownInterval);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      setTimeout(() => {
+        setIsTrading(false);
+        
+        // 70% chance of win, 30% chance of loss
+        const isWin = Math.random() < 0.7;
+        
+        // Win amounts are bigger than loss amounts
+        const baseAmount = session.staked_amount * 0.005; // 0.5% of staked as base
+        let amount: number;
+        if (isWin) {
+          amount = baseAmount * (0.8 + Math.random() * 2.5); // Win: 0.8x - 3.3x base
+        } else {
+          amount = baseAmount * (0.3 + Math.random() * 0.8); // Loss: 0.3x - 1.1x base (smaller)
+        }
+        amount = Math.round(amount * 100) / 100;
+
+        roundIdRef.current += 1;
+        const newTrade: TradeRound = {
+          id: roundIdRef.current,
+          isWin,
+          amount,
+          timestamp: Date.now(),
+        };
+        
+        setTrades(prev => [...prev, newTrade]);
+      }, tradeDuration);
+    };
+
+    // Initial trade after 1 second
+    const initialTimeout = setTimeout(runTradeRound, 1000);
+
+    // Then repeat every 4-7 seconds
+    const interval = setInterval(runTradeRound, 4000 + Math.random() * 3000);
+
+    return () => {
+      clearTimeout(initialTimeout);
+      clearInterval(interval);
+    };
+  }, [isCompleted, session.status, session.staked_amount]);
+
+  // Auto scroll to latest trade
+  useEffect(() => {
+    tradesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [trades.length]);
+
+  const handleCancelRequest = () => {
+    setShowCancelConfirm(true);
+  };
+
+  const handleConfirmCancel = useCallback(async () => {
     setCancelling(true);
+    setShowCancelConfirm(false);
     try {
       const { error } = await supabase.rpc('cancel_staking', { _session_id: session.id });
       if (error) throw error;
-      toast({ title: 'Flywheel stopped', description: 'Your funds + profits have been returned to your balance.' });
+      toast({ title: 'Bot stopped ✅', description: `Profits of $${fmt(Math.max(0, totalWinnings))} returned to your balance.` });
       onCancelled();
     } catch (err: any) {
       toast({ title: 'Error', description: err.message || 'Failed to stop bot', variant: 'destructive' });
     } finally {
       setCancelling(false);
     }
-  }, [session.id, onCancelled, toast]);
+  }, [session.id, onCancelled, toast, totalWinnings]);
 
   return (
-    <Card className="border-primary/30 bg-gradient-to-br from-primary/5 to-card overflow-hidden">
-      <CardContent className="p-4 space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
-              <ArrowDownUp className="h-4 w-4 text-primary" />
+    <>
+      <Card className="border-primary/30 bg-gradient-to-br from-primary/5 to-card overflow-hidden">
+        <CardContent className="p-4 space-y-3">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
+                <ArrowDownUp className="h-4 w-4 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-foreground">{session.plan_name}</p>
+                <p className="text-[10px] text-muted-foreground">Flywheel • {session.daily_return_pct}% daily</p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm font-semibold text-foreground">{session.plan_name}</p>
-              <p className="text-[10px] text-muted-foreground">Flywheel • {session.daily_return_pct}% daily rate</p>
+            <Badge className={isCompleted ? 'bg-success/15 text-success border-0' : 'bg-primary/15 text-primary border-0'}>
+              {isCompleted ? 'Done' : 'Running'}
+            </Badge>
+          </div>
+
+          {/* Trading animation indicator */}
+          {isTrading && !isCompleted && (
+            <div className="bg-primary/10 border border-primary/20 rounded-xl p-3 flex items-center gap-3 animate-pulse">
+              <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+                <Zap className="h-4 w-4 text-primary animate-bounce" />
+              </div>
+              <div className="flex-1">
+                <p className="text-xs font-semibold text-primary">Bot is trading...</p>
+                <p className="text-[10px] text-muted-foreground">Analyzing market • {tradingCountdown}s</p>
+              </div>
+              <div className="flex gap-0.5">
+                <div className="w-1.5 h-4 bg-primary/40 rounded-full animate-[pulse_0.6s_ease-in-out_infinite]" />
+                <div className="w-1.5 h-6 bg-primary/60 rounded-full animate-[pulse_0.6s_ease-in-out_infinite_0.1s]" />
+                <div className="w-1.5 h-3 bg-primary/30 rounded-full animate-[pulse_0.6s_ease-in-out_infinite_0.2s]" />
+                <div className="w-1.5 h-5 bg-primary/50 rounded-full animate-[pulse_0.6s_ease-in-out_infinite_0.3s]" />
+              </div>
             </div>
-          </div>
-          <Badge className={isCompleted ? 'bg-success/15 text-success border-0' : 'bg-primary/15 text-primary border-0'}>
-            {isCompleted ? 'Done' : 'Trading'}
-          </Badge>
-        </div>
-
-        {/* Live profit counter */}
-        <div className="bg-card/80 border border-border/30 rounded-xl p-3 space-y-1">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Live Value</p>
-          <p className="text-2xl font-bold font-display text-foreground tabular-nums">
-            ${fmt(currentTotal, 4)}
-          </p>
-          <div className="flex items-center gap-1">
-            <Zap className="h-3 w-3 text-success" />
-            <p className="text-xs text-success font-semibold tabular-nums">
-              +${fmt(currentEarnings, 6)} profit
-            </p>
-          </div>
-        </div>
-
-        {/* Progress */}
-        <div className="space-y-1.5">
-          <div className="flex justify-between text-[10px] text-muted-foreground">
-            <span>Trading progress</span>
-            <span>{progressPct.toFixed(1)}%</span>
-          </div>
-          <Progress value={progressPct} className="h-2" />
-        </div>
-
-        {/* Countdown */}
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <Clock className="h-3.5 w-3.5" />
-          {isCompleted ? (
-            <span className="text-success font-medium">Trading cycle complete!</span>
-          ) : (
-            <span className="tabular-nums">
-              {remainingHours}h {remainingMinutes}m {remainingSeconds}s remaining
-            </span>
           )}
-        </div>
 
-        {/* Info row */}
-        <div className="grid grid-cols-2 gap-2">
-          <div className="bg-secondary/50 rounded-lg p-2 text-center">
-            <p className="text-[10px] text-muted-foreground">Invested</p>
-            <p className="text-xs font-bold text-foreground">
-              ${fmt(session.staked_amount)}
+          {/* Trade history feed */}
+          <div className="space-y-1">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Trade History</p>
+            <ScrollArea className="h-[140px] rounded-lg border border-border/30 bg-card/80">
+              <div className="p-2 space-y-1.5">
+                {trades.length === 0 && !isTrading && (
+                  <p className="text-xs text-muted-foreground text-center py-6">Waiting for first trade...</p>
+                )}
+                {trades.map((trade, idx) => (
+                  <div
+                    key={trade.id}
+                    className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs animate-fade-in ${
+                      trade.isWin ? 'bg-success/10' : 'bg-destructive/10'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      {trade.isWin ? (
+                        <CheckCircle2 className="h-3.5 w-3.5 text-success" />
+                      ) : (
+                        <XCircle className="h-3.5 w-3.5 text-destructive" />
+                      )}
+                      <span className="text-muted-foreground">Round #{idx + 1}</span>
+                    </div>
+                    <span className={`font-bold tabular-nums ${trade.isWin ? 'text-success' : 'text-destructive'}`}>
+                      {trade.isWin ? '+' : '-'}${fmt(trade.amount)}
+                    </span>
+                  </div>
+                ))}
+                <div ref={tradesEndRef} />
+              </div>
+            </ScrollArea>
+          </div>
+
+          {/* Total winnings */}
+          <div className="bg-card/80 border border-border/30 rounded-xl p-3 space-y-1">
+            <div className="flex items-center gap-1.5">
+              <Trophy className="h-3.5 w-3.5 text-gold" />
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Total Profit</p>
+            </div>
+            <p className={`text-2xl font-bold font-display tabular-nums ${totalWinnings >= 0 ? 'text-success' : 'text-destructive'}`}>
+              {totalWinnings >= 0 ? '+' : '-'}${fmt(Math.abs(totalWinnings))}
+            </p>
+            <p className="text-[10px] text-muted-foreground">
+              {trades.filter(t => t.isWin).length}W / {trades.filter(t => !t.isWin).length}L from {trades.length} trades
             </p>
           </div>
-          <div className="bg-secondary/50 rounded-lg p-2 text-center">
-            <p className="text-[10px] text-muted-foreground">Est. Final</p>
-            <p className="text-xs font-bold text-success">
-              ${fmt(session.staked_amount + session.staked_amount * (session.daily_return_pct / 100) * session.lock_days)}
-            </p>
-          </div>
-        </div>
 
-        {/* Stop button */}
-        {!isCompleted && session.status === 'active' && (
-          <Button
-            variant="outline"
-            className="w-full border-destructive/30 text-destructive hover:bg-destructive/10"
-            onClick={handleCancel}
-            disabled={cancelling}
-          >
-            <X className="h-4 w-4 mr-1.5" />
-            {cancelling ? 'Stopping…' : 'Stop Bot & Collect'}
-          </Button>
-        )}
-      </CardContent>
-    </Card>
+          {/* Progress */}
+          <div className="space-y-1.5">
+            <div className="flex justify-between text-[10px] text-muted-foreground">
+              <span>Session progress</span>
+              <span>{progressPct.toFixed(1)}%</span>
+            </div>
+            <Progress value={progressPct} className="h-2" />
+          </div>
+
+          {/* Countdown */}
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Clock className="h-3.5 w-3.5" />
+            {isCompleted ? (
+              <span className="text-success font-medium">Trading cycle complete!</span>
+            ) : (
+              <span className="tabular-nums">
+                {remainingHours}h {remainingMinutes}m {remainingSeconds}s remaining
+              </span>
+            )}
+          </div>
+
+          {/* Info row */}
+          <div className="grid grid-cols-2 gap-2">
+            <div className="bg-secondary/50 rounded-lg p-2 text-center">
+              <p className="text-[10px] text-muted-foreground">Invested</p>
+              <p className="text-xs font-bold text-foreground">${fmt(session.staked_amount)}</p>
+            </div>
+            <div className="bg-secondary/50 rounded-lg p-2 text-center">
+              <p className="text-[10px] text-muted-foreground">Current Value</p>
+              <p className={`text-xs font-bold ${totalWinnings >= 0 ? 'text-success' : 'text-destructive'}`}>
+                ${fmt(session.staked_amount + totalWinnings)}
+              </p>
+            </div>
+          </div>
+
+          {/* Stop button */}
+          {!isCompleted && session.status === 'active' && (
+            <Button
+              variant="outline"
+              className="w-full border-destructive/30 text-destructive hover:bg-destructive/10"
+              onClick={handleCancelRequest}
+              disabled={cancelling}
+            >
+              <X className="h-4 w-4 mr-1.5" />
+              {cancelling ? 'Stopping…' : 'Stop Bot & Collect'}
+            </Button>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Cancel Confirmation Dialog */}
+      <Dialog open={showCancelConfirm} onOpenChange={setShowCancelConfirm}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Trophy className="h-5 w-5 text-gold" />
+              Collect Profits
+            </DialogTitle>
+            <DialogDescription>
+              Review your trading session results before collecting.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-secondary/50 rounded-lg p-3 text-center">
+                <p className="text-[10px] text-muted-foreground">Invested</p>
+                <p className="text-sm font-bold text-foreground">${fmt(session.staked_amount)}</p>
+              </div>
+              <div className="bg-secondary/50 rounded-lg p-3 text-center">
+                <p className="text-[10px] text-muted-foreground">Trades</p>
+                <p className="text-sm font-bold text-foreground">{trades.length}</p>
+              </div>
+              <div className="bg-success/10 rounded-lg p-3 text-center">
+                <p className="text-[10px] text-muted-foreground">Wins</p>
+                <p className="text-sm font-bold text-success">
+                  {trades.filter(t => t.isWin).length} (+${fmt(trades.filter(t => t.isWin).reduce((s, t) => s + t.amount, 0))})
+                </p>
+              </div>
+              <div className="bg-destructive/10 rounded-lg p-3 text-center">
+                <p className="text-[10px] text-muted-foreground">Losses</p>
+                <p className="text-sm font-bold text-destructive">
+                  {trades.filter(t => !t.isWin).length} (-${fmt(trades.filter(t => !t.isWin).reduce((s, t) => s + t.amount, 0))})
+                </p>
+              </div>
+            </div>
+            <div className="bg-card border border-border/50 rounded-xl p-4 text-center space-y-1">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Total Return to Balance</p>
+              <p className="text-2xl font-bold font-display text-success">
+                ${fmt(session.staked_amount + Math.max(0, totalWinnings))}
+              </p>
+              <p className="text-[10px] text-muted-foreground">
+                ${fmt(session.staked_amount)} invested + ${fmt(Math.max(0, totalWinnings))} profit
+              </p>
+            </div>
+          </div>
+          <DialogFooter className="flex gap-2 sm:gap-2">
+            <Button variant="outline" onClick={() => setShowCancelConfirm(false)} className="flex-1">
+              Keep Trading
+            </Button>
+            <Button
+              className="flex-1 bg-success hover:bg-success/90 text-success-foreground"
+              onClick={handleConfirmCancel}
+              disabled={cancelling}
+            >
+              {cancelling ? 'Collecting…' : 'Collect Profits'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 
@@ -210,8 +405,6 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
       toast({ title: 'Insufficient balance', description: `Your balance is $${fmt(balance)}`, variant: 'destructive' });
       return;
     }
-
-    // Show confirmation dialog
     setConfirmPlan(plan);
   };
 
@@ -267,11 +460,11 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
             <h2 className="text-lg font-display font-bold text-foreground">Flywheel</h2>
           </div>
           <p className="text-sm text-muted-foreground mb-3">
-            Maximize with dual crypto cycling. Deploy USDT, watch profits build up <span className="text-primary font-semibold">in real-time</span>.
+            Automated trading bot. Watch trades execute <span className="text-primary font-semibold">in real-time</span> with win/loss results.
           </p>
           <div className="flex items-center gap-4 text-xs text-muted-foreground">
-            <div className="flex items-center gap-1"><Zap className="h-3.5 w-3.5 text-primary" /><span>Fast returns</span></div>
-            <div className="flex items-center gap-1"><TrendingUp className="h-3.5 w-3.5 text-success" /><span>Auto-compound</span></div>
+            <div className="flex items-center gap-1"><Zap className="h-3.5 w-3.5 text-primary" /><span>Live trades</span></div>
+            <div className="flex items-center gap-1"><TrendingUp className="h-3.5 w-3.5 text-success" /><span>70% win rate</span></div>
             <div className="flex items-center gap-1"><Clock className="h-3.5 w-3.5 text-warning" /><span>Hour cycles</span></div>
           </div>
         </CardContent>
@@ -297,7 +490,7 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
       {/* Active Sessions */}
       {activeSessions.length > 0 && (
         <div className="space-y-3">
-          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Active Trades</h3>
+          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Active Bots</h3>
           {activeSessions.map((session) => (
             <ActiveFlywheelCard key={session.id} session={session} onCancelled={handleSessionDone} />
           ))}
@@ -392,7 +585,7 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
         Bot trading involves risk. Returns are estimates based on market conditions. You can stop a bot at any time to collect accrued profits.
       </p>
 
-      {/* Confirmation Dialog */}
+      {/* Start Confirmation Dialog */}
       <Dialog open={!!confirmPlan} onOpenChange={(open) => { if (!open) setConfirmPlan(null); }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
