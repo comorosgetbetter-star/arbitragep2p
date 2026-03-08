@@ -768,8 +768,13 @@ const AdminDashboard = () => {
                           <p className="text-xs text-muted-foreground truncate">{member.email}</p>
                         </div>
                         <div className="text-right shrink-0">
-                          <p className="font-mono text-sm font-bold">{Number(member.usdt_balance).toFixed(2)}</p>
-                          <p className="text-[10px] text-muted-foreground">USDT</p>
+                          <p className="font-mono text-sm font-bold">${member.total_usd_balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                          <p className="text-[10px] text-muted-foreground">Total USD</p>
+                          {member.crypto_holdings.length > 0 && (
+                            <p className="text-[10px] text-muted-foreground">
+                              {member.crypto_holdings.map(h => `${h.amount.toFixed(h.symbol === 'BTC' ? 6 : 4)} ${h.symbol}`).join(', ')}
+                            </p>
+                          )}
                         </div>
                       </div>
                       <div className="flex items-center justify-between">
