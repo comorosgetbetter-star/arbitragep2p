@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-const BONUS_AMOUNT = 5; // USDT bonus per referral
+const BONUS_PERCENT = 5; // 5% bonus of referral's deposit
 
 function generateCode(userId: string): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
