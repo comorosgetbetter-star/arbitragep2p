@@ -138,14 +138,14 @@ export const AssetsView = () => {
   };
 
   const cryptoLogos: Record<string, string> = {
-    BTC: 'https://assets.coingecko.com/coins/images/1/small/bitcoin.png',
-    ETH: 'https://assets.coingecko.com/coins/images/279/small/ethereum.png',
-    USDT: 'https://assets.coingecko.com/coins/images/325/small/Tether.png',
-    BNB: 'https://assets.coingecko.com/coins/images/825/small/bnb-icon2_2x.png',
-    SOL: 'https://assets.coingecko.com/coins/images/4128/small/solana.png',
-    XRP: 'https://assets.coingecko.com/coins/images/44/small/xrp-symbol-white-128.png',
-    LTC: 'https://assets.coingecko.com/coins/images/2/small/litecoin.png',
-    DOGE: 'https://assets.coingecko.com/coins/images/5/small/dogecoin.png',
+    BTC: 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@1a63530be6e374711a8554f31b17e4cb92c25fa5/128/color/btc.png',
+    ETH: 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@1a63530be6e374711a8554f31b17e4cb92c25fa5/128/color/eth.png',
+    USDT: 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@1a63530be6e374711a8554f31b17e4cb92c25fa5/128/color/usdt.png',
+    BNB: 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@1a63530be6e374711a8554f31b17e4cb92c25fa5/128/color/bnb.png',
+    SOL: 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@1a63530be6e374711a8554f31b17e4cb92c25fa5/128/color/sol.png',
+    XRP: 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@1a63530be6e374711a8554f31b17e4cb92c25fa5/128/color/xrp.png',
+    LTC: 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@1a63530be6e374711a8554f31b17e4cb92c25fa5/128/color/ltc.png',
+    DOGE: 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@1a63530be6e374711a8554f31b17e4cb92c25fa5/128/color/doge.png',
   };
   const cryptoIcons: Record<string, string> = {
     BTC: '₿', ETH: '⟠', USDT: '₮', BNB: '◆', SOL: '◎', XRP: '✕', LTC: 'Ł', DOGE: 'Ð',
