@@ -252,3 +252,10 @@
     transform: translateX(0);
   }
 }
+
+/* Raise Tawk.to widget above bottom navigation */
+#tawk-bubble-container,
+.tawk-min-container,
+iframe[title="chat widget"] {
+  bottom: 80px !important;
+}

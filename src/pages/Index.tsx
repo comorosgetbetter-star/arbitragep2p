@@ -16,10 +16,17 @@ import { Download, Zap, ShoppingBag, ArrowLeft } from 'lucide-react';
 
 type ActiveSection = 'home' | 'deposit' | 'express' | 'p2p';
 
+const VALID_TABS: BottomNavTab[] = ['home', 'markets', 'trade', 'explore', 'assets'];
+
+const getTabFromHash = (): BottomNavTab => {
+  const hash = window.location.hash.replace('#', '') as BottomNavTab;
+  return VALID_TABS.includes(hash) ? hash : 'home';
+};
+
 const Index = () => {
   const [isDark, setIsDark] = useState(true);
   const [activeSection, setActiveSection] = useState<ActiveSection>('home');
-  const [bottomTab, setBottomTab] = useState<BottomNavTab>('home');
+  const [bottomTab, setBottomTab] = useState<BottomNavTab>(getTabFromHash);
 
   useEffect(() => {
     if (isDark) {
@@ -33,10 +40,18 @@ const Index = () => {
 
   const handleBottomTab = (tab: BottomNavTab) => {
     setBottomTab(tab);
+    window.location.hash = tab === 'home' ? '' : tab;
     if (tab === 'home') {
       setActiveSection('home');
     }
   };
+
+  // Listen for browser back/forward
+  useEffect(() => {
+    const onHashChange = () => setBottomTab(getTabFromHash());
+    window.addEventListener('hashchange', onHashChange);
+    return () => window.removeEventListener('hashchange', onHashChange);
+  }, []);
 
   const btnClass = (section: ActiveSection) =>
     `h-12 rounded-xl text-sm font-semibold transition-all ${

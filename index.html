@@ -43,6 +43,10 @@
 
       Tawk_API.onLoad = function() {
         checkPage();
+        // Raise widget above bottom nav (80px)
+        var style = document.createElement('style');
+        style.textContent = 'iframe[title="chat widget"][src*="tawk.to"] { bottom: 80px !important; } .tawk-min-container { bottom: 80px !important; }';
+        document.head.appendChild(style);
         // Re-check on route changes (SPA)
         var pushState = history.pushState;
         history.pushState = function() {
