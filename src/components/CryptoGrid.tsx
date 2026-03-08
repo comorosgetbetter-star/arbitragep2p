@@ -1,5 +1,6 @@
 import { useCryptoPrices } from '@/hooks/useCryptoPrices';
 import { TrendingUp, TrendingDown } from 'lucide-react';
+import { CryptoGridSkeleton } from '@/components/skeletons/CryptoGridSkeleton';
 
 export const CryptoGrid = () => {
   const { prices, isLoading } = useCryptoPrices();
