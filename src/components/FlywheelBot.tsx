@@ -51,7 +51,7 @@ const FLYWHEEL_PLANS = [
 ];
 
 // Full-page Deriv-style active bot view
-const ActiveBotView = ({ session, onCancelled }: { session: FlywheelSession; onCancelled: () => void }) => {
+const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSession; onCancelled: () => void; onBack: () => void }) => {
   const { toast } = useToast();
   const [cancelling, setCancelling] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
@@ -288,7 +288,7 @@ const ActiveBotView = ({ session, onCancelled }: { session: FlywheelSession; onC
       </div>
 
       {/* Bottom action bar */}
-      <div className="p-4 border-t border-border/30 bg-card/80 backdrop-blur-sm">
+      <div className="p-4 border-t border-border/30 bg-card/80 backdrop-blur-sm space-y-2">
         {!isCompleted && session.status === 'active' ? (
           <Button
             variant="outline"
@@ -300,13 +300,23 @@ const ActiveBotView = ({ session, onCancelled }: { session: FlywheelSession; onC
             {cancelling ? 'Stopping…' : 'Stop Bot & Collect Profits'}
           </Button>
         ) : (
-          <Button
-            className="w-full h-12 bg-success hover:bg-success/90 text-success-foreground font-semibold"
-            onClick={() => setShowCancelConfirm(true)}
-          >
-            <Trophy className="h-4 w-4 mr-1.5" />
-            Collect Profits
-          </Button>
+          <div className="space-y-2">
+            <Button
+              className="w-full h-12 bg-success hover:bg-success/90 text-success-foreground font-semibold"
+              onClick={() => setShowCancelConfirm(true)}
+            >
+              <Trophy className="h-4 w-4 mr-1.5" />
+              Collect Profits
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full h-10 font-medium"
+              onClick={onBack}
+            >
+              <ArrowLeft className="h-4 w-4 mr-1.5" />
+              Back to Packages
+            </Button>
+          </div>
         )}
       </div>
 
@@ -383,6 +393,8 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
   const [confirmPlan, setConfirmPlan] = useState<typeof FLYWHEEL_PLANS[0] | null>(null);
   const [viewingSession, setViewingSession] = useState<FlywheelSession | null>(null);
 
+  const [recentRuns, setRecentRuns] = useState<FlywheelSession[]>([]);
+
   const fetchSessions = useCallback(async () => {
     if (!user) return;
     const { data } = await supabase
@@ -393,6 +405,17 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
       .like('plan_name', 'Turbo%')
       .order('started_at', { ascending: false });
     if (data) setActiveSessions(data as FlywheelSession[]);
+
+    // Fetch recent completed runs
+    const { data: completed } = await supabase
+      .from('staking_sessions')
+      .select('id, plan_name, staked_amount, daily_return_pct, lock_days, started_at, ends_at, status')
+      .eq('user_id', user.id)
+      .eq('status', 'cancelled')
+      .like('plan_name', 'Turbo%')
+      .order('started_at', { ascending: false })
+      .limit(5);
+    if (completed) setRecentRuns(completed as FlywheelSession[]);
   }, [user]);
 
   useEffect(() => {
@@ -463,7 +486,7 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
 
   // If viewing a session, show full-page bot view
   if (viewingSession) {
-    return <ActiveBotView session={viewingSession} onCancelled={handleSessionDone} />;
+    return <ActiveBotView session={viewingSession} onCancelled={handleSessionDone} onBack={() => setViewingSession(null)} />;
   }
 
   return (
@@ -639,6 +662,37 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
           );
         })}
       </div>
+
+      {/* Recent Runs */}
+      {recentRuns.length > 0 && (
+        <div className="space-y-3">
+          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Recent Runs</h3>
+          {recentRuns.map((run) => {
+            const startMs = new Date(run.started_at).getTime();
+            const endMs = new Date(run.ends_at).getTime();
+            const durationDays = (endMs - startMs) / (1000 * 60 * 60 * 24);
+            const estProfit = run.staked_amount * (run.daily_return_pct / 100) * durationDays;
+            return (
+              <Card key={run.id} className="border-border/50">
+                <CardContent className="p-3 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-success/15 flex items-center justify-center">
+                      <CheckCircle2 className="h-4 w-4 text-success" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">{run.plan_name}</p>
+                      <p className="text-[10px] text-muted-foreground">
+                        ${fmt(run.staked_amount)} invested • {new Date(run.started_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-sm font-bold text-success">+${fmt(estProfit)}</span>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
 
       <p className="text-[10px] text-muted-foreground text-center px-4 pb-4">
         Bot trading involves risk. Returns are estimates based on market conditions. You can stop a bot at any time to collect accrued profits.
