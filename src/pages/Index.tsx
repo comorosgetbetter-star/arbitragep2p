@@ -1,21 +1,15 @@
 import { useState, useEffect } from 'react';
 import { Header } from '@/components/Header';
-import { HeroSection } from '@/components/HeroSection';
-import { LivePriceTicker } from '@/components/LivePriceTicker';
-import { TrustIndicators } from '@/components/TrustIndicators';
+import { PortfolioCard } from '@/components/PortfolioCard';
+import { ActionButtons } from '@/components/ActionButtons';
+import { CryptoGrid } from '@/components/CryptoGrid';
 import { ExpressP2P } from '@/components/ExpressP2P';
 import { P2POrders } from '@/components/P2POrders';
-import { PlatformDescription } from '@/components/PlatformDescription';
-
-import { Testimonials } from '@/components/Testimonials';
-import { FAQ } from '@/components/FAQ';
 import { Footer } from '@/components/Footer';
-import { Button } from '@/components/ui/button';
-import { Zap, ShoppingBag } from 'lucide-react';
 
 const Index = () => {
   const [isDark, setIsDark] = useState(true);
-  const [activeTab, setActiveTab] = useState<'express' | 'orders'>('orders');
+  const [activeTab, setActiveTab] = useState<'favorites' | 'p2p-orders' | 'p2p-express'>('favorites');
 
   useEffect(() => {
     if (isDark) {
@@ -31,50 +25,53 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground relative">
-      {/* Serverix-inspired background effects */}
-      <div className="fixed inset-0 pointer-events-none z-0">
-        <div className="absolute inset-0 opacity-[0.03]" style={{
-          backgroundImage: 'linear-gradient(hsl(280 80% 60% / 0.3) 1px, transparent 1px), linear-gradient(90deg, hsl(280 80% 60% / 0.3) 1px, transparent 1px)',
-          backgroundSize: '60px 60px'
-        }} />
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-[radial-gradient(ellipse_at_center,hsl(280_80%_60%_/_0.08)_0%,transparent_70%)]" />
-        <div className="absolute bottom-0 left-0 w-[600px] h-[400px] bg-[radial-gradient(ellipse_at_center,hsl(320_80%_55%_/_0.05)_0%,transparent_70%)]" />
-      </div>
       <Header isDark={isDark} toggleTheme={toggleTheme} />
       
-      <main className="relative z-10">
-        <HeroSection />
-        <LivePriceTicker />
-        <TrustIndicators />
-        
-        {/* P2P Section with Tab Toggle */}
-        <section id="rates" className="py-16">
-          <div className="container mx-auto px-4">
-            <div className="flex items-center justify-center gap-3 mb-10">
-              <Button
-                variant={activeTab === 'orders' ? 'default' : 'outline'}
-                onClick={() => setActiveTab('orders')}
-                className="gap-2 w-44 justify-center ring-1 ring-primary/40 shadow-[0_0_18px_hsl(var(--primary)/0.25)]"
-              >
-                <ShoppingBag className="h-4 w-4" />
-                P2P Orders
-              </Button>
-              <Button
-                variant={activeTab === 'express' ? 'default' : 'outline'}
-                onClick={() => setActiveTab('express')}
-                className="gap-2 w-44 justify-center"
-              >
-                <Zap className="h-4 w-4" />
-                P2P Express Rates
-              </Button>
-            </div>
+      <main className="relative z-10 pt-20 pb-8">
+        <div className="container mx-auto px-4 max-w-lg">
+          {/* Portfolio Card */}
+          <PortfolioCard />
 
-            {activeTab === 'express' ? <ExpressP2P /> : <P2POrders />}
+          {/* Action Buttons */}
+          <ActionButtons />
+
+          {/* Category Tabs */}
+          <div className="flex items-center gap-1 mt-8 mb-4 overflow-x-auto scrollbar-hide">
+            {[
+              { key: 'favorites', label: 'Favorites' },
+              { key: 'p2p-orders', label: 'P2P Orders' },
+              { key: 'p2p-express', label: 'Express' },
+            ].map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key as typeof activeTab)}
+                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                  activeTab === tab.key
+                    ? 'bg-foreground text-background'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
           </div>
-        </section>
-        <Testimonials />
-        <PlatformDescription />
-        <FAQ />
+
+          {/* Content based on active tab */}
+          {activeTab === 'favorites' && (
+            <>
+              <h3 className="text-base font-semibold mb-3">Select crypto</h3>
+              <CryptoGrid />
+            </>
+          )}
+
+          {activeTab === 'p2p-orders' && (
+            <P2POrders />
+          )}
+
+          {activeTab === 'p2p-express' && (
+            <ExpressP2P />
+          )}
+        </div>
       </main>
       
       <Footer />
