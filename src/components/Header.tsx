@@ -3,7 +3,6 @@ import { Menu, X, Sun, Moon, Home, BarChart3, ArrowLeftRight, Compass, Wallet as
 import { Button } from '@/components/ui/button';
 import { AccountDropdown } from './AccountDropdown';
 import { useAuth } from '@/contexts/AuthContext';
-import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 
 type NavTab = 'home' | 'markets' | 'trade' | 'explore' | 'assets';
