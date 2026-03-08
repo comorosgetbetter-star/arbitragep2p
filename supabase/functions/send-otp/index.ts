@@ -57,7 +57,7 @@ function getEmailHTML(code: string, fullName: string): string {
               <h1 style="margin:0 0 8px;font-size:22px;font-weight:700;color:#ffffff;">Verify Your Email Address</h1>
               <p style="margin:0 0 28px;font-size:15px;color:#9ca3af;line-height:1.6;">
                 Hello ${fullName},<br/>
-                Thank you for registering with ArbitrageP2P. Please use the verification code below to complete your account setup.
+                Thank you for registering with PeerBitX. Please use the verification code below to complete your account setup.
               </p>
               <div style="background:linear-gradient(135deg,#1e3a5f,#0f2744);border:2px solid #3b82f6;border-radius:12px;padding:24px;text-align:center;margin:0 0 28px;">
                 <p style="margin:0 0 8px;font-size:12px;color:#93c5fd;text-transform:uppercase;letter-spacing:2px;font-weight:600;">Your Verification Code</p>
