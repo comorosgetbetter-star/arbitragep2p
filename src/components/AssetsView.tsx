@@ -455,11 +455,41 @@ export const AssetsView = () => {
 
     const activities = historyFilter === 'all' ? allActivities : allActivities.filter(a => a.type === (historyFilter === 'deposits' ? 'deposit' : 'withdrawal'));
 
+    const exportCSV = () => {
+      const rows = [['Type', 'Amount (USDT)', 'Status', 'Network', 'Reason', 'Date']];
+      activities.forEach(a => {
+        rows.push([
+          a.type === 'deposit' ? 'Deposit' : 'Withdrawal',
+          `${a.type === 'deposit' ? '+' : '-'}${a.amount.toFixed(2)}`,
+          a.status,
+          a.type === 'withdrawal' ? (a.network || '').toUpperCase() : 'USDT',
+          a.reason || '',
+          new Date(a.created_at).toLocaleString(),
+        ]);
+      });
+      const csv = rows.map(r => r.map(c => `"${c}"`).join(',')).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `peerbitx-transactions-${new Date().toISOString().split('T')[0]}.csv`;
+      link.click();
+      URL.revokeObjectURL(url);
+      toast.success('Transaction history exported');
+    };
+
     return (
       <div className="space-y-4">
-        <button onClick={() => setSubView('main')} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
-          <ArrowLeft className="h-4 w-4" /> Back
-        </button>
+        <div className="flex items-center justify-between">
+          <button onClick={() => setSubView('main')} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
+            <ArrowLeft className="h-4 w-4" /> Back
+          </button>
+          {activities.length > 0 && (
+            <button onClick={exportCSV} className="flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 font-medium transition-colors">
+              <FileDown className="h-3.5 w-3.5" /> Export CSV
+            </button>
+          )}
+        </div>
         <h2 className="text-lg font-display font-bold">Transaction History</h2>
         <div className="flex gap-2">
           {(['all', 'deposits', 'withdrawals'] as const).map((f) => (
