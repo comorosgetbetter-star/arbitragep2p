@@ -51,7 +51,7 @@ const Login = () => {
         const { data: isBanned } = await supabase
           .rpc('is_email_banned', { _email: validatedData.email.toLowerCase().trim() });
 
-        if (banned) {
+        if (isBanned) {
           toast({
             title: "Account Suspended",
             description: "This account has been suspended. Contact support for assistance.",
