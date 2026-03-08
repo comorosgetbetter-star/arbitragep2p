@@ -20,42 +20,38 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     let isMounted = true;
 
-    const applySession = (sessionUser: User | null) => {
-      if (!isMounted) return;
-      setUser(sessionUser);
-    };
-
-    const finishInit = () => {
-      if (!isMounted || initialSessionHandled.current) return;
-      initialSessionHandled.current = true;
-      setLoading(false);
-    };
-
-    // Listen for auth changes first
+    // Set up auth state listener FIRST — this is the single source of truth.
+    // The INITIAL_SESSION event fires synchronously with the persisted session.
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!isMounted) return;
       console.log('[Auth] event:', event, 'authenticated:', !!session?.user);
-      applySession(session?.user ?? null);
+      setUser(session?.user ?? null);
 
-      if (event === 'INITIAL_SESSION') {
-        finishInit();
+      if (!initialSessionHandled.current) {
+        initialSessionHandled.current = true;
+        setLoading(false);
       }
     });
 
-    // Resolve auth readiness immediately from persisted session
-    void supabase.auth.getSession()
-      .then(({ data: { session } }) => {
-        applySession(session?.user ?? null);
-        finishInit();
-      })
-      .catch((error) => {
-        console.error('[Auth] getSession error:', error);
-        finishInit();
-      });
-
-    // Safety net: never keep UI blocked in loading state
-    const fallbackTimer = setTimeout(() => {
-      finishInit();
-    }, 1200);
+    // Fallback: if onAuthStateChange doesn't fire within 1.5s (e.g. cold start edge case),
+    // manually check the session so the app never stays stuck in loading.
+    const fallbackTimer = setTimeout(async () => {
+      if (!initialSessionHandled.current && isMounted) {
+        console.log('[Auth] Fallback: checking session manually');
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (isMounted) {
+            setUser(session?.user ?? null);
+          }
+        } catch (e) {
+          console.error('[Auth] getSession error:', e);
+        }
+        if (isMounted && !initialSessionHandled.current) {
+          initialSessionHandled.current = true;
+          setLoading(false);
+        }
+      }
+    }, 1500);
 
     return () => {
       isMounted = false;
