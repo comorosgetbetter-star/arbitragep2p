@@ -404,7 +404,6 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
   const { toast } = useToast();
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [selectedDuration, setSelectedDuration] = useState(DURATION_OPTIONS[0]);
-  const [amount, setAmount] = useState('');
   const [isStarting, setIsStarting] = useState(false);
   const [activeSessions, setActiveSessions] = useState<FlywheelSession[]>([]);
   const [confirmPlan, setConfirmPlan] = useState<typeof FLYWHEEL_PLANS[0] | null>(null);
