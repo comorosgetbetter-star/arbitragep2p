@@ -59,46 +59,62 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
   // Request deduplication: track in-flight promises
   const inflightRef = useRef<Record<string, Promise<void>>>({});
 
+  // Deduplicating wrapper: if a fetch for the same key is already in flight, reuse it
+  const deduped = useCallback((key: string, fn: () => Promise<void>) => {
+    if (inflightRef.current[key]) return inflightRef.current[key];
+    const promise = fn().finally(() => { delete inflightRef.current[key]; });
+    inflightRef.current[key] = promise;
+    return promise;
+  }, []);
+
   const fetchBalance = useCallback(async () => {
     if (!user) return;
-    const { data } = await supabase
-      .from('user_balances')
-      .select('usdt_balance')
-      .eq('user_id', user.id)
-      .single();
-    if (data) setBalance(Number(data.usdt_balance));
-  }, [user]);
+    return deduped('balance', async () => {
+      const { data } = await supabase
+        .from('user_balances')
+        .select('usdt_balance')
+        .eq('user_id', user.id)
+        .single();
+      if (data) setBalance(Number(data.usdt_balance));
+    });
+  }, [user, deduped]);
 
   const fetchCryptoBalances = useCallback(async () => {
     if (!user) return;
-    const { data } = await supabase
-      .from('user_crypto_balances')
-      .select('symbol, amount')
-      .eq('user_id', user.id);
-    if (data) setCryptoBalances(data.map(d => ({ symbol: d.symbol, amount: Number(d.amount) })));
-  }, [user]);
+    return deduped('crypto', async () => {
+      const { data } = await supabase
+        .from('user_crypto_balances')
+        .select('symbol, amount')
+        .eq('user_id', user.id);
+      if (data) setCryptoBalances(data.map(d => ({ symbol: d.symbol, amount: Number(d.amount) })));
+    });
+  }, [user, deduped]);
 
   const fetchWithdrawals = useCallback(async () => {
     if (!user) return;
-    const { data } = await supabase
-      .from('withdrawals')
-      .select('id, amount, status, created_at, network')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-      .limit(10);
-    if (data) setWithdrawals(data);
-  }, [user]);
+    return deduped('withdrawals', async () => {
+      const { data } = await supabase
+        .from('withdrawals')
+        .select('id, amount, status, created_at, network')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(10);
+      if (data) setWithdrawals(data);
+    });
+  }, [user, deduped]);
 
   const fetchDeposits = useCallback(async () => {
     if (!user) return;
-    const { data } = await supabase
-      .from('deposits')
-      .select('id, amount, reason, created_at')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-      .limit(10);
-    if (data) setDeposits(data);
-  }, [user]);
+    return deduped('deposits', async () => {
+      const { data } = await supabase
+        .from('deposits')
+        .select('id, amount, reason, created_at')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(10);
+      if (data) setDeposits(data);
+    });
+  }, [user, deduped]);
 
   useEffect(() => {
     if (!user) {
