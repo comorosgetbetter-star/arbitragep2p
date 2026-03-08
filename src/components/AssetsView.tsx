@@ -298,11 +298,13 @@ export const AssetsView = () => {
   // ── SUB-VIEW: Convert ──
   if (subView === 'convert') {
     // Available cryptos the user has balance in (including USDT)
+    // Use a threshold > 0 to avoid floating point dust
     const availableCryptos = [
-      { symbol: 'USDT', amount: balance },
-      ...cryptoBalances.filter(cb => cb.amount > 0),
+      ...(balance > 0.001 ? [{ symbol: 'USDT', amount: balance }] : []),
+      ...cryptoBalances.filter(cb => cb.amount > 0.000001),
     ];
 
+    // All symbols: user-owned ones + all standard ones for the "To" picker
     const allSymbols = ['USDT', 'BTC', 'ETH', 'BNB', 'SOL', 'XRP'];
     const cryptoNames: Record<string, string> = { USDT: 'Tether', BTC: 'Bitcoin', ETH: 'Ethereum', BNB: 'BNB', SOL: 'Solana', XRP: 'XRP' };
     const fromBalance = convertFrom === 'USDT' ? balance : (cryptoBalances.find(c => c.symbol === convertFrom)?.amount || 0);
