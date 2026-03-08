@@ -662,7 +662,7 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
                 ) : (
                   <Button
                     className="w-full h-11 font-semibold text-sm bg-gold/15 hover:bg-gold/25 text-gold border border-gold/30"
-                    onClick={() => { setSelectedPlan(plan.id); setAmount(String(plan.minAmount)); }}
+                    onClick={() => { setSelectedPlan(plan.id); }}
                   >
                     Start Trading
                   </Button>
