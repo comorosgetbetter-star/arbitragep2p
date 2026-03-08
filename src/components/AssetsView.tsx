@@ -48,7 +48,7 @@ const getRotatedDepositAddress = async () => {
 
 export const AssetsView = () => {
   const { user, loading } = useAuth();
-  const { balance, cryptoBalances, deposits, withdrawals } = useUserData();
+  const { balance, cryptoBalances, deposits, withdrawals, refetchBalance, refetchCryptoBalances } = useUserData();
   const { prices } = useCryptoPrices();
   const navigate = useNavigate();
   const [hidden, setHidden] = useState(false);
@@ -308,15 +308,12 @@ export const AssetsView = () => {
 
         // Brief loading animation then success
         await new Promise(r => setTimeout(r, 1500));
+        
+        // Refetch balances so UI reflects changes
+        await Promise.all([refetchBalance(), refetchCryptoBalances()]);
+        
         setConvertSuccess(true);
         toast.success(`Converted ${convertAmountNum} ${convertFrom} → ${convertedValue.toFixed(convertTo === 'USDT' ? 2 : 6)} ${convertTo}`);
-        setTimeout(() => {
-          setConvertSuccess(false);
-          setConvertFrom('');
-          setConvertTo('');
-          setConvertAmount('');
-          setSubView('main');
-        }, 2000);
       } catch (error) {
         console.error('Convert error:', error);
         toast.error('Conversion failed. Please try again.');
@@ -337,6 +334,19 @@ export const AssetsView = () => {
               <p className="text-sm text-muted-foreground">
                 {convertAmountNum} {convertFrom} → {convertedValue.toFixed(convertTo === 'USDT' ? 2 : 6)} {convertTo}
               </p>
+              <Button
+                variant="outline"
+                className="mt-4"
+                onClick={() => {
+                  setConvertSuccess(false);
+                  setConvertFrom('');
+                  setConvertTo('');
+                  setConvertAmount('');
+                  setSubView('main');
+                }}
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" /> Go Back to Assets
+              </Button>
             </>
           ) : (
             <>
