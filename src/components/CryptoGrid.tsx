@@ -6,17 +6,7 @@ export const CryptoGrid = () => {
   const { prices, isLoading } = useCryptoPrices();
 
   if (isLoading) {
-    return (
-      <div className="grid grid-cols-2 gap-3">
-        {[...Array(6)].map((_, i) => (
-          <div key={i} className="rounded-xl bg-card p-4 animate-pulse">
-            <div className="h-5 bg-muted rounded w-20 mb-2" />
-            <div className="h-4 bg-muted rounded w-16 mb-1" />
-            <div className="h-3 bg-muted rounded w-12" />
-          </div>
-        ))}
-      </div>
-    );
+    return <CryptoGridSkeleton />;
   }
 
   return (
