@@ -20,7 +20,7 @@ const TermsOfService = () => {
         <div className="prose prose-sm prose-invert max-w-none space-y-6 text-muted-foreground">
           <section className="space-y-3">
             <h2 className="text-lg font-semibold text-foreground">1. Acceptance of Terms</h2>
-            <p>By accessing or using the ArbitrageP2P platform ("Platform"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree with any part of these Terms, you must not use the Platform. These Terms constitute a legally binding agreement between you ("User," "you," or "your") and ArbitrageP2P ("we," "us," or "our").</p>
+            <p>By accessing or using the PeerBitX platform ("Platform"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree with any part of these Terms, you must not use the Platform. These Terms constitute a legally binding agreement between you ("User," "you," or "your") and PeerBitX ("we," "us," or "our").</p>
             <p>We reserve the right to update or modify these Terms at any time without prior notice. Your continued use of the Platform following any changes constitutes acceptance of those changes. It is your responsibility to review these Terms periodically.</p>
           </section>
 
@@ -45,7 +45,7 @@ const TermsOfService = () => {
 
           <section className="space-y-3">
             <h2 className="text-lg font-semibold text-foreground">4. Platform Services</h2>
-            <p>ArbitrageP2P provides a peer-to-peer (P2P) cryptocurrency trading platform that enables users to buy and sell USDT (Tether) and other supported digital assets. The Platform facilitates transactions between buyers and sellers but does not act as a counterparty to any trade.</p>
+            <p>PeerBitX provides a peer-to-peer (P2P) cryptocurrency trading platform that enables users to buy and sell USDT (Tether) and other supported digital assets. The Platform facilitates transactions between buyers and sellers but does not act as a counterparty to any trade.</p>
             <p>Our services include but are not limited to:</p>
             <ul className="list-disc pl-6 space-y-1">
               <li>Matching buyers and sellers for P2P cryptocurrency transactions.</li>
@@ -85,7 +85,7 @@ const TermsOfService = () => {
               <li>Cybersecurity risks, including hacking and phishing, may result in loss of funds.</li>
               <li>Past performance is not indicative of future results.</li>
             </ul>
-            <p>ArbitrageP2P does not provide financial, tax, or legal advice. You should consult with qualified professionals before making any decisions related to cryptocurrency transactions.</p>
+            <p>PeerBitX does not provide financial, tax, or legal advice. You should consult with qualified professionals before making any decisions related to cryptocurrency transactions.</p>
           </section>
 
           <section className="space-y-3">
@@ -105,12 +105,12 @@ const TermsOfService = () => {
 
           <section className="space-y-3">
             <h2 className="text-lg font-semibold text-foreground">9. Intellectual Property</h2>
-            <p>All content, features, and functionality of the Platform, including but not limited to text, graphics, logos, icons, images, audio clips, digital downloads, data compilations, and software, are the exclusive property of ArbitrageP2P or its licensors and are protected by international copyright, trademark, patent, trade secret, and other intellectual property laws.</p>
+            <p>All content, features, and functionality of the Platform, including but not limited to text, graphics, logos, icons, images, audio clips, digital downloads, data compilations, and software, are the exclusive property of PeerBitX or its licensors and are protected by international copyright, trademark, patent, trade secret, and other intellectual property laws.</p>
           </section>
 
           <section className="space-y-3">
             <h2 className="text-lg font-semibold text-foreground">10. Limitation of Liability</h2>
-            <p>To the maximum extent permitted by applicable law, ArbitrageP2P and its directors, officers, employees, agents, and affiliates shall not be liable for any indirect, incidental, special, consequential, or punitive damages, including but not limited to loss of profits, data, use, goodwill, or other intangible losses, resulting from:</p>
+            <p>To the maximum extent permitted by applicable law, PeerBitX and its directors, officers, employees, agents, and affiliates shall not be liable for any indirect, incidental, special, consequential, or punitive damages, including but not limited to loss of profits, data, use, goodwill, or other intangible losses, resulting from:</p>
             <ul className="list-disc pl-6 space-y-1">
               <li>Your access to, use of, or inability to access or use the Platform.</li>
               <li>Any conduct or content of any third party on the Platform.</li>
@@ -122,7 +122,7 @@ const TermsOfService = () => {
           <section className="space-y-3">
             <h2 className="text-lg font-semibold text-foreground">11. Dispute Resolution</h2>
             <p>Any dispute arising out of or relating to these Terms or the Platform shall first be attempted to be resolved through good-faith negotiation. If the dispute cannot be resolved through negotiation, it shall be submitted to binding arbitration in accordance with the rules of the applicable arbitration body in our jurisdiction.</p>
-            <p>For trade-related disputes between users, ArbitrageP2P may provide mediation services at its sole discretion. The decision of ArbitrageP2P in such disputes shall be final and binding.</p>
+            <p>For trade-related disputes between users, PeerBitX may provide mediation services at its sole discretion. The decision of PeerBitX in such disputes shall be final and binding.</p>
           </section>
 
           <section className="space-y-3">
@@ -132,13 +132,13 @@ const TermsOfService = () => {
 
           <section className="space-y-3">
             <h2 className="text-lg font-semibold text-foreground">13. Governing Law</h2>
-            <p>These Terms shall be governed by and construed in accordance with the laws of the jurisdiction in which ArbitrageP2P operates, without regard to its conflict of law provisions. You agree to submit to the personal and exclusive jurisdiction of the courts located within that jurisdiction.</p>
+            <p>These Terms shall be governed by and construed in accordance with the laws of the jurisdiction in which PeerBitX operates, without regard to its conflict of law provisions. You agree to submit to the personal and exclusive jurisdiction of the courts located within that jurisdiction.</p>
           </section>
 
           <section className="space-y-3">
             <h2 className="text-lg font-semibold text-foreground">14. Contact Information</h2>
             <p>If you have any questions about these Terms of Service, please contact us at:</p>
-            <p className="text-foreground font-medium">support@arbitragep2p.com</p>
+            <p className="text-foreground font-medium">support@peerbitx.com</p>
           </section>
         </div>
       </main>

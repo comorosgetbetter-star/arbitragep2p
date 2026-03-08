@@ -67,7 +67,7 @@ const OTPVerification = ({ email, fullName, phone, country, password, onVerified
         });
       } else {
         toast({
-          title: 'Welcome to ArbitrageP2P!',
+          title: 'Welcome to PeerBitX!',
           description: 'Your account has been verified and you are now signed in.',
         });
       }

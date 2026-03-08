@@ -20,7 +20,7 @@ const PrivacyPolicy = () => {
         <div className="prose prose-sm prose-invert max-w-none space-y-6 text-muted-foreground">
           <section className="space-y-3">
             <h2 className="text-lg font-semibold text-foreground">1. Introduction</h2>
-            <p>ArbitrageP2P ("we," "us," or "our") is committed to protecting your privacy and personal data. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our peer-to-peer cryptocurrency trading platform ("Platform"). Please read this policy carefully to understand our views and practices regarding your personal data.</p>
+            <p>PeerBitX ("we," "us," or "our") is committed to protecting your privacy and personal data. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our peer-to-peer cryptocurrency trading platform ("Platform"). Please read this policy carefully to understand our views and practices regarding your personal data.</p>
           </section>
 
           <section className="space-y-3">
@@ -144,7 +144,7 @@ const PrivacyPolicy = () => {
           <section className="space-y-3">
             <h2 className="text-lg font-semibold text-foreground">12. Contact Us</h2>
             <p>If you have any questions, concerns, or requests regarding this Privacy Policy or our data practices, please contact us at:</p>
-            <p className="text-foreground font-medium">privacy@arbitragep2p.com</p>
+            <p className="text-foreground font-medium">privacy@peerbitx.com</p>
           </section>
         </div>
       </main>

@@ -31,7 +31,7 @@ function getEmailHTML(code: string, fullName: string): string {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Verify Your Email - ArbitrageP2P</title>
+  <title>Verify Your Email - PeerBitX</title>
 </head>
 <body style="margin:0;padding:0;background-color:#0a0e1a;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#0a0e1a;padding:40px 20px;">
@@ -43,10 +43,10 @@ function getEmailHTML(code: string, fullName: string): string {
               <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto;">
                 <tr>
                   <td style="vertical-align:middle;padding-right:10px;">
-                    <img src="${LOGO_URL}" alt="ArbitrageP2P" width="38" height="38" style="display:block;border-radius:8px;border:0;" />
+                    <img src="${LOGO_URL}" alt="PeerBitX" width="38" height="38" style="display:block;border-radius:8px;border:0;" />
                   </td>
                   <td style="vertical-align:middle;">
-                    <span style="font-size:22px;font-weight:700;color:#ffffff;letter-spacing:-0.3px;line-height:1;">ArbitrageP2P</span>
+                    <span style="font-size:22px;font-weight:700;color:#ffffff;letter-spacing:-0.3px;line-height:1;">PeerBitX</span>
                   </td>
                 </tr>
               </table>
@@ -57,7 +57,7 @@ function getEmailHTML(code: string, fullName: string): string {
               <h1 style="margin:0 0 8px;font-size:22px;font-weight:700;color:#ffffff;">Verify Your Email Address</h1>
               <p style="margin:0 0 28px;font-size:15px;color:#9ca3af;line-height:1.6;">
                 Hello ${fullName},<br/>
-                Thank you for registering with ArbitrageP2P. Please use the verification code below to complete your account setup.
+                Thank you for registering with PeerBitX. Please use the verification code below to complete your account setup.
               </p>
               <div style="background:linear-gradient(135deg,#1e3a5f,#0f2744);border:2px solid #3b82f6;border-radius:12px;padding:24px;text-align:center;margin:0 0 28px;">
                 <p style="margin:0 0 8px;font-size:12px;color:#93c5fd;text-transform:uppercase;letter-spacing:2px;font-weight:600;">Your Verification Code</p>
@@ -73,14 +73,14 @@ function getEmailHTML(code: string, fullName: string): string {
                 </p>
               </div>
               <p style="margin:0;font-size:13px;color:#6b7280;line-height:1.6;">
-                If you did not create an account with ArbitrageP2P, you can safely ignore this email.
+                If you did not create an account with PeerBitX, you can safely ignore this email.
               </p>
             </td>
           </tr>
           <tr>
             <td style="padding:24px 40px;border-top:1px solid #1f2937;text-align:center;">
               <p style="margin:0 0 8px;font-size:12px;color:#6b7280;">
-                © ${new Date().getFullYear()} ArbitrageP2P. All rights reserved.
+                © ${new Date().getFullYear()} PeerBitX. All rights reserved.
               </p>
               <p style="margin:0;font-size:11px;color:#4b5563;">
                 This is an automated message. Please do not reply to this email.
@@ -162,7 +162,7 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         from: 'PeerBitX <noreply@contact.peerbitx.com>',
         to: [email.toLowerCase().trim()],
-        subject: `${code} is your ArbitrageP2P verification code`,
+        subject: `${code} is your PeerBitX verification code`,
         html: getEmailHTML(code, safeName),
       }),
     })

@@ -28,11 +28,7 @@ export const Header = ({ isDark, toggleTheme }: HeaderProps) => {
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-            <img src="/logo.png" alt="ArbitrageP2P" className="w-10 h-10 rounded-xl" />
-            <span className="font-display font-bold text-base sm:text-xl">
-              <span className="text-foreground">Arbitrage</span>
-              <span className="text-primary">P2P</span>
-            </span>
+            <img src="/logo.png" alt="PeerBitX" className="w-10 h-10 rounded-xl" />
           </div>
 
           {/* Desktop Nav */}
