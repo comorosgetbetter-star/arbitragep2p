@@ -542,6 +542,15 @@ export type Database = {
         Returns: boolean
       }
       cancel_staking: { Args: { _session_id: string }; Returns: boolean }
+      convert_crypto: {
+        Args: {
+          _from_amount: number
+          _from_symbol: string
+          _to_amount: number
+          _to_symbol: string
+        }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
