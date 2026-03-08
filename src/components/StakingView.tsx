@@ -240,7 +240,17 @@ export const StakingView = () => {
                       <p className="text-xs text-muted-foreground">{plan.lockDays}-day lock</p>
                     </div>
                   </div>
-                  <Badge className="bg-primary/15 text-primary border-0 text-[10px]">{plan.badge}</Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge className="bg-primary/15 text-primary border-0 text-[10px]">{plan.badge}</Badge>
+                    <Button
+                      size="sm"
+                      variant={isSelected ? 'default' : 'outline'}
+                      className="h-7 text-xs px-3"
+                      onClick={(e) => { e.stopPropagation(); setSelectedPlan(isSelected ? null : plan.id); setStakeAmount(String(plan.minAmount)); }}
+                    >
+                      {isSelected ? 'Selected' : 'Select'}
+                    </Button>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-3 gap-2 mb-3 text-center">
