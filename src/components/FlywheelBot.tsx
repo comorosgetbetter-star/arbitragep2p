@@ -646,7 +646,7 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
                       <Button
                         variant="outline"
                         className="flex-1 h-11 font-semibold text-sm border-border/50"
-                        onClick={() => { setSelectedPlan(null); setAmount(''); }}
+                        onClick={() => { setSelectedPlan(null); }}
                       >
                         Cancel
                       </Button>
