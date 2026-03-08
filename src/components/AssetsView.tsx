@@ -395,14 +395,19 @@ export const AssetsView = () => {
             <span>Value/Spot PnL</span>
           </div>
           <div className="space-y-1">
-            {prices.map((crypto) => {
+            {[...prices].sort((a, b) => b.price - a.price).map((crypto) => {
+              const logo = cryptoLogos[crypto.symbol];
               const icon = cryptoIcons[crypto.symbol] || '•';
               const apr = aprRates[crypto.symbol];
               const colorClass = iconColors[crypto.symbol] || 'bg-muted text-muted-foreground';
               return (
                 <div key={crypto.symbol} className="flex items-center justify-between py-3 px-1">
                   <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-full ${colorClass} flex items-center justify-center text-lg font-bold`}>{icon}</div>
+                    {logo ? (
+                      <img src={logo} alt={crypto.symbol} className="w-10 h-10 rounded-full" />
+                    ) : (
+                      <div className={`w-10 h-10 rounded-full ${colorClass} flex items-center justify-center text-lg font-bold`}>{icon}</div>
+                    )}
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-semibold text-foreground">{crypto.symbol}</span>
