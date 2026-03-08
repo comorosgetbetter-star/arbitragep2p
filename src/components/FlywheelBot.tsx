@@ -44,14 +44,14 @@ const DURATION_OPTIONS = [
 ];
 
 const FLYWHEEL_PLANS = [
-  { id: 'turbo-sprint', name: 'Turbo Sprint', dailyReturnPct: 120, minAmount: 100, badge: 'Fast' },
-  { id: 'turbo-rush', name: 'Turbo Rush', dailyReturnPct: 80, minAmount: 250, badge: 'Popular' },
-  { id: 'turbo-wave', name: 'Turbo Wave', dailyReturnPct: 60, minAmount: 500, badge: 'Steady' },
-  { id: 'turbo-titan', name: 'Turbo Titan', dailyReturnPct: 40, minAmount: 1000, badge: 'Safe' },
+  { id: 'turbo-sprint', name: 'Turbo Sprint', dailyReturnPct: 120, minAmount: 100, badge: 'Fast', profitMultiplier: 1 },
+  { id: 'turbo-rush', name: 'Turbo Rush', dailyReturnPct: 80, minAmount: 250, badge: 'Popular', profitMultiplier: 1.5 },
+  { id: 'turbo-wave', name: 'Turbo Wave', dailyReturnPct: 60, minAmount: 500, badge: 'Steady', profitMultiplier: 2.2 },
+  { id: 'turbo-titan', name: 'Turbo Titan', dailyReturnPct: 40, minAmount: 1000, badge: 'Safe', profitMultiplier: 3 },
 ];
 
-// Deriv-style active session card with round-by-round win/loss
-const ActiveFlywheelCard = ({ session, onCancelled }: { session: FlywheelSession; onCancelled: () => void }) => {
+// Full-page Deriv-style active bot view
+const ActiveBotView = ({ session, onCancelled }: { session: FlywheelSession; onCancelled: () => void }) => {
   const { toast } = useToast();
   const [cancelling, setCancelling] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
@@ -59,10 +59,10 @@ const ActiveFlywheelCard = ({ session, onCancelled }: { session: FlywheelSession
   const [trades, setTrades] = useState<TradeRound[]>([]);
   const [isTrading, setIsTrading] = useState(false);
   const [tradingCountdown, setTradingCountdown] = useState(0);
+  const [lastResult, setLastResult] = useState<TradeRound | null>(null);
   const roundIdRef = useRef(0);
   const tradesEndRef = useRef<HTMLDivElement>(null);
 
-  // Tick for countdown and progress
   useEffect(() => {
     const interval = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(interval);
@@ -75,83 +75,62 @@ const ActiveFlywheelCard = ({ session, onCancelled }: { session: FlywheelSession
   const progressPct = totalDurationMs > 0 ? (elapsedMs / totalDurationMs) * 100 : 0;
   const isCompleted = now >= endsAt;
 
-  // Time remaining
   const remainingMs = Math.max(0, endsAt - now);
-  const remainingHours = Math.floor(remainingMs / (1000 * 60 * 60));
-  const remainingMinutes = Math.floor((remainingMs % (1000 * 60 * 60)) / (1000 * 60));
+  const remainingMinutes = Math.floor(remainingMs / (1000 * 60));
   const remainingSeconds = Math.floor((remainingMs % (1000 * 60)) / 1000);
 
-  // Calculate total from trades
   const totalWinnings = trades.reduce((sum, t) => sum + (t.isWin ? t.amount : -t.amount), 0);
 
-  // Generate trade rounds at intervals (every 3-6 seconds)
+  // Determine profit multiplier from plan name
+  const planConfig = FLYWHEEL_PLANS.find(p => p.name === session.plan_name);
+  const profitMultiplier = planConfig?.profitMultiplier ?? 1;
+
   useEffect(() => {
     if (isCompleted || session.status !== 'active') return;
 
     const runTradeRound = () => {
-      // Start "trading" animation
       setIsTrading(true);
-      const tradeDuration = 2000 + Math.random() * 2000; // 2-4 seconds of "trading"
+      setLastResult(null);
+      const tradeDuration = 2000 + Math.random() * 2000;
       setTradingCountdown(Math.ceil(tradeDuration / 1000));
 
       const countdownInterval = setInterval(() => {
         setTradingCountdown(prev => {
-          if (prev <= 1) {
-            clearInterval(countdownInterval);
-            return 0;
-          }
+          if (prev <= 1) { clearInterval(countdownInterval); return 0; }
           return prev - 1;
         });
       }, 1000);
 
       setTimeout(() => {
         setIsTrading(false);
-        
-        // 70% chance of win, 30% chance of loss
         const isWin = Math.random() < 0.7;
-        
-        // Win amounts are bigger than loss amounts
-        const baseAmount = session.staked_amount * 0.005; // 0.5% of staked as base
+        const baseAmount = session.staked_amount * 0.005 * profitMultiplier;
         let amount: number;
         if (isWin) {
-          amount = baseAmount * (0.8 + Math.random() * 2.5); // Win: 0.8x - 3.3x base
+          amount = baseAmount * (0.8 + Math.random() * 2.5);
         } else {
-          amount = baseAmount * (0.3 + Math.random() * 0.8); // Loss: 0.3x - 1.1x base (smaller)
+          amount = baseAmount * (0.3 + Math.random() * 0.8);
         }
         amount = Math.round(amount * 100) / 100;
 
         roundIdRef.current += 1;
-        const newTrade: TradeRound = {
-          id: roundIdRef.current,
-          isWin,
-          amount,
-          timestamp: Date.now(),
-        };
-        
+        const newTrade: TradeRound = { id: roundIdRef.current, isWin, amount, timestamp: Date.now() };
         setTrades(prev => [...prev, newTrade]);
+        setLastResult(newTrade);
+
+        // Clear result flash after 2s
+        setTimeout(() => setLastResult(null), 2500);
       }, tradeDuration);
     };
 
-    // Initial trade after 1 second
     const initialTimeout = setTimeout(runTradeRound, 1000);
-
-    // Then repeat every 4-7 seconds
     const interval = setInterval(runTradeRound, 4000 + Math.random() * 3000);
+    return () => { clearTimeout(initialTimeout); clearInterval(interval); };
+  }, [isCompleted, session.status, session.staked_amount, profitMultiplier]);
 
-    return () => {
-      clearTimeout(initialTimeout);
-      clearInterval(interval);
-    };
-  }, [isCompleted, session.status, session.staked_amount]);
-
-  // Auto scroll to latest trade
   useEffect(() => {
     tradesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [trades.length]);
-
-  const handleCancelRequest = () => {
-    setShowCancelConfirm(true);
-  };
 
   const handleConfirmCancel = useCallback(async () => {
     setCancelling(true);
@@ -169,140 +148,167 @@ const ActiveFlywheelCard = ({ session, onCancelled }: { session: FlywheelSession
   }, [session.id, onCancelled, toast, totalWinnings]);
 
   return (
-    <>
-      <Card className="border-primary/30 bg-gradient-to-br from-primary/5 to-card overflow-hidden">
-        <CardContent className="p-4 space-y-3">
-          {/* Header */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
-                <ArrowDownUp className="h-4 w-4 text-primary" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-foreground">{session.plan_name}</p>
-                <p className="text-[10px] text-muted-foreground">Flywheel • {session.daily_return_pct}% daily</p>
-              </div>
-            </div>
-            <Badge className={isCompleted ? 'bg-success/15 text-success border-0' : 'bg-primary/15 text-primary border-0'}>
-              {isCompleted ? 'Done' : 'Running'}
-            </Badge>
+    <div className="fixed inset-0 z-50 bg-background flex flex-col animate-fade-in">
+      {/* Top bar */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border/30 bg-card/80 backdrop-blur-sm">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-lg bg-primary/20 flex items-center justify-center">
+            <ArrowDownUp className="h-3.5 w-3.5 text-primary" />
           </div>
-
-          {/* Trading animation indicator */}
-          {isTrading && !isCompleted && (
-            <div className="bg-primary/10 border border-primary/20 rounded-xl p-3 flex items-center gap-3 animate-pulse">
-              <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
-                <Zap className="h-4 w-4 text-primary animate-bounce" />
-              </div>
-              <div className="flex-1">
-                <p className="text-xs font-semibold text-primary">Bot is trading...</p>
-                <p className="text-[10px] text-muted-foreground">Analyzing market • {tradingCountdown}s</p>
-              </div>
-              <div className="flex gap-0.5">
-                <div className="w-1.5 h-4 bg-primary/40 rounded-full animate-[pulse_0.6s_ease-in-out_infinite]" />
-                <div className="w-1.5 h-6 bg-primary/60 rounded-full animate-[pulse_0.6s_ease-in-out_infinite_0.1s]" />
-                <div className="w-1.5 h-3 bg-primary/30 rounded-full animate-[pulse_0.6s_ease-in-out_infinite_0.2s]" />
-                <div className="w-1.5 h-5 bg-primary/50 rounded-full animate-[pulse_0.6s_ease-in-out_infinite_0.3s]" />
-              </div>
-            </div>
-          )}
-
-          {/* Trade history feed */}
-          <div className="space-y-1">
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Trade History</p>
-            <ScrollArea className="h-[140px] rounded-lg border border-border/30 bg-card/80">
-              <div className="p-2 space-y-1.5">
-                {trades.length === 0 && !isTrading && (
-                  <p className="text-xs text-muted-foreground text-center py-6">Waiting for first trade...</p>
-                )}
-                {trades.map((trade, idx) => (
-                  <div
-                    key={trade.id}
-                    className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs animate-fade-in ${
-                      trade.isWin ? 'bg-success/10' : 'bg-destructive/10'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      {trade.isWin ? (
-                        <CheckCircle2 className="h-3.5 w-3.5 text-success" />
-                      ) : (
-                        <XCircle className="h-3.5 w-3.5 text-destructive" />
-                      )}
-                      <span className="text-muted-foreground">Round #{idx + 1}</span>
-                    </div>
-                    <span className={`font-bold tabular-nums ${trade.isWin ? 'text-success' : 'text-destructive'}`}>
-                      {trade.isWin ? '+' : '-'}${fmt(trade.amount)}
-                    </span>
-                  </div>
-                ))}
-                <div ref={tradesEndRef} />
-              </div>
-            </ScrollArea>
+          <div>
+            <p className="text-sm font-semibold text-foreground">{session.plan_name}</p>
+            <p className="text-[10px] text-muted-foreground">{session.daily_return_pct}% daily • ${fmt(session.staked_amount)} invested</p>
           </div>
+        </div>
+        <Badge className={isCompleted ? 'bg-success/15 text-success border-0' : 'bg-primary/15 text-primary border-0 animate-pulse'}>
+          {isCompleted ? 'Complete' : 'Live'}
+        </Badge>
+      </div>
 
-          {/* Total winnings */}
-          <div className="bg-card/80 border border-border/30 rounded-xl p-3 space-y-1">
+      {/* Main content - scrollable */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {/* Result flash */}
+        {lastResult && (
+          <div className={`rounded-xl p-4 text-center animate-scale-in ${
+            lastResult.isWin ? 'bg-success/15 border border-success/30' : 'bg-destructive/15 border border-destructive/30'
+          }`}>
+            <div className="flex items-center justify-center gap-2 mb-1">
+              {lastResult.isWin ? (
+                <CheckCircle2 className="h-6 w-6 text-success" />
+              ) : (
+                <XCircle className="h-6 w-6 text-destructive" />
+              )}
+              <span className={`text-lg font-bold ${lastResult.isWin ? 'text-success' : 'text-destructive'}`}>
+                {lastResult.isWin ? 'WIN' : 'LOSS'}
+              </span>
+            </div>
+            <p className={`text-2xl font-bold font-display tabular-nums ${lastResult.isWin ? 'text-success' : 'text-destructive'}`}>
+              {lastResult.isWin ? '+' : '-'}${fmt(lastResult.amount)}
+            </p>
+          </div>
+        )}
+
+        {/* Trading indicator */}
+        {isTrading && !isCompleted && !lastResult && (
+          <div className="bg-primary/10 border border-primary/20 rounded-xl p-4 flex items-center gap-3 animate-pulse">
+            <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+              <Zap className="h-5 w-5 text-primary animate-bounce" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-primary">Bot is trading...</p>
+              <p className="text-xs text-muted-foreground">Analyzing market patterns • {tradingCountdown}s</p>
+            </div>
+            <div className="flex gap-0.5">
+              <div className="w-1.5 h-4 bg-primary/40 rounded-full animate-[pulse_0.6s_ease-in-out_infinite]" />
+              <div className="w-1.5 h-6 bg-primary/60 rounded-full animate-[pulse_0.6s_ease-in-out_infinite_0.1s]" />
+              <div className="w-1.5 h-3 bg-primary/30 rounded-full animate-[pulse_0.6s_ease-in-out_infinite_0.2s]" />
+              <div className="w-1.5 h-5 bg-primary/50 rounded-full animate-[pulse_0.6s_ease-in-out_infinite_0.3s]" />
+            </div>
+          </div>
+        )}
+
+        {/* Total profit card */}
+        <Card className="border-border/30">
+          <CardContent className="p-4 space-y-1">
             <div className="flex items-center gap-1.5">
-              <Trophy className="h-3.5 w-3.5 text-gold" />
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Total Profit</p>
+              <Trophy className="h-4 w-4 text-gold" />
+              <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Net Profit</p>
             </div>
-            <p className={`text-2xl font-bold font-display tabular-nums ${totalWinnings >= 0 ? 'text-success' : 'text-destructive'}`}>
+            <p className={`text-3xl font-bold font-display tabular-nums ${totalWinnings >= 0 ? 'text-success' : 'text-destructive'}`}>
               {totalWinnings >= 0 ? '+' : '-'}${fmt(Math.abs(totalWinnings))}
             </p>
-            <p className="text-[10px] text-muted-foreground">
-              {trades.filter(t => t.isWin).length}W / {trades.filter(t => !t.isWin).length}L from {trades.length} trades
+            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+              <span className="text-success">{trades.filter(t => t.isWin).length} wins</span>
+              <span className="text-destructive">{trades.filter(t => !t.isWin).length} losses</span>
+              <span>{trades.length} total trades</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Stats row */}
+        <div className="grid grid-cols-2 gap-2">
+          <div className="bg-secondary/50 rounded-xl p-3 text-center">
+            <p className="text-[10px] text-muted-foreground">Invested</p>
+            <p className="text-sm font-bold text-foreground">${fmt(session.staked_amount)}</p>
+          </div>
+          <div className="bg-secondary/50 rounded-xl p-3 text-center">
+            <p className="text-[10px] text-muted-foreground">Current Value</p>
+            <p className={`text-sm font-bold ${totalWinnings >= 0 ? 'text-success' : 'text-destructive'}`}>
+              ${fmt(session.staked_amount + totalWinnings)}
             </p>
           </div>
+        </div>
 
-          {/* Progress */}
-          <div className="space-y-1.5">
-            <div className="flex justify-between text-[10px] text-muted-foreground">
-              <span>Session progress</span>
-              <span>{progressPct.toFixed(1)}%</span>
-            </div>
-            <Progress value={progressPct} className="h-2" />
+        {/* Progress */}
+        <div className="space-y-1.5">
+          <div className="flex justify-between text-xs text-muted-foreground">
+            <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {remainingMinutes}m {remainingSeconds}s left</span>
+            <span>{progressPct.toFixed(1)}%</span>
           </div>
+          <Progress value={progressPct} className="h-2.5" />
+        </div>
 
-          {/* Countdown */}
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <Clock className="h-3.5 w-3.5" />
-            {isCompleted ? (
-              <span className="text-success font-medium">Trading cycle complete!</span>
-            ) : (
-              <span className="tabular-nums">
-                {remainingHours}h {remainingMinutes}m {remainingSeconds}s remaining
-              </span>
-            )}
-          </div>
-
-          {/* Info row */}
-          <div className="grid grid-cols-2 gap-2">
-            <div className="bg-secondary/50 rounded-lg p-2 text-center">
-              <p className="text-[10px] text-muted-foreground">Invested</p>
-              <p className="text-xs font-bold text-foreground">${fmt(session.staked_amount)}</p>
+        {/* Trade history */}
+        <div className="space-y-1.5">
+          <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Trade History</p>
+          <ScrollArea className="h-[200px] rounded-xl border border-border/30 bg-card/50">
+            <div className="p-2 space-y-1">
+              {trades.length === 0 && !isTrading && (
+                <p className="text-xs text-muted-foreground text-center py-8">Waiting for first trade...</p>
+              )}
+              {trades.map((trade, idx) => (
+                <div
+                  key={trade.id}
+                  className={`flex items-center justify-between px-3 py-2 rounded-lg text-xs animate-fade-in ${
+                    trade.isWin ? 'bg-success/8' : 'bg-destructive/8'
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    {trade.isWin ? (
+                      <CheckCircle2 className="h-4 w-4 text-success" />
+                    ) : (
+                      <XCircle className="h-4 w-4 text-destructive" />
+                    )}
+                    <span className="text-muted-foreground font-medium">Trade #{idx + 1}</span>
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded font-semibold ${
+                      trade.isWin ? 'bg-success/15 text-success' : 'bg-destructive/15 text-destructive'
+                    }`}>
+                      {trade.isWin ? 'WIN' : 'LOSS'}
+                    </span>
+                  </div>
+                  <span className={`font-bold tabular-nums ${trade.isWin ? 'text-success' : 'text-destructive'}`}>
+                    {trade.isWin ? '+' : '-'}${fmt(trade.amount)}
+                  </span>
+                </div>
+              ))}
+              <div ref={tradesEndRef} />
             </div>
-            <div className="bg-secondary/50 rounded-lg p-2 text-center">
-              <p className="text-[10px] text-muted-foreground">Current Value</p>
-              <p className={`text-xs font-bold ${totalWinnings >= 0 ? 'text-success' : 'text-destructive'}`}>
-                ${fmt(session.staked_amount + totalWinnings)}
-              </p>
-            </div>
-          </div>
+          </ScrollArea>
+        </div>
+      </div>
 
-          {/* Stop button */}
-          {!isCompleted && session.status === 'active' && (
-            <Button
-              variant="outline"
-              className="w-full border-destructive/30 text-destructive hover:bg-destructive/10"
-              onClick={handleCancelRequest}
-              disabled={cancelling}
-            >
-              <X className="h-4 w-4 mr-1.5" />
-              {cancelling ? 'Stopping…' : 'Stop Bot & Collect'}
-            </Button>
-          )}
-        </CardContent>
-      </Card>
+      {/* Bottom action bar */}
+      <div className="p-4 border-t border-border/30 bg-card/80 backdrop-blur-sm">
+        {!isCompleted && session.status === 'active' ? (
+          <Button
+            variant="outline"
+            className="w-full h-12 border-destructive/30 text-destructive hover:bg-destructive/10 font-semibold"
+            onClick={() => setShowCancelConfirm(true)}
+            disabled={cancelling}
+          >
+            <X className="h-4 w-4 mr-1.5" />
+            {cancelling ? 'Stopping…' : 'Stop Bot & Collect Profits'}
+          </Button>
+        ) : (
+          <Button
+            className="w-full h-12 bg-success hover:bg-success/90 text-success-foreground font-semibold"
+            onClick={() => setShowCancelConfirm(true)}
+          >
+            <Trophy className="h-4 w-4 mr-1.5" />
+            Collect Profits
+          </Button>
+        )}
+      </div>
 
       {/* Cancel Confirmation Dialog */}
       <Dialog open={showCancelConfirm} onOpenChange={setShowCancelConfirm}>
@@ -312,9 +318,7 @@ const ActiveFlywheelCard = ({ session, onCancelled }: { session: FlywheelSession
               <Trophy className="h-5 w-5 text-gold" />
               Collect Profits
             </DialogTitle>
-            <DialogDescription>
-              Review your trading session results before collecting.
-            </DialogDescription>
+            <DialogDescription>Review your trading session results.</DialogDescription>
           </DialogHeader>
           <div className="space-y-3 py-2">
             <div className="grid grid-cols-2 gap-3">
@@ -363,7 +367,7 @@ const ActiveFlywheelCard = ({ session, onCancelled }: { session: FlywheelSession
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </>
+    </div>
   );
 };
 
@@ -377,6 +381,7 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
   const [isStarting, setIsStarting] = useState(false);
   const [activeSessions, setActiveSessions] = useState<FlywheelSession[]>([]);
   const [confirmPlan, setConfirmPlan] = useState<typeof FLYWHEEL_PLANS[0] | null>(null);
+  const [viewingSession, setViewingSession] = useState<FlywheelSession | null>(null);
 
   const fetchSessions = useCallback(async () => {
     if (!user) return;
@@ -444,9 +449,22 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
   };
 
   const handleSessionDone = () => {
+    setViewingSession(null);
     refetchBalance();
     fetchSessions();
   };
+
+  // Auto-open first active session, or open newly created one
+  useEffect(() => {
+    if (activeSessions.length > 0 && !viewingSession) {
+      setViewingSession(activeSessions[0]);
+    }
+  }, [activeSessions]);
+
+  // If viewing a session, show full-page bot view
+  if (viewingSession) {
+    return <ActiveBotView session={viewingSession} onCancelled={handleSessionDone} />;
+  }
 
   return (
     <div className="space-y-4 pb-4">
@@ -496,12 +514,25 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
         </CardContent>
       </Card>
 
-      {/* Active Sessions */}
+      {/* Active Sessions - shown as resumable cards */}
       {activeSessions.length > 0 && (
         <div className="space-y-3">
           <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Active Bots</h3>
           {activeSessions.map((session) => (
-            <ActiveFlywheelCard key={session.id} session={session} onCancelled={handleSessionDone} />
+            <Card key={session.id} className="border-primary/30 cursor-pointer hover:border-primary/50 transition-all" onClick={() => setViewingSession(session)}>
+              <CardContent className="p-3 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
+                    <ArrowDownUp className="h-4 w-4 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">{session.plan_name}</p>
+                    <p className="text-[10px] text-muted-foreground">${fmt(session.staked_amount)} invested</p>
+                  </div>
+                </div>
+                <Badge className="bg-primary/15 text-primary border-0 animate-pulse">Running</Badge>
+              </CardContent>
+            </Card>
           ))}
         </div>
       )}
