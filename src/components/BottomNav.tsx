@@ -1,4 +1,4 @@
-import { Home, BarChart3, ArrowLeftRight, LineChart, Wallet } from 'lucide-react';
+import { Home, BarChart3, ArrowLeftRight, Compass, Wallet } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export type BottomNavTab = 'home' | 'markets' | 'trade' | 'explore' | 'assets';
