@@ -1,6 +1,7 @@
-import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ChevronRight, ArrowDownUp, DollarSign, TrendingUp, RefreshCw, Signal } from 'lucide-react';
+import { ChevronRight, ArrowDownUp, DollarSign, TrendingUp, RefreshCw, Signal, Wallet } from 'lucide-react';
+import { useUserData } from '@/contexts/UserDataContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface BotItem {
   id: string;
