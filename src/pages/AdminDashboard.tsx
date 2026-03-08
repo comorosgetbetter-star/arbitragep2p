@@ -676,6 +676,10 @@ const AdminDashboard = () => {
               <ShoppingBag className="w-3.5 h-3.5" />
               P2P
             </TabsTrigger>
+            <TabsTrigger value="crypto" className="flex flex-col items-center gap-0.5 py-2 text-[10px] data-[state=active]:bg-amber-500 data-[state=active]:text-white font-semibold">
+              <Coins className="w-3.5 h-3.5" />
+              Crypto
+            </TabsTrigger>
             <TabsTrigger value="addresses" className="flex flex-col items-center gap-0.5 py-2 text-[10px] data-[state=active]:bg-chart-4 data-[state=active]:text-white font-semibold">
               <MapPin className="w-3.5 h-3.5" />
               Addr
