@@ -406,9 +406,14 @@ export const AssetsView = () => {
           </div>
           <div className="space-y-1">
             {[...prices].map((crypto) => {
-              // USDT value = user's actual balance, others = 0 (no holdings)
-              const holdingValue = crypto.symbol === 'USDT' ? balance : 0;
-              const holdingAmount = crypto.symbol === 'USDT' ? balance / crypto.price : 0;
+              // USDT value = user's USDT balance; others = crypto holdings × live price
+              const cryptoHolding = cryptoBalances.find(cb => cb.symbol === crypto.symbol);
+              const holdingAmount = crypto.symbol === 'USDT'
+                ? balance
+                : (cryptoHolding?.amount || 0);
+              const holdingValue = crypto.symbol === 'USDT'
+                ? balance
+                : holdingAmount * crypto.price;
               return { ...crypto, holdingValue, holdingAmount };
             }).sort((a, b) => b.holdingValue - a.holdingValue || b.price - a.price).map((crypto) => {
               const logo = cryptoLogos[crypto.symbol];
