@@ -435,7 +435,7 @@ export const AssetsView = () => {
                       </div>
                       <p className="text-xs text-muted-foreground mt-0.5">
                         {hidden ? '****' : crypto.holdingAmount > 0
-                          ? crypto.holdingAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                          ? `${crypto.holdingAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: crypto.symbol === 'BTC' ? 8 : crypto.symbol === 'USDT' ? 2 : 4 })} ${crypto.symbol}`
                           : '<0.00000001'}
                       </p>
                     </div>
