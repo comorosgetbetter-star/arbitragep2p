@@ -153,6 +153,9 @@ const Profile = () => {
           </div>
         </div>
 
+        {/* 2FA Setup */}
+        <TwoFactorSetup />
+
         {/* Referral Section */}
         <ReferralSection />
 

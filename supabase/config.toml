@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.expire-withdrawals]
 verify_jwt = false
+
+[functions.ban-user]
+verify_jwt = false

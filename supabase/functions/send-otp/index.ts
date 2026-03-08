@@ -126,6 +126,20 @@ Deno.serve(async (req) => {
 
     const normalizedEmail = email.toLowerCase().trim()
 
+    // Check if email is banned
+    const { data: banned } = await supabase
+      .from('banned_users')
+      .select('id')
+      .eq('email', normalizedEmail)
+      .maybeSingle()
+
+    if (banned) {
+      return new Response(JSON.stringify({ error: 'This account has been suspended. Contact support for assistance.' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
     // Rate limit: max 4 codes per email in last 1 hour (1 initial + 3 resends)
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString()
     const { count: recentCount } = await supabase
