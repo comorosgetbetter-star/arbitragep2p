@@ -11,6 +11,7 @@ import { Footer } from '@/components/Footer';
 import { BottomNav, BottomNavTab } from '@/components/BottomNav';
 import { MarketsView } from '@/components/MarketsView';
 import { StakingView } from '@/components/StakingView';
+import { AssetsView } from '@/components/AssetsView';
 import { Button } from '@/components/ui/button';
 import { Download, Zap, ShoppingBag, ArrowLeft } from 'lucide-react';
 
@@ -83,8 +84,8 @@ const Index = () => {
 
     if (bottomTab === 'assets') {
       return (
-        <div className="container mx-auto px-4 max-w-lg text-center py-20">
-          <p className="text-muted-foreground">Assets coming soon</p>
+        <div className="container mx-auto px-4 max-w-lg">
+          <AssetsView />
         </div>
       );
     }
