@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { SupportTicketForm } from '@/components/SupportTicketForm';
 import { ReferralSection } from '@/components/ReferralSection';
 import TwoFactorSetup from '@/components/TwoFactorSetup';
+import AccountSettings from '@/components/AccountSettings';
 
 interface ProfileData {
   full_name: string;
