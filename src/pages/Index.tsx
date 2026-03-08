@@ -9,7 +9,7 @@ import { WhyUsdt } from '@/components/WhyUsdt';
 import { FAQ } from '@/components/FAQ';
 import { Footer } from '@/components/Footer';
 import { Button } from '@/components/ui/button';
-import { Download, Zap, ShoppingBag } from 'lucide-react';
+import { Download, Zap, ShoppingBag, ArrowLeft } from 'lucide-react';
 
 type ActiveSection = 'home' | 'deposit' | 'express' | 'p2p';
 
