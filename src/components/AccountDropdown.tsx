@@ -56,8 +56,10 @@ export const AccountDropdown = () => {
   }, [user]);
 
   useEffect(() => {
-    if (!user) return;
-
+    if (!user) {
+      setUnreadCount(0);
+      return;
+    }
     const fetchUnread = async () => {
       // Get open tickets for user
       const { data: tickets } = await supabase
