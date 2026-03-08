@@ -1212,6 +1212,45 @@ const AdminDashboard = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Ban User Dialog */}
+      <Dialog open={!!banTarget} onOpenChange={(open) => { if (!open) setBanTarget(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <Ban className="w-5 h-5" />
+              Ban User
+            </DialogTitle>
+            <DialogDescription>
+              This will permanently delete all data for <strong>{banTarget?.full_name}</strong> ({banTarget?.email}) and prevent them from registering again with the same email or phone.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label htmlFor="ban-reason">Reason for ban</Label>
+              <Textarea
+                id="ban-reason"
+                placeholder="Reason for banning this user..."
+                value={banReason}
+                onChange={(e) => setBanReason(e.target.value)}
+                rows={2}
+              />
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setBanTarget(null)} disabled={isBanning}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleBanUser}
+              disabled={isBanning}
+            >
+              {isBanning ? 'Banning...' : 'Ban & Delete All Data'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
