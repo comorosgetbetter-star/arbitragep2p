@@ -2,65 +2,45 @@ import { useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 
 const INACTIVITY_TIMEOUT = 15 * 60 * 1000; // 15 minutes
-const WARNING_BEFORE = 60 * 1000; // warn 1 minute before
-const ACTIVITY_EVENTS = ['mousedown', 'keydown', 'touchstart', 'scroll', 'mousemove'];
+const ACTIVITY_EVENTS = ['mousedown', 'keydown', 'touchstart', 'scroll', 'mousemove', 'focus'];
 
 export const useInactivityLogout = () => {
   const { user, signOut } = useAuth();
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const warningRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const toastShownRef = useRef(false);
 
-  const clearTimers = useCallback(() => {
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    if (warningRef.current) clearTimeout(warningRef.current);
-    toastShownRef.current = false;
+  const clearTimer = useCallback(() => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
   }, []);
 
   const handleLogout = useCallback(async () => {
-    clearTimers();
+    clearTimer();
     await signOut();
-    // Use toast import lazily to avoid circular deps
-    const { toast } = await import('sonner');
-    toast.info('You have been signed out due to inactivity.');
-  }, [signOut, clearTimers]);
+  }, [signOut, clearTimer]);
 
-  const resetTimers = useCallback(() => {
+  const resetTimer = useCallback(() => {
     if (!user) return;
-    clearTimers();
-
-    // Warning timer
-    warningRef.current = setTimeout(() => {
-      if (!toastShownRef.current) {
-        toastShownRef.current = true;
-        import('sonner').then(({ toast }) => {
-          toast.warning('Session expiring soon', {
-            description: 'You will be signed out in 1 minute due to inactivity.',
-            duration: 10000,
-          });
-        });
-      }
-    }, INACTIVITY_TIMEOUT - WARNING_BEFORE);
-
-    // Logout timer
+    clearTimer();
     timeoutRef.current = setTimeout(handleLogout, INACTIVITY_TIMEOUT);
-  }, [user, clearTimers, handleLogout]);
+  }, [user, clearTimer, handleLogout]);
 
   useEffect(() => {
     if (!user) {
-      clearTimers();
+      clearTimer();
       return;
     }
 
-    resetTimers();
+    resetTimer();
 
-    const onActivity = () => resetTimers();
+    const onActivity = () => resetTimer();
 
     ACTIVITY_EVENTS.forEach(evt => window.addEventListener(evt, onActivity, { passive: true }));
 
     return () => {
-      clearTimers();
+      clearTimer();
       ACTIVITY_EVENTS.forEach(evt => window.removeEventListener(evt, onActivity));
     };
-  }, [user, resetTimers, clearTimers]);
+  }, [user, resetTimer, clearTimer]);
 };
