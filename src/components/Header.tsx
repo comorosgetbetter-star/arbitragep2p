@@ -1,44 +1,61 @@
 import { useState } from 'react';
-import { Wallet, Menu, X, Sun, Moon, Plus } from 'lucide-react';
+import { Wallet, Menu, X, Sun, Moon, Plus, Home, BarChart3, ArrowLeftRight, Compass, Wallet as WalletIcon2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { WalletDropdown } from './WalletDropdown';
 import { AddFundsModal } from './AddFundsModal';
 import { AccountDropdown } from './AccountDropdown';
 import { useAuth } from '@/contexts/AuthContext';
+import { cn } from '@/lib/utils';
+
+type NavTab = 'home' | 'markets' | 'trade' | 'explore' | 'assets';
+
+const desktopTabs: { id: NavTab; label: string; icon: React.ElementType }[] = [
+  { id: 'home', label: 'Home', icon: Home },
+  { id: 'markets', label: 'Markets', icon: BarChart3 },
+  { id: 'trade', label: 'Trade', icon: ArrowLeftRight },
+  { id: 'explore', label: 'Explore', icon: Compass },
+  { id: 'assets', label: 'Assets', icon: WalletIcon2 },
+];
 
 interface HeaderProps {
   isDark: boolean;
   toggleTheme: () => void;
+  activeTab?: NavTab;
+  onTabChange?: (tab: NavTab) => void;
 }
 
-export const Header = ({ isDark, toggleTheme }: HeaderProps) => {
+export const Header = ({ isDark, toggleTheme, activeTab = 'home', onTabChange }: HeaderProps) => {
   const { user } = useAuth();
   const [isWalletOpen, setIsWalletOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isAddFundsOpen, setIsAddFundsOpen] = useState(false);
-
-  const scrollTo = (id: string) => {
-    setIsMobileMenuOpen(false);
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
-  };
 
   return (
     <>
       <header className="fixed top-0 left-0 right-0 z-50 glass-card border-b border-border/30">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           {/* Logo */}
-          <div className="flex items-center gap-2 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+          <div className="flex items-center gap-2 cursor-pointer" onClick={() => { onTabChange?.('home'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
             <img src="/logo.png" alt="PeerBitX" className="w-10 h-10 rounded-xl" />
           </div>
 
-          {/* Desktop Nav */}
-          <nav className="hidden md:flex items-center gap-6">
-            <button onClick={() => scrollTo('why-usdt')} className="text-muted-foreground hover:text-foreground transition-colors text-sm">
-              Why USDT
-            </button>
-            <button onClick={() => scrollTo('faq')} className="text-muted-foreground hover:text-foreground transition-colors text-sm">
-              FAQ
-            </button>
+          {/* Desktop Nav Tabs */}
+          <nav className="hidden md:flex items-center gap-1">
+            {desktopTabs.map(({ id, label, icon: Icon }) => (
+              <button
+                key={id}
+                onClick={() => onTabChange?.(id)}
+                className={cn(
+                  'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
+                  activeTab === id
+                    ? 'bg-primary/15 text-primary'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                )}
+              >
+                <Icon className="h-4 w-4" />
+                {label}
+              </button>
+            ))}
           </nav>
 
           {/* Actions */}
@@ -90,12 +107,6 @@ export const Header = ({ isDark, toggleTheme }: HeaderProps) => {
         {isMobileMenuOpen && (
           <div className="md:hidden glass-card border-t border-border/30 animate-fade-in-up">
             <nav className="container mx-auto px-4 py-4 flex flex-col gap-4">
-              <button onClick={() => scrollTo('why-usdt')} className="text-muted-foreground hover:text-foreground transition-colors py-2 text-left">
-                Why USDT
-              </button>
-              <button onClick={() => scrollTo('faq')} className="text-muted-foreground hover:text-foreground transition-colors py-2 text-left">
-                FAQ
-              </button>
               {user && (
                 <Button variant="glow" size="sm" onClick={() => { setIsMobileMenuOpen(false); setIsAddFundsOpen(true); }} className="justify-start gap-2">
                   <Plus className="h-4 w-4" />
