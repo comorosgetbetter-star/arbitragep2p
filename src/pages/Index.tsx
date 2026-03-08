@@ -200,9 +200,19 @@ const Index = () => {
               </button>
             )}
             {activeSection === 'home' && <CryptoGrid />}
-            {activeSection === 'deposit' && <DepositCrypto />}
-            {activeSection === 'express' && <ExpressP2P />}
-            {activeSection === 'p2p' && <P2POrders />}
+            {activeSection !== 'home' && !user && (
+              <div className="text-center py-12 rounded-xl border border-border bg-card/50">
+                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-3">
+                  <Lock className="h-6 w-6 text-primary" />
+                </div>
+                <p className="font-semibold mb-1">Sign in to continue</p>
+                <p className="text-sm text-muted-foreground mb-4">This action is available only to logged-in users.</p>
+                <Button onClick={() => navigate('/login')}>Sign In</Button>
+              </div>
+            )}
+            {activeSection === 'deposit' && user && <DepositCrypto />}
+            {activeSection === 'express' && user && <ExpressP2P />}
+            {activeSection === 'p2p' && user && <P2POrders />}
           </div>
         </div>
 
