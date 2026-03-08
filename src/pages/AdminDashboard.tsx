@@ -1063,12 +1063,12 @@ const AdminDashboard = () => {
               ) : (
                 <Minus className="w-5 h-5 text-destructive" />
               )}
-              {isStealth ? 'Stealth Add' : adjustmentType === 'add' ? 'Add' : 'Subtract'} USDT
+              {isStealth ? 'Stealth Add' : adjustmentType === 'add' ? 'Add' : 'Subtract'} Funds
             </DialogTitle>
             <DialogDescription>
               {selectedMember && (
                 <span>
-                  <strong>{selectedMember.full_name}</strong> — Balance: <strong>{Number(selectedMember.usdt_balance).toFixed(2)} USDT</strong>
+                  <strong>{selectedMember.full_name}</strong> — USDT Balance: <strong>{Number(selectedMember.usdt_balance).toFixed(2)}</strong>
                 </span>
               )}
               {isStealth && (
@@ -1080,8 +1080,28 @@ const AdminDashboard = () => {
           </DialogHeader>
 
           <div className="space-y-4 py-2">
+            {/* Crypto selector */}
             <div className="space-y-2">
-              <Label htmlFor="amount">Amount (USDT)</Label>
+              <Label>Cryptocurrency</Label>
+              <div className="grid grid-cols-3 gap-1.5">
+                {['USDT', 'BTC', 'ETH', 'BNB', 'SOL', 'XRP'].map((sym) => (
+                  <button
+                    key={sym}
+                    onClick={() => setAdjustmentCrypto(sym)}
+                    className={`px-2 py-2 rounded-lg border text-xs font-medium transition-all ${
+                      adjustmentCrypto === sym
+                        ? 'border-primary bg-primary/10 text-primary'
+                        : 'border-border/50 text-muted-foreground hover:border-primary/30'
+                    }`}
+                  >
+                    {sym}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="amount">Amount (USD)</Label>
               <Input
                 id="amount"
                 type="number"
@@ -1092,6 +1112,12 @@ const AdminDashboard = () => {
                 onChange={(e) => setAdjustmentAmount(e.target.value)}
                 className="bg-background/50"
               />
+              {adjustmentCrypto !== 'USDT' && adjustmentAmount && convertedCryptoAmount > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  ≈ {convertedCryptoAmount.toLocaleString('en-US', { minimumFractionDigits: 6, maximumFractionDigits: 8 })} {adjustmentCrypto}
+                  <span className="ml-1 opacity-70">(@ ${cryptoPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})</span>
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
