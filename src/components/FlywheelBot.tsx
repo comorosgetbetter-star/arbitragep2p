@@ -298,7 +298,16 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
 
       {/* Bottom action bar */}
       <div className="p-4 border-t border-border/30 bg-card/80 backdrop-blur-sm space-y-2">
-        {!isCompleted && session.status === 'active' ? (
+        {collected ? (
+          /* Profits collected — show only Back button */
+          <Button
+            className="w-full h-12 font-semibold"
+            onClick={onCancelled}
+          >
+            <ArrowLeft className="h-4 w-4 mr-1.5" />
+            Back to Packages
+          </Button>
+        ) : !isCompleted && session.status === 'active' ? (
           /* Bot is still running — show only Cancel button */
           <Button
             variant="outline"
@@ -310,24 +319,14 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
             {cancelling ? 'Stopping…' : 'Cancel Bot'}
           </Button>
         ) : (
-          /* Bot finished or was cancelled — show Collect + Back */
-          <div className="space-y-2">
-            <Button
-              className="w-full h-12 bg-success hover:bg-success/90 text-success-foreground font-semibold"
-              onClick={() => setShowCancelConfirm(true)}
-            >
-              <Trophy className="h-4 w-4 mr-1.5" />
-              Collect Profits
-            </Button>
-            <Button
-              variant="outline"
-              className="w-full h-10 font-medium"
-              onClick={onBack}
-            >
-              <ArrowLeft className="h-4 w-4 mr-1.5" />
-              Back to Packages
-            </Button>
-          </div>
+          /* Bot finished — show Collect Profits */
+          <Button
+            className="w-full h-12 bg-success hover:bg-success/90 text-success-foreground font-semibold"
+            onClick={() => setShowCancelConfirm(true)}
+          >
+            <Trophy className="h-4 w-4 mr-1.5" />
+            Collect Profits
+          </Button>
         )}
       </div>
 
