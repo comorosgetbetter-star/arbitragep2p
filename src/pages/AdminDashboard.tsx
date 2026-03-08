@@ -135,6 +135,11 @@ const AdminDashboard = () => {
   const [banTarget, setBanTarget] = useState<Member | null>(null);
   const [banReason, setBanReason] = useState('');
   const [isBanning, setIsBanning] = useState(false);
+  const [manageTarget, setManageTarget] = useState<Member | null>(null);
+  const [manageTab, setManageTab] = useState<'info' | 'reset' | 'impersonate'>('info');
+  const [userInfo, setUserInfo] = useState<any>(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [isManageLoading, setIsManageLoading] = useState(false);
   const { prices } = useCryptoPrices();
   const [stats, setStats] = useState({
     totalMembers: 0,
