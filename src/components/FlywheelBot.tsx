@@ -432,6 +432,7 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
       if (error) throw error;
       toast({ title: 'Flywheel started! 🚀', description: `$${fmt(amountNum)} deployed on ${confirmPlan.name}` });
       setSelectedPlan(null);
+      setSelectedDuration(DURATION_OPTIONS[0]);
       setAmount('');
       refetchBalance();
       fetchSessions();
