@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Mail, AlertTriangle, RefreshCw, Loader2, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { Mail, AlertTriangle, RefreshCw, Loader2, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { supabase } from '@/integrations/supabase/client';
@@ -15,13 +15,18 @@ interface OTPVerificationProps {
   onBack: () => void;
 }
 
+const MAX_RESENDS = 3;
+const RESEND_COOLDOWN = 40; // seconds
+
 const OTPVerification = ({ email, fullName, phone, country, password, onVerified, onBack }: OTPVerificationProps) => {
   const { toast } = useToast();
   const [otp, setOtp] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
   const [isResending, setIsResending] = useState(false);
-  const [resendTimer, setResendTimer] = useState(60);
+  const [resendTimer, setResendTimer] = useState(RESEND_COOLDOWN);
   const [canResend, setCanResend] = useState(false);
+  const [resendCount, setResendCount] = useState(0);
+  const [isBlocked, setIsBlocked] = useState(false);
   const [error, setError] = useState('');
 
   // Countdown timer for resend
@@ -82,6 +87,11 @@ const OTPVerification = ({ email, fullName, phone, country, password, onVerified
   }, [email, password, fullName, phone, country, onVerified, toast]);
 
   const handleResend = async () => {
+    if (resendCount >= MAX_RESENDS) {
+      setIsBlocked(true);
+      return;
+    }
+
     setIsResending(true);
     setError('');
 
@@ -91,20 +101,36 @@ const OTPVerification = ({ email, fullName, phone, country, password, onVerified
       });
 
       if (sendError || data?.error) {
+        // Server-side rate limit hit
+        if (data?.error === 'rate_limited') {
+          setIsBlocked(true);
+          setIsResending(false);
+          return;
+        }
         toast({
           title: 'Failed to resend code',
-          description: data?.error || 'Please try again later.',
+          description: data?.message || data?.error || 'Please try again later.',
           variant: 'destructive',
         });
         return;
       }
 
-      toast({
-        title: 'Code Resent',
-        description: 'A new verification code has been sent to your email.',
-      });
+      const newCount = resendCount + 1;
+      setResendCount(newCount);
 
-      setResendTimer(60);
+      if (newCount >= MAX_RESENDS) {
+        toast({
+          title: 'Code Resent',
+          description: 'This is your last resend. Please check your inbox carefully.',
+        });
+      } else {
+        toast({
+          title: 'Code Resent',
+          description: 'A new verification code has been sent to your email.',
+        });
+      }
+
+      setResendTimer(RESEND_COOLDOWN);
       setCanResend(false);
       setOtp('');
     } catch {
@@ -126,6 +152,8 @@ const OTPVerification = ({ email, fullName, phone, country, password, onVerified
   }, [otp, handleVerify]);
 
   const maskedEmail = email.replace(/(.{2})(.*)(@.*)/, '$1***$3');
+
+  const remainingResends = MAX_RESENDS - resendCount;
 
   return (
     <div className="space-y-6">
@@ -186,29 +214,52 @@ const OTPVerification = ({ email, fullName, phone, country, password, onVerified
 
       {/* Resend Code */}
       <div className="text-center">
-        {canResend ? (
-          <Button
-            variant="ghost"
-            onClick={handleResend}
-            disabled={isResending}
-            className="text-primary"
-          >
-            {isResending ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                Sending...
-              </>
-            ) : (
-              <>
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Resend Verification Code
-              </>
-            )}
-          </Button>
-        ) : (
+        {isBlocked ? (
+          <div className="space-y-2">
+            <p className="text-sm text-muted-foreground">
+              You've reached the maximum number of code requests.
+            </p>
+            <p className="text-sm font-medium text-foreground">
+              Please come back later and try again.
+            </p>
+          </div>
+        ) : canResend && remainingResends > 0 ? (
+          <div className="space-y-2">
+            <Button
+              variant="ghost"
+              onClick={handleResend}
+              disabled={isResending}
+              className="text-primary"
+            >
+              {isResending ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Sending...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Resend Verification Code
+                </>
+              )}
+            </Button>
+            <p className="text-xs text-muted-foreground">
+              {remainingResends} resend{remainingResends !== 1 ? 's' : ''} remaining
+            </p>
+          </div>
+        ) : !isBlocked && remainingResends > 0 ? (
           <p className="text-sm text-muted-foreground">
             Resend code in <span className="font-semibold text-foreground">{resendTimer}s</span>
           </p>
+        ) : (
+          <div className="space-y-2">
+            <p className="text-sm text-muted-foreground">
+              You've reached the maximum number of code requests.
+            </p>
+            <p className="text-sm font-medium text-foreground">
+              Please come back later and try again.
+            </p>
+          </div>
         )}
       </div>
 
