@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 type AssetsSubView = 'main' | 'deposit' | 'withdraw' | 'history';
+type HistoryFilter = 'all' | 'deposits' | 'withdrawals';
 
 const NETWORK_META: Record<string, { name: string; chain: string; fee: string; time: string }> = {
   trc20: { name: 'TRC20', chain: 'Tron Network', fee: '~1 USDT', time: '~3 min' },
