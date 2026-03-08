@@ -9,5 +9,14 @@ verify_jwt = false
 [functions.verify-otp]
 verify_jwt = false
 
+[functions.check-email-exists]
+verify_jwt = false
+
+[functions.send-reset-code]
+verify_jwt = false
+
+[functions.verify-reset-code]
+verify_jwt = false
+
 [functions.expire-withdrawals]
 verify_jwt = false

@@ -133,6 +133,17 @@ const CreateAccount = () => {
         return;
       }
 
+      // Check if email already exists before sending OTP
+      const { data: emailCheckData } = await supabase.functions.invoke('check-email-exists', {
+        body: { email: validatedData.email },
+      });
+
+      if (emailCheckData?.exists) {
+        setErrors(prev => ({ ...prev, email: 'This email is already registered. Please sign in or use a different email.' }));
+        setIsSubmitting(false);
+        return;
+      }
+
       // Send OTP code via Resend
       const { data, error: sendError } = await supabase.functions.invoke('send-otp', {
         body: { email: validatedData.email, fullName: validatedData.fullName },
@@ -294,7 +305,16 @@ const CreateAccount = () => {
                       className="pl-10"
                     />
                   </div>
-                  {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
+                  {errors.email && (
+                    <div>
+                      <p className="text-sm text-destructive">{errors.email}</p>
+                      {errors.email.includes('already registered') && (
+                        <p className="text-xs mt-1">
+                          <Link to="/login" className="text-primary hover:underline font-medium">Go to Login</Link>
+                        </p>
+                      )}
+                    </div>
+                  )}
                   {!errors.email && formData.email.length > 0 && (() => {
                     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
                     if (emailRegex.test(formData.email)) return (
