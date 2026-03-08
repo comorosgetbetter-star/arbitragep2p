@@ -12,7 +12,7 @@ const tabs: { id: BottomNavTab; label: string; icon: React.ElementType }[] = [
   { id: 'home', label: 'Home', icon: Home },
   { id: 'markets', label: 'Markets', icon: BarChart3 },
   { id: 'trade', label: 'Trade', icon: ArrowLeftRight },
-  { id: 'futures', label: 'Futures', icon: LineChart },
+  { id: 'explore', label: 'Explore', icon: Compass },
   { id: 'assets', label: 'Assets', icon: Wallet },
 ];
 
