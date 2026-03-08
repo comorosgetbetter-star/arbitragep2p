@@ -298,6 +298,7 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
       {/* Bottom action bar */}
       <div className="p-4 border-t border-border/30 bg-card/80 backdrop-blur-sm space-y-2">
         {!isCompleted && session.status === 'active' ? (
+          /* Bot is still running — show only Cancel button */
           <Button
             variant="outline"
             className="w-full h-12 border-destructive/30 text-destructive hover:bg-destructive/10 font-semibold"
@@ -305,9 +306,10 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
             disabled={cancelling}
           >
             <X className="h-4 w-4 mr-1.5" />
-            {cancelling ? 'Stopping…' : 'Stop Bot & Collect Profits'}
+            {cancelling ? 'Stopping…' : 'Cancel Bot'}
           </Button>
         ) : (
+          /* Bot finished or was cancelled — show Collect + Back */
           <div className="space-y-2">
             <Button
               className="w-full h-12 bg-success hover:bg-success/90 text-success-foreground font-semibold"
