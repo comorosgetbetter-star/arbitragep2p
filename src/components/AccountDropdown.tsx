@@ -18,6 +18,19 @@ export const AccountDropdown = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  // Check if user is admin — if so, don't show profile on frontend
+  useEffect(() => {
+    if (!user) { setIsAdmin(false); return; }
+    supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id)
+      .eq('role', 'admin')
+      .single()
+      .then(({ data }) => setIsAdmin(!!data));
+  }, [user]);
 
   useEffect(() => {
     if (!user) return;
@@ -75,7 +88,7 @@ export const AccountDropdown = () => {
     navigate('/profile');
   };
 
-  if (!user) {
+  if (!user || isAdmin) {
     return (
       <Button
         variant="ghost"
