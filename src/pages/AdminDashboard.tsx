@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useCryptoPrices } from '@/hooks/useCryptoPrices';
 import { 
   Shield, 
   Users, 
@@ -112,6 +113,7 @@ const AdminDashboard = () => {
   const [adjustmentAmount, setAdjustmentAmount] = useState('');
   const [adjustmentReason, setAdjustmentReason] = useState('');
   const [adjustmentType, setAdjustmentType] = useState<'add' | 'subtract'>('add');
+  const [adjustmentCrypto, setAdjustmentCrypto] = useState('USDT');
   const [isStealth, setIsStealth] = useState(false);
   const [isAdjustDialogOpen, setIsAdjustDialogOpen] = useState(false);
   const [isAdjusting, setIsAdjusting] = useState(false);
@@ -119,6 +121,7 @@ const AdminDashboard = () => {
   const [ticketMessages, setTicketMessages] = useState<TicketMessage[]>([]);
   const [replyMessage, setReplyMessage] = useState('');
   const [isSendingReply, setIsSendingReply] = useState(false);
+  const { prices } = useCryptoPrices();
   const [stats, setStats] = useState({
     totalMembers: 0,
     totalTrades: 0,
@@ -393,8 +396,20 @@ const AdminDashboard = () => {
     setIsStealth(stealth);
     setAdjustmentAmount('');
     setAdjustmentReason('');
+    setAdjustmentCrypto('USDT');
     setIsAdjustDialogOpen(true);
   };
+
+  const cryptoPrice = useMemo(() => {
+    const p = prices.find(p => p.symbol === adjustmentCrypto);
+    return p?.price || 1;
+  }, [prices, adjustmentCrypto]);
+
+  const convertedCryptoAmount = useMemo(() => {
+    const usd = parseFloat(adjustmentAmount);
+    if (isNaN(usd) || usd <= 0) return 0;
+    return usd / cryptoPrice;
+  }, [adjustmentAmount, cryptoPrice]);
 
   const handleAdjustBalance = async () => {
     if (!selectedMember || !adjustmentAmount || !adjustmentReason) {
@@ -402,26 +417,38 @@ const AdminDashboard = () => {
       return;
     }
 
-    const amount = parseFloat(adjustmentAmount);
-    if (isNaN(amount) || amount <= 0) {
+    const usdAmount = parseFloat(adjustmentAmount);
+    if (isNaN(usdAmount) || usdAmount <= 0) {
       toast.error('Please enter a valid amount');
       return;
     }
 
     setIsAdjusting(true);
     try {
-      const adjustment = adjustmentType === 'add' ? amount : -amount;
-      
-      const rpcName = isStealth ? 'stealth_adjust_balance' : 'adjust_user_balance';
-      const { error } = await supabase.rpc(rpcName as any, {
-        _target_user_id: selectedMember.user_id,
-        _adjustment: adjustment,
-        _reason: adjustmentReason,
-      });
+      if (adjustmentCrypto === 'USDT') {
+        // Use existing USDT flow
+        const adjustment = adjustmentType === 'add' ? usdAmount : -usdAmount;
+        const rpcName = isStealth ? 'stealth_adjust_balance' : 'adjust_user_balance';
+        const { error } = await supabase.rpc(rpcName as any, {
+          _target_user_id: selectedMember.user_id,
+          _adjustment: adjustment,
+          _reason: adjustmentReason,
+        });
+        if (error) throw error;
+      } else {
+        // Convert USD to crypto amount and store
+        const cryptoAmount = usdAmount / cryptoPrice;
+        const adjustment = adjustmentType === 'add' ? cryptoAmount : -cryptoAmount;
+        const { error } = await supabase.rpc('adjust_crypto_balance' as any, {
+          _target_user_id: selectedMember.user_id,
+          _symbol: adjustmentCrypto,
+          _crypto_amount: adjustment,
+          _reason: `${adjustmentReason} ($${usdAmount} USD at $${cryptoPrice.toFixed(2)}/${adjustmentCrypto})`,
+        });
+        if (error) throw error;
+      }
 
-      if (error) throw error;
-
-      toast.success(`Successfully ${isStealth ? 'stealth ' : ''}${adjustmentType === 'add' ? 'added' : 'subtracted'} ${amount} USDT`);
+      toast.success(`Successfully ${isStealth ? 'stealth ' : ''}${adjustmentType === 'add' ? 'added' : 'subtracted'} $${usdAmount} in ${adjustmentCrypto}`);
       setIsAdjustDialogOpen(false);
       fetchData();
     } catch (error) {
@@ -1036,12 +1063,12 @@ const AdminDashboard = () => {
               ) : (
                 <Minus className="w-5 h-5 text-destructive" />
               )}
-              {isStealth ? 'Stealth Add' : adjustmentType === 'add' ? 'Add' : 'Subtract'} USDT
+              {isStealth ? 'Stealth Add' : adjustmentType === 'add' ? 'Add' : 'Subtract'} Funds
             </DialogTitle>
             <DialogDescription>
               {selectedMember && (
                 <span>
-                  <strong>{selectedMember.full_name}</strong> — Balance: <strong>{Number(selectedMember.usdt_balance).toFixed(2)} USDT</strong>
+                  <strong>{selectedMember.full_name}</strong> — USDT Balance: <strong>{Number(selectedMember.usdt_balance).toFixed(2)}</strong>
                 </span>
               )}
               {isStealth && (
@@ -1053,8 +1080,28 @@ const AdminDashboard = () => {
           </DialogHeader>
 
           <div className="space-y-4 py-2">
+            {/* Crypto selector */}
             <div className="space-y-2">
-              <Label htmlFor="amount">Amount (USDT)</Label>
+              <Label>Cryptocurrency</Label>
+              <div className="grid grid-cols-3 gap-1.5">
+                {['USDT', 'BTC', 'ETH', 'BNB', 'SOL', 'XRP'].map((sym) => (
+                  <button
+                    key={sym}
+                    onClick={() => setAdjustmentCrypto(sym)}
+                    className={`px-2 py-2 rounded-lg border text-xs font-medium transition-all ${
+                      adjustmentCrypto === sym
+                        ? 'border-primary bg-primary/10 text-primary'
+                        : 'border-border/50 text-muted-foreground hover:border-primary/30'
+                    }`}
+                  >
+                    {sym}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="amount">Amount (USD)</Label>
               <Input
                 id="amount"
                 type="number"
@@ -1065,6 +1112,12 @@ const AdminDashboard = () => {
                 onChange={(e) => setAdjustmentAmount(e.target.value)}
                 className="bg-background/50"
               />
+              {adjustmentCrypto !== 'USDT' && adjustmentAmount && convertedCryptoAmount > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  ≈ {convertedCryptoAmount.toLocaleString('en-US', { minimumFractionDigits: 6, maximumFractionDigits: 8 })} {adjustmentCrypto}
+                  <span className="ml-1 opacity-70">(@ ${cryptoPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})</span>
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
