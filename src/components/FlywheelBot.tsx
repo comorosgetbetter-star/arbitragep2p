@@ -101,12 +101,12 @@ const ActiveFlywheelCard = ({ session, onCancelled }: { session: FlywheelSession
         <div className="bg-card/80 border border-border/30 rounded-xl p-3 space-y-1">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Live Value</p>
           <p className="text-2xl font-bold font-display text-foreground tabular-nums">
-            ${currentTotal.toLocaleString('en-US', { minimumFractionDigits: 4, maximumFractionDigits: 4 })}
+            ${fmt(currentTotal, 4)}
           </p>
           <div className="flex items-center gap-1">
             <Zap className="h-3 w-3 text-success" />
             <p className="text-xs text-success font-semibold tabular-nums">
-              +${currentEarnings.toLocaleString('en-US', { minimumFractionDigits: 6, maximumFractionDigits: 6 })} profit
+              +${fmt(currentEarnings, 6)} profit
             </p>
           </div>
         </div>
