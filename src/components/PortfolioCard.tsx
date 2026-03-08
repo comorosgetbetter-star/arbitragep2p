@@ -1,14 +1,25 @@
 import { Eye } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserData } from '@/contexts/UserDataContext';
+import { useCryptoPrices } from '@/hooks/useCryptoPrices';
 import { useState } from 'react';
 
 export const PortfolioCard = () => {
   const { user } = useAuth();
-  const { balance } = useUserData();
+  const { balance, cryptoBalances } = useUserData();
+  const { prices } = useCryptoPrices();
   const [hidden, setHidden] = useState(false);
 
-  const displayBalance = user ? balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00';
+  const totalPortfolioValue = (() => {
+    let total = balance;
+    cryptoBalances.forEach((cb) => {
+      const p = prices.find(pr => pr.symbol === cb.symbol);
+      if (p) total += cb.amount * p.price;
+    });
+    return total;
+  })();
+
+  const displayBalance = user ? totalPortfolioValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00';
 
   return (
     <div className="mb-6">
