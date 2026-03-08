@@ -286,41 +286,13 @@ export const AssetsView = () => {
 
       setIsConverting(true);
       try {
-        // Deduct from source
-        if (convertFrom === 'USDT') {
-          const { error } = await supabase.rpc('stealth_adjust_balance', {
-            _target_user_id: user.id,
-            _adjustment: -convertAmountNum,
-            _reason: `Convert ${convertAmountNum} USDT to ${convertTo}`,
-          });
-          if (error) throw error;
-        } else {
-          const { error } = await supabase.rpc('adjust_crypto_balance', {
-            _target_user_id: user.id,
-            _symbol: convertFrom,
-            _crypto_amount: -convertAmountNum,
-            _reason: `Convert ${convertAmountNum} ${convertFrom} to ${convertTo}`,
-          });
-          if (error) throw error;
-        }
-
-        // Add to destination
-        if (convertTo === 'USDT') {
-          const { error } = await supabase.rpc('stealth_adjust_balance', {
-            _target_user_id: user.id,
-            _adjustment: convertedValue,
-            _reason: `Converted from ${convertFrom}`,
-          });
-          if (error) throw error;
-        } else {
-          const { error } = await supabase.rpc('adjust_crypto_balance', {
-            _target_user_id: user.id,
-            _symbol: convertTo,
-            _crypto_amount: convertedValue,
-            _reason: `Converted from ${convertFrom}`,
-          });
-          if (error) throw error;
-        }
+        const { error } = await supabase.rpc('convert_crypto', {
+          _from_symbol: convertFrom,
+          _to_symbol: convertTo,
+          _from_amount: convertAmountNum,
+          _to_amount: convertedValue,
+        });
+        if (error) throw error;
 
         // Brief loading animation then success
         await new Promise(r => setTimeout(r, 1500));
