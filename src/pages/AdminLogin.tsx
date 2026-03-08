@@ -56,7 +56,7 @@ const AdminLogin = () => {
       }).then(() => {});
 
       toast.success('Welcome to Admin Panel');
-      navigate('/admin/dashboard');
+      navigate('/alpha02/dashboard');
     } catch (error) {
       console.error('Login error:', error);
       toast.error('An error occurred during login');

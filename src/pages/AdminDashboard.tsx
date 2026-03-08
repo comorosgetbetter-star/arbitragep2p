@@ -423,7 +423,7 @@ const AdminDashboard = () => {
     }
 
     await supabase.auth.signOut();
-    navigate('/admin');
+    navigate('/alpha02');
   };
 
   const openAdjustDialog = (member: Member, type: 'add' | 'subtract', stealth = false) => {
