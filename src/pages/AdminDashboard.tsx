@@ -799,7 +799,7 @@ const AdminDashboard = () => {
 
         {/* Main Tabs */}
         <Tabs defaultValue="members" className="space-y-3">
-          <TabsList className="w-full grid grid-cols-6 h-auto p-1 bg-card border border-border/50">
+          <TabsList className="w-full grid grid-cols-7 h-auto p-1 bg-card border border-border/50">
             <TabsTrigger value="members" className="flex flex-col items-center gap-0.5 py-2 text-[10px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-semibold">
               <Users className="w-3.5 h-3.5" />
               Members
@@ -821,6 +821,10 @@ const AdminDashboard = () => {
                   {openTickets.length}
                 </span>
               )}
+            </TabsTrigger>
+            <TabsTrigger value="kyc" className="flex flex-col items-center gap-0.5 py-2 text-[10px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-semibold">
+              <UserCheck className="w-3.5 h-3.5" />
+              KYC
             </TabsTrigger>
             <TabsTrigger value="p2p-orders" className="flex flex-col items-center gap-0.5 py-2 text-[10px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-semibold">
               <ShoppingBag className="w-3.5 h-3.5" />
