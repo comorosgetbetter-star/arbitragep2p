@@ -38,8 +38,8 @@ const AppInner = () => {
           <Route path="/login" element={<Login />} />
           <Route path="/payment" element={<Payment />} />
           <Route path="/profile" element={<Profile />} />
-          <Route path="/admin" element={<AdminLogin />} />
-          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+           <Route path="/alpha02" element={<AdminLogin />} />
+           <Route path="/alpha02/dashboard" element={<AdminDashboard />} />
           <Route path="/terms" element={<TermsOfService />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/auth/confirm" element={<EmailConfirmed />} />

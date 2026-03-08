@@ -198,7 +198,7 @@ const AdminDashboard = () => {
     const { data: { session } } = await supabase.auth.getSession();
     
     if (!session) {
-      navigate('/admin');
+      navigate('/alpha02');
       return;
     }
 
@@ -211,7 +211,7 @@ const AdminDashboard = () => {
 
     if (!roleData) {
       toast.error('Access denied');
-      navigate('/admin');
+      navigate('/alpha02');
       return;
     }
 
@@ -423,7 +423,7 @@ const AdminDashboard = () => {
     }
 
     await supabase.auth.signOut();
-    navigate('/admin');
+    navigate('/alpha02');
   };
 
   const openAdjustDialog = (member: Member, type: 'add' | 'subtract', stealth = false) => {
