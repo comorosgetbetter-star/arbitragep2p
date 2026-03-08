@@ -663,6 +663,37 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
         })}
       </div>
 
+      {/* Recent Runs */}
+      {recentRuns.length > 0 && (
+        <div className="space-y-3">
+          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Recent Runs</h3>
+          {recentRuns.map((run) => {
+            const startMs = new Date(run.started_at).getTime();
+            const endMs = new Date(run.ends_at).getTime();
+            const durationDays = (endMs - startMs) / (1000 * 60 * 60 * 24);
+            const estProfit = run.staked_amount * (run.daily_return_pct / 100) * durationDays;
+            return (
+              <Card key={run.id} className="border-border/50">
+                <CardContent className="p-3 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-success/15 flex items-center justify-center">
+                      <CheckCircle2 className="h-4 w-4 text-success" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">{run.plan_name}</p>
+                      <p className="text-[10px] text-muted-foreground">
+                        ${fmt(run.staked_amount)} invested • {new Date(run.started_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-sm font-bold text-success">+${fmt(estProfit)}</span>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+
       <p className="text-[10px] text-muted-foreground text-center px-4 pb-4">
         Bot trading involves risk. Returns are estimates based on market conditions. You can stop a bot at any time to collect accrued profits.
       </p>
