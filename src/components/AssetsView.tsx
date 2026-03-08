@@ -73,6 +73,8 @@ export const AssetsView = () => {
   const [convertAmount, setConvertAmount] = useState('');
   const [isConverting, setIsConverting] = useState(false);
   const [convertSuccess, setConvertSuccess] = useState(false);
+  const [showFromPicker, setShowFromPicker] = useState(false);
+  const [showToPicker, setShowToPicker] = useState(false);
 
   // Compute total portfolio value (USDT balance + all crypto holdings at current prices)
   const totalPortfolioValue = (() => {
