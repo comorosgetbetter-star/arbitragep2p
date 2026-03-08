@@ -42,7 +42,7 @@ interface StakingSession {
 }
 
 export const StakingView = () => {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const { balance, refetchBalance } = useUserData();
   const { prices } = useCryptoPrices();
   const { toast } = useToast();
