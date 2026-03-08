@@ -3,12 +3,17 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useUserData } from '@/contexts/UserDataContext';
 import { useCryptoPrices } from '@/hooks/useCryptoPrices';
 import { useState } from 'react';
+import { PortfolioSkeleton } from '@/components/skeletons/PortfolioSkeleton';
 
 export const PortfolioCard = () => {
-  const { user } = useAuth();
-  const { balance, cryptoBalances } = useUserData();
+  const { user, loading: authLoading } = useAuth();
+  const { balance, cryptoBalances, isLoading: dataLoading } = useUserData();
   const { prices } = useCryptoPrices();
   const [hidden, setHidden] = useState(false);
+
+  if (authLoading || (user && dataLoading)) {
+    return <PortfolioSkeleton />;
+  }
 
   const totalPortfolioValue = (() => {
     let total = balance;
