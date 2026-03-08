@@ -1,14 +1,17 @@
 import { useState, useEffect, useCallback } from 'react';
-import { ArrowLeft, ArrowDownUp, Wallet, Clock, TrendingUp, Zap, X } from 'lucide-react';
+import { ArrowLeft, ArrowDownUp, Wallet, Clock, TrendingUp, Zap, X, AlertTriangle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserData } from '@/contexts/UserDataContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+
+const fmt = (n: number, decimals = 2) => n.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
 
 interface FlywheelBotProps {
   onBack: () => void;
@@ -98,12 +101,12 @@ const ActiveFlywheelCard = ({ session, onCancelled }: { session: FlywheelSession
         <div className="bg-card/80 border border-border/30 rounded-xl p-3 space-y-1">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Live Value</p>
           <p className="text-2xl font-bold font-display text-foreground tabular-nums">
-            ${currentTotal.toLocaleString('en-US', { minimumFractionDigits: 4, maximumFractionDigits: 4 })}
+            ${fmt(currentTotal, 4)}
           </p>
           <div className="flex items-center gap-1">
             <Zap className="h-3 w-3 text-success" />
             <p className="text-xs text-success font-semibold tabular-nums">
-              +${currentEarnings.toLocaleString('en-US', { minimumFractionDigits: 6, maximumFractionDigits: 6 })} profit
+              +${fmt(currentEarnings, 6)} profit
             </p>
           </div>
         </div>
@@ -134,13 +137,13 @@ const ActiveFlywheelCard = ({ session, onCancelled }: { session: FlywheelSession
           <div className="bg-secondary/50 rounded-lg p-2 text-center">
             <p className="text-[10px] text-muted-foreground">Invested</p>
             <p className="text-xs font-bold text-foreground">
-              ${session.staked_amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              ${fmt(session.staked_amount)}
             </p>
           </div>
           <div className="bg-secondary/50 rounded-lg p-2 text-center">
             <p className="text-[10px] text-muted-foreground">Est. Final</p>
             <p className="text-xs font-bold text-success">
-              ${(session.staked_amount + session.staked_amount * (session.daily_return_pct / 100) * (session.lock_days)).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              ${fmt(session.staked_amount + session.staked_amount * (session.daily_return_pct / 100) * session.lock_days)}
             </p>
           </div>
         </div>
@@ -170,6 +173,7 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
   const [amount, setAmount] = useState('');
   const [isStarting, setIsStarting] = useState(false);
   const [activeSessions, setActiveSessions] = useState<FlywheelSession[]>([]);
+  const [confirmPlan, setConfirmPlan] = useState<typeof FLYWHEEL_PLANS[0] | null>(null);
 
   const fetchSessions = useCallback(async () => {
     if (!user) return;
@@ -199,24 +203,33 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
     if (!user) return;
     const amountNum = parseFloat(amount || String(plan.minAmount));
     if (amountNum < plan.minAmount) {
-      toast({ title: 'Minimum not met', description: `Minimum is $${plan.minAmount}`, variant: 'destructive' });
+      toast({ title: 'Minimum not met', description: `Minimum is $${fmt(plan.minAmount)}`, variant: 'destructive' });
       return;
     }
     if (amountNum > balance) {
-      toast({ title: 'Insufficient balance', description: `Your balance is $${balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, variant: 'destructive' });
+      toast({ title: 'Insufficient balance', description: `Your balance is $${fmt(balance)}`, variant: 'destructive' });
       return;
     }
 
+    // Show confirmation dialog
+    setConfirmPlan(plan);
+  };
+
+  const handleConfirmStart = async () => {
+    if (!confirmPlan || !user) return;
+    const amountNum = parseFloat(amount || String(confirmPlan.minAmount));
+
     setIsStarting(true);
+    setConfirmPlan(null);
     try {
       const { error } = await supabase.rpc('start_flywheel', {
-        _plan_name: plan.name,
+        _plan_name: confirmPlan.name,
         _amount: amountNum,
-        _daily_return_pct: plan.dailyReturnPct,
-        _lock_minutes: plan.lockMinutes,
+        _daily_return_pct: confirmPlan.dailyReturnPct,
+        _lock_minutes: confirmPlan.lockMinutes,
       });
       if (error) throw error;
-      toast({ title: 'Flywheel started! 🚀', description: `$${amountNum.toLocaleString()} deployed on ${plan.name}` });
+      toast({ title: 'Flywheel started! 🚀', description: `$${fmt(amountNum)} deployed on ${confirmPlan.name}` });
       setSelectedPlan(null);
       setAmount('');
       refetchBalance();
@@ -320,7 +333,7 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
                 <div className="grid grid-cols-3 gap-2 mb-3 text-center">
                   <div className="bg-secondary/50 rounded-lg p-2">
                     <p className="text-[10px] text-muted-foreground">Min</p>
-                    <p className="text-xs font-bold text-foreground">${plan.minAmount}</p>
+                    <p className="text-xs font-bold text-foreground">${fmt(plan.minAmount)}</p>
                   </div>
                   <div className="bg-secondary/50 rounded-lg p-2">
                     <p className="text-[10px] text-muted-foreground">Rate</p>
@@ -328,7 +341,7 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
                   </div>
                   <div className="bg-secondary/50 rounded-lg p-2">
                     <p className="text-[10px] text-muted-foreground">Est. Profit</p>
-                    <p className="text-xs font-bold text-success">+${estProfit.toFixed(2)}</p>
+                    <p className="text-xs font-bold text-success">+${fmt(estProfit)}</p>
                   </div>
                 </div>
 
@@ -338,7 +351,7 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
                       <label className="text-xs text-muted-foreground mb-1 block">Amount (USDT)</label>
                       <Input
                         type="number"
-                        placeholder={`Min $${plan.minAmount}`}
+                        placeholder={`Min $${fmt(plan.minAmount)}`}
                         value={amount}
                         onChange={e => setAmount(e.target.value)}
                         className="bg-secondary/50 border-border/50"
@@ -357,7 +370,7 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
                         onClick={() => handleStart(plan)}
                         disabled={isStarting}
                       >
-                        {isStarting ? 'Starting…' : `Deploy $${amount || plan.minAmount}`}
+                        {isStarting ? 'Starting…' : `Deploy $${fmt(parseFloat(amount) || plan.minAmount)}`}
                       </Button>
                     </div>
                   </div>
@@ -378,6 +391,58 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
       <p className="text-[10px] text-muted-foreground text-center px-4 pb-4">
         Bot trading involves risk. Returns are estimates based on market conditions. You can stop a bot at any time to collect accrued profits.
       </p>
+
+      {/* Confirmation Dialog */}
+      <Dialog open={!!confirmPlan} onOpenChange={(open) => { if (!open) setConfirmPlan(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-warning" />
+              Confirm Deployment
+            </DialogTitle>
+            <DialogDescription>
+              Please review the details before proceeding.
+            </DialogDescription>
+          </DialogHeader>
+          {confirmPlan && (
+            <div className="space-y-3 py-2">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-secondary/50 rounded-lg p-3 text-center">
+                  <p className="text-[10px] text-muted-foreground">Plan</p>
+                  <p className="text-sm font-bold text-foreground">{confirmPlan.name}</p>
+                </div>
+                <div className="bg-secondary/50 rounded-lg p-3 text-center">
+                  <p className="text-[10px] text-muted-foreground">Duration</p>
+                  <p className="text-sm font-bold text-foreground">{confirmPlan.duration}</p>
+                </div>
+                <div className="bg-secondary/50 rounded-lg p-3 text-center">
+                  <p className="text-[10px] text-muted-foreground">Amount</p>
+                  <p className="text-sm font-bold text-primary">${fmt(parseFloat(amount) || confirmPlan.minAmount)}</p>
+                </div>
+                <div className="bg-secondary/50 rounded-lg p-3 text-center">
+                  <p className="text-[10px] text-muted-foreground">Daily Rate</p>
+                  <p className="text-sm font-bold text-success">{confirmPlan.dailyReturnPct}%</p>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground text-center">
+                ${fmt(parseFloat(amount) || confirmPlan.minAmount)} USDT will be deducted from your balance.
+              </p>
+            </div>
+          )}
+          <DialogFooter className="flex gap-2 sm:gap-2">
+            <Button variant="outline" onClick={() => setConfirmPlan(null)} className="flex-1">
+              Cancel
+            </Button>
+            <Button
+              className="flex-1 bg-gold hover:bg-gold/90 text-gold-foreground"
+              onClick={handleConfirmStart}
+              disabled={isStarting}
+            >
+              {isStarting ? 'Starting…' : 'Confirm & Deploy'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
