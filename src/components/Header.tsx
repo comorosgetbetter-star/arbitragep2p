@@ -5,31 +5,21 @@ import { WalletDropdown } from './WalletDropdown';
 import { AddFundsModal } from './AddFundsModal';
 import { AccountDropdown } from './AccountDropdown';
 import { useAuth } from '@/contexts/AuthContext';
-import type { ActiveSection } from '@/pages/Index';
 
 interface HeaderProps {
   isDark: boolean;
   toggleTheme: () => void;
-  onNavigate?: (section: ActiveSection) => void;
 }
 
-export const Header = ({ isDark, toggleTheme, onNavigate }: HeaderProps) => {
+export const Header = ({ isDark, toggleTheme }: HeaderProps) => {
   const { user } = useAuth();
   const [isWalletOpen, setIsWalletOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isAddFundsOpen, setIsAddFundsOpen] = useState(false);
 
-  const navItems: { label: string; section: ActiveSection }[] = [
-    { label: 'Prices', section: 'home' },
-    { label: 'Deposit', section: 'deposit' },
-    { label: 'Express', section: 'express' },
-    { label: 'P2P Orders', section: 'p2p' },
-  ];
-
-  const handleNav = (section: ActiveSection) => {
-    onNavigate?.(section);
+  const scrollTo = (id: string) => {
     setIsMobileMenuOpen(false);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
   };
 
   return (
@@ -37,7 +27,7 @@ export const Header = ({ isDark, toggleTheme, onNavigate }: HeaderProps) => {
       <header className="fixed top-0 left-0 right-0 z-50 glass-card border-b border-border/30">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           {/* Logo */}
-          <div className="flex items-center gap-2 cursor-pointer" onClick={() => handleNav('home')}>
+          <div className="flex items-center gap-2 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
             <img src="/logo.png" alt="ArbitrageP2P" className="w-10 h-10 rounded-xl" />
             <span className="font-display font-bold text-base sm:text-xl">
               <span className="text-foreground">Arbitrage</span>
@@ -47,15 +37,15 @@ export const Header = ({ isDark, toggleTheme, onNavigate }: HeaderProps) => {
 
           {/* Desktop Nav */}
           <nav className="hidden md:flex items-center gap-6">
-            {navItems.map((item) => (
-              <button
-                key={item.section}
-                onClick={() => handleNav(item.section)}
-                className="text-muted-foreground hover:text-foreground transition-colors text-sm"
-              >
-                {item.label}
-              </button>
-            ))}
+            <button onClick={() => scrollTo('calculator')} className="text-muted-foreground hover:text-foreground transition-colors text-sm">
+              Calculator
+            </button>
+            <button onClick={() => scrollTo('why-usdt')} className="text-muted-foreground hover:text-foreground transition-colors text-sm">
+              Why USDT
+            </button>
+            <button onClick={() => scrollTo('faq')} className="text-muted-foreground hover:text-foreground transition-colors text-sm">
+              FAQ
+            </button>
           </nav>
 
           {/* Actions */}
@@ -72,12 +62,7 @@ export const Header = ({ isDark, toggleTheme, onNavigate }: HeaderProps) => {
               </Button>
             )}
 
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggleTheme}
-              className="hidden sm:flex"
-            >
+            <Button variant="ghost" size="icon" onClick={toggleTheme} className="hidden sm:flex">
               {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
             </Button>
 
@@ -94,7 +79,6 @@ export const Header = ({ isDark, toggleTheme, onNavigate }: HeaderProps) => {
                   <Wallet className="h-5 w-5" />
                   <span className="hidden sm:inline">Wallet</span>
                 </Button>
-                
                 <WalletDropdown 
                   isOpen={isWalletOpen} 
                   onClose={() => setIsWalletOpen(false)}
@@ -103,12 +87,7 @@ export const Header = ({ isDark, toggleTheme, onNavigate }: HeaderProps) => {
               </div>
             )}
 
-            <Button
-              variant="ghost"
-              size="icon"
-              className="md:hidden"
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            >
+            <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
               {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </Button>
           </div>
@@ -118,35 +97,22 @@ export const Header = ({ isDark, toggleTheme, onNavigate }: HeaderProps) => {
         {isMobileMenuOpen && (
           <div className="md:hidden glass-card border-t border-border/30 animate-fade-in-up">
             <nav className="container mx-auto px-4 py-4 flex flex-col gap-4">
-              {navItems.map((item) => (
-                <button
-                  key={item.section}
-                  onClick={() => handleNav(item.section)}
-                  className="text-muted-foreground hover:text-foreground transition-colors py-2 text-left"
-                >
-                  {item.label}
-                </button>
-              ))}
+              <button onClick={() => scrollTo('calculator')} className="text-muted-foreground hover:text-foreground transition-colors py-2 text-left">
+                Calculator
+              </button>
+              <button onClick={() => scrollTo('why-usdt')} className="text-muted-foreground hover:text-foreground transition-colors py-2 text-left">
+                Why USDT
+              </button>
+              <button onClick={() => scrollTo('faq')} className="text-muted-foreground hover:text-foreground transition-colors py-2 text-left">
+                FAQ
+              </button>
               {user && (
-                <Button
-                  variant="glow"
-                  size="sm"
-                  onClick={() => {
-                    setIsMobileMenuOpen(false);
-                    setIsAddFundsOpen(true);
-                  }}
-                  className="justify-start gap-2"
-                >
+                <Button variant="glow" size="sm" onClick={() => { setIsMobileMenuOpen(false); setIsAddFundsOpen(true); }} className="justify-start gap-2">
                   <Plus className="h-4 w-4" />
                   Add Funds
                 </Button>
               )}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={toggleTheme}
-                className="justify-start gap-2"
-              >
+              <Button variant="ghost" size="sm" onClick={toggleTheme} className="justify-start gap-2">
                 {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
                 {isDark ? 'Light Mode' : 'Dark Mode'}
               </Button>
@@ -155,10 +121,7 @@ export const Header = ({ isDark, toggleTheme, onNavigate }: HeaderProps) => {
         )}
       </header>
 
-      <AddFundsModal 
-        isOpen={isAddFundsOpen} 
-        onClose={() => setIsAddFundsOpen(false)} 
-      />
+      <AddFundsModal isOpen={isAddFundsOpen} onClose={() => setIsAddFundsOpen(false)} />
     </>
   );
 };
