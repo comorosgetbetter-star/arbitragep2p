@@ -34,6 +34,8 @@ const Index = () => {
   const [activeSection, setActiveSection] = useState<ActiveSection>('home');
   const [exploreTab, setExploreTab] = useState<ExploreTab>('staking');
   const [bottomTab, setBottomTab] = useState<BottomNavTab>(getTabFromHash);
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (isDark) {
@@ -43,9 +45,22 @@ const Index = () => {
     }
   }, [isDark]);
 
+  useEffect(() => {
+    if (!loading && !user && activeSection !== 'home') {
+      setActiveSection('home');
+    }
+  }, [loading, user, activeSection]);
+
   const toggleTheme = () => setIsDark(!isDark);
 
-
+  const openProtectedSection = (section: Exclude<ActiveSection, 'home'>) => {
+    if (loading) return;
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    setActiveSection(activeSection === section ? 'home' : section);
+  };
   const handleBottomTab = (tab: BottomNavTab) => {
     setBottomTab(tab);
     window.location.hash = tab === 'home' ? '' : tab;
