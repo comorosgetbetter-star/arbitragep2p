@@ -35,9 +35,9 @@ export const Header = ({ isDark, toggleTheme, activeTab = 'home', onTabChange }:
       <header className="fixed top-0 left-0 right-0 z-50 glass-card border-b border-border/30">
         <div className="container mx-auto px-4 h-12 md:h-16 flex items-center justify-between">
           {/* Logo */}
-          <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => { onTabChange?.('home'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
+          <div className="flex items-center gap-2.5 cursor-pointer shrink-0 mr-4" onClick={() => { onTabChange?.('home'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
             <img src="/logo.png" alt="PeerBitX" className="w-8 h-8 md:w-9 md:h-9 rounded-lg" />
-            <span className="font-display font-bold text-base md:text-lg tracking-tight text-foreground">Peer<span className="text-primary">BitX</span></span>
+            <span className="font-display font-bold text-base md:text-lg tracking-tight text-foreground whitespace-nowrap">Peer<span className="text-primary">BitX</span></span>
           </div>
 
           {/* Desktop Nav Tabs */}
