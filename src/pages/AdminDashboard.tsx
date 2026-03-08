@@ -25,7 +25,7 @@ import {
   EyeOff,
   Coins
 } from 'lucide-react';
-import { AdminAddressManager } from '@/components/AdminAddressManager'; // kept for potential standalone use
+// AdminAddressManager is now merged into AdminCryptoManager
 import { AdminCryptoManager } from '@/components/AdminCryptoManager';
 import { AdminP2POrderManager } from '@/components/AdminP2POrderManager';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
