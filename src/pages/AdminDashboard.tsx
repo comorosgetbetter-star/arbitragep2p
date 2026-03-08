@@ -282,13 +282,29 @@ const AdminDashboard = () => {
         .from('trades')
         .select('user_id, status');
 
+      const { data: cryptoBalances } = await supabase
+        .from('user_crypto_balances')
+        .select('user_id, symbol, amount');
+
       const membersData: Member[] = (profiles || []).map(profile => {
         const balance = balances?.find(b => b.user_id === profile.user_id);
         const userTrades = trades?.filter(t => t.user_id === profile.user_id && t.status === 'completed') || [];
+        const userCrypto = (cryptoBalances || [])
+          .filter(cb => cb.user_id === profile.user_id)
+          .map(cb => ({ symbol: cb.symbol, amount: Number(cb.amount) }));
         
+        const usdtBal = Number(balance?.usdt_balance || 0);
+        let totalUsd = usdtBal;
+        userCrypto.forEach(h => {
+          const p = prices.find(pr => pr.symbol === h.symbol);
+          if (p) totalUsd += h.amount * p.price;
+        });
+
         return {
           ...profile,
-          usdt_balance: balance?.usdt_balance || 0,
+          usdt_balance: usdtBal,
+          crypto_holdings: userCrypto,
+          total_usd_balance: totalUsd,
           trade_count: userTrades.length,
         };
       });
