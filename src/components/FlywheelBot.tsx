@@ -36,11 +36,18 @@ interface TradeRound {
   timestamp: number;
 }
 
+const DURATION_OPTIONS = [
+  { label: '1 min', minutes: 1 },
+  { label: '2 min', minutes: 2 },
+  { label: '5 min', minutes: 5 },
+  { label: '10 min', minutes: 10 },
+];
+
 const FLYWHEEL_PLANS = [
-  { id: 'turbo-1h', name: 'Turbo 1H', duration: '1 hour', lockMinutes: 60, dailyReturnPct: 120, minAmount: 100, badge: 'Fast' },
-  { id: 'turbo-3h', name: 'Turbo 3H', duration: '3 hours', lockMinutes: 180, dailyReturnPct: 80, minAmount: 250, badge: 'Popular' },
-  { id: 'turbo-6h', name: 'Turbo 6H', duration: '6 hours', lockMinutes: 360, dailyReturnPct: 60, minAmount: 500, badge: 'Steady' },
-  { id: 'turbo-12h', name: 'Turbo 12H', duration: '12 hours', lockMinutes: 720, dailyReturnPct: 40, minAmount: 1000, badge: 'Safe' },
+  { id: 'turbo-sprint', name: 'Turbo Sprint', dailyReturnPct: 120, minAmount: 100, badge: 'Fast' },
+  { id: 'turbo-rush', name: 'Turbo Rush', dailyReturnPct: 80, minAmount: 250, badge: 'Popular' },
+  { id: 'turbo-wave', name: 'Turbo Wave', dailyReturnPct: 60, minAmount: 500, badge: 'Steady' },
+  { id: 'turbo-titan', name: 'Turbo Titan', dailyReturnPct: 40, minAmount: 1000, badge: 'Safe' },
 ];
 
 // Deriv-style active session card with round-by-round win/loss
