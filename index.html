@@ -43,10 +43,6 @@
 
       Tawk_API.onLoad = function() {
         checkPage();
-        // Nudge widget slightly to the right
-        var style = document.createElement('style');
-        style.textContent = 'iframe[title="chat widget"]{ right: -8px !important; }';
-        document.head.appendChild(style);
         // Re-check on route changes (SPA)
         var pushState = history.pushState;
         history.pushState = function() {
