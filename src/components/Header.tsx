@@ -33,7 +33,7 @@ export const Header = ({ isDark, toggleTheme, activeTab = 'home', onTabChange }:
   return (
     <>
       <header className="fixed top-0 left-0 right-0 z-50 glass-card border-b border-border/30">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+        <div className="container mx-auto px-4 h-12 md:h-16 flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => { onTabChange?.('home'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
             <img src="/logo.png" alt="PeerBitX" className="w-10 h-10 rounded-xl" />
