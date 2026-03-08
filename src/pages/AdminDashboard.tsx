@@ -1141,6 +1141,11 @@ const AdminDashboard = () => {
             )}
           </TabsContent>
 
+          {/* KYC Tab */}
+          <TabsContent value="kyc" className="space-y-3">
+            <AdminKYCManager members={members.map(m => ({ user_id: m.user_id, full_name: m.full_name, email: m.email }))} />
+          </TabsContent>
+
           {/* P2P Orders Tab */}
           <TabsContent value="p2p-orders" className="space-y-3">
             <AdminP2POrderManager />
