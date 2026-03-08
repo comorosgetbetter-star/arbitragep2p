@@ -89,7 +89,7 @@ export const StakingView = () => {
   };
 
   const handleConfirmStake = async () => {
-    if (!confirmModal) return;
+    if (!confirmModal || !user) return;
     setIsStaking(true);
     try {
       const { error } = await supabase.rpc('start_staking', {
@@ -227,7 +227,10 @@ export const StakingView = () => {
             <Card
               key={plan.id}
               className={`border transition-all cursor-pointer ${isSelected ? 'border-primary/50 bg-primary/5' : 'border-border/50 hover:border-border'}`}
-              onClick={() => { setSelectedPlan(isSelected ? null : plan.id); setStakeAmount(String(plan.minAmount)); }}
+              onClick={() => {
+                if (!user) { navigate('/login'); return; }
+                setSelectedPlan(isSelected ? null : plan.id); setStakeAmount(String(plan.minAmount));
+              }}
             >
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-3">
@@ -246,7 +249,7 @@ export const StakingView = () => {
                       size="sm"
                       variant={isSelected ? 'default' : 'outline'}
                       className="h-7 text-xs px-3"
-                      onClick={(e) => { e.stopPropagation(); setSelectedPlan(isSelected ? null : plan.id); setStakeAmount(String(plan.minAmount)); }}
+                      onClick={(e) => { e.stopPropagation(); if (!user) { navigate('/login'); return; } setSelectedPlan(isSelected ? null : plan.id); setStakeAmount(String(plan.minAmount)); }}
                     >
                       {isSelected ? 'Selected' : 'Select'}
                     </Button>
