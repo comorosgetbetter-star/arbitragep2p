@@ -67,6 +67,13 @@ export const AssetsView = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [historyFilter, setHistoryFilter] = useState<HistoryFilter>('all');
 
+  // Convert state
+  const [convertFrom, setConvertFrom] = useState('');
+  const [convertTo, setConvertTo] = useState('');
+  const [convertAmount, setConvertAmount] = useState('');
+  const [isConverting, setIsConverting] = useState(false);
+  const [convertSuccess, setConvertSuccess] = useState(false);
+
   // Compute total portfolio value (USDT balance + all crypto holdings at current prices)
   const totalPortfolioValue = (() => {
     let total = balance; // USDT balance
