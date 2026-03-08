@@ -62,8 +62,8 @@ const Index = () => {
   const btnClass = (section: ActiveSection) =>
     `h-12 rounded-xl text-sm font-semibold transition-all ${
       activeSection === section
-        ? 'bg-[hsl(80,85%,55%)] hover:bg-[hsl(80,85%,48%)] text-[hsl(0,0%,6%)]'
-        : 'bg-card border border-border text-foreground hover:border-primary/40'
+        ? 'bg-gold hover:bg-gold/90 text-gold-foreground shadow-[0_0_16px_hsl(43_96%_56%/0.3)]'
+        : 'bg-card border border-border text-foreground hover:border-gold/40'
     }`;
 
   // Determine what to render based on bottom tab
