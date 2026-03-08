@@ -129,6 +129,9 @@ const AdminDashboard = () => {
   const [ticketMessages, setTicketMessages] = useState<TicketMessage[]>([]);
   const [replyMessage, setReplyMessage] = useState('');
   const [isSendingReply, setIsSendingReply] = useState(false);
+  const [banTarget, setBanTarget] = useState<Member | null>(null);
+  const [banReason, setBanReason] = useState('');
+  const [isBanning, setIsBanning] = useState(false);
   const { prices } = useCryptoPrices();
   const [stats, setStats] = useState({
     totalMembers: 0,
