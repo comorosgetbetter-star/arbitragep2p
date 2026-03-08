@@ -427,7 +427,7 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
         _plan_name: confirmPlan.name,
         _amount: amountNum,
         _daily_return_pct: confirmPlan.dailyReturnPct,
-        _lock_minutes: confirmPlan.lockMinutes,
+        _lock_minutes: selectedDuration.minutes,
       });
       if (error) throw error;
       toast({ title: 'Flywheel started! 🚀', description: `$${fmt(amountNum)} deployed on ${confirmPlan.name}` });
