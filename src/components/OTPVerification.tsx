@@ -178,12 +178,12 @@ const OTPVerification = ({ email, fullName, phone, country, password, onVerified
           disabled={isVerifying}
         >
           <InputOTPGroup>
-            <InputOTPSlot index={0} className="w-12 h-14 text-xl font-bold" />
-            <InputOTPSlot index={1} className="w-12 h-14 text-xl font-bold" />
-            <InputOTPSlot index={2} className="w-12 h-14 text-xl font-bold" />
-            <InputOTPSlot index={3} className="w-12 h-14 text-xl font-bold" />
-            <InputOTPSlot index={4} className="w-12 h-14 text-xl font-bold" />
-            <InputOTPSlot index={5} className="w-12 h-14 text-xl font-bold" />
+            <InputOTPSlot index={0} className="w-12 h-14 text-xl font-bold border-2 border-border bg-secondary text-foreground" />
+            <InputOTPSlot index={1} className="w-12 h-14 text-xl font-bold border-2 border-border bg-secondary text-foreground" />
+            <InputOTPSlot index={2} className="w-12 h-14 text-xl font-bold border-2 border-border bg-secondary text-foreground" />
+            <InputOTPSlot index={3} className="w-12 h-14 text-xl font-bold border-2 border-border bg-secondary text-foreground" />
+            <InputOTPSlot index={4} className="w-12 h-14 text-xl font-bold border-2 border-border bg-secondary text-foreground" />
+            <InputOTPSlot index={5} className="w-12 h-14 text-xl font-bold border-2 border-border bg-secondary text-foreground" />
           </InputOTPGroup>
         </InputOTP>
 
