@@ -115,7 +115,7 @@ export const AssetsView = () => {
     return age < 24 * 60 * 60 * 1000;
   });
 
-  // Load deposit address when entering deposit view
+  // Load deposit address when entering deposit view; refetch balances when entering convert view
   useEffect(() => {
     if (subView === 'deposit') {
       setDepositLoading(true);
@@ -123,6 +123,10 @@ export const AssetsView = () => {
         setDepositAddr(addr);
         setDepositLoading(false);
       });
+    }
+    if (subView === 'convert') {
+      // Always refetch so newly acquired crypto shows up
+      Promise.all([refetchBalance(), refetchCryptoBalances()]);
     }
   }, [subView]);
 
