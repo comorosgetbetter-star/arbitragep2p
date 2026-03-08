@@ -144,7 +144,7 @@ const PrivacyPolicy = () => {
           <section className="space-y-3">
             <h2 className="text-lg font-semibold text-foreground">12. Contact Us</h2>
             <p>If you have any questions, concerns, or requests regarding this Privacy Policy or our data practices, please contact us at:</p>
-            <p className="text-foreground font-medium">privacy@arbitragep2p.com</p>
+            <p className="text-foreground font-medium">privacy@peerbitx.com</p>
           </section>
         </div>
       </main>

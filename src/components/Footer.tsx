@@ -15,14 +15,9 @@ export const Footer = () => {
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             {/* Logo & Copyright */}
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
-                <span className="text-primary font-bold text-xl">₮</span>
-              </div>
+              <img src="/logo.png" alt="PeerBitX" className="w-10 h-10 rounded-xl" />
               <div>
-                <span className="font-display font-bold text-lg">
-                  <span className="text-foreground">USDT</span>
-                  <span className="text-primary">Exchange</span>
-                </span>
+                <span className="font-display font-bold text-lg text-foreground">PeerBitX</span>
                 <p className="text-xs text-muted-foreground">
                   © 2026 All rights reserved
                 </p>

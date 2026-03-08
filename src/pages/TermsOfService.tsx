@@ -138,7 +138,7 @@ const TermsOfService = () => {
           <section className="space-y-3">
             <h2 className="text-lg font-semibold text-foreground">14. Contact Information</h2>
             <p>If you have any questions about these Terms of Service, please contact us at:</p>
-            <p className="text-foreground font-medium">support@arbitragep2p.com</p>
+            <p className="text-foreground font-medium">support@peerbitx.com</p>
           </section>
         </div>
       </main>
