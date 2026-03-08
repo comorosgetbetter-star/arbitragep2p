@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-const BONUS_AMOUNT = 5; // USDT bonus per referral
+const BONUS_PERCENT = 5; // 5% bonus of referral's deposit
 
 function generateCode(userId: string): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -76,7 +76,7 @@ export const ReferralSection = () => {
       try {
         await navigator.share({
           title: 'Join PeerBitX',
-          text: `Join PeerBitX and earn $${BONUS_AMOUNT} USDT bonus! Use my referral link:`,
+          text: `Join PeerBitX and earn a ${BONUS_PERCENT}% bonus on deposits! Use my referral link:`,
           url: referralLink,
         });
       } catch {
@@ -106,7 +106,7 @@ export const ReferralSection = () => {
           </div>
           <div>
             <h3 className="text-sm font-bold text-foreground">Refer & Earn</h3>
-            <p className="text-[10px] text-muted-foreground">Earn ${BONUS_AMOUNT} USDT for every friend who joins</p>
+            <p className="text-[10px] text-muted-foreground">Earn {BONUS_PERCENT}% bonus of every referral's deposit</p>
           </div>
         </div>
 
