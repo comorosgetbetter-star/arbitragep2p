@@ -20,12 +20,12 @@ import {
   Clock,
   MessageSquare,
   Send,
-  MapPin,
+  
   ShoppingBag,
   EyeOff,
   Coins
 } from 'lucide-react';
-import { AdminAddressManager } from '@/components/AdminAddressManager';
+// AdminAddressManager is now merged into AdminCryptoManager
 import { AdminCryptoManager } from '@/components/AdminCryptoManager';
 import { AdminP2POrderManager } from '@/components/AdminP2POrderManager';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -699,7 +699,7 @@ const AdminDashboard = () => {
 
         {/* Main Tabs */}
         <Tabs defaultValue="members" className="space-y-3">
-          <TabsList className="w-full grid grid-cols-7 h-auto p-1 bg-card border border-border/50">
+          <TabsList className="w-full grid grid-cols-6 h-auto p-1 bg-card border border-border/50">
             <TabsTrigger value="members" className="flex flex-col items-center gap-0.5 py-2 text-[10px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-semibold">
               <Users className="w-3.5 h-3.5" />
               Members
@@ -726,13 +726,9 @@ const AdminDashboard = () => {
               <ShoppingBag className="w-3.5 h-3.5" />
               P2P
             </TabsTrigger>
-            <TabsTrigger value="crypto" className="flex flex-col items-center gap-0.5 py-2 text-[10px] data-[state=active]:bg-amber-500 data-[state=active]:text-white font-semibold">
+            <TabsTrigger value="crypto" className="flex flex-col items-center gap-0.5 py-2 text-[10px] data-[state=active]:bg-gold data-[state=active]:text-gold-foreground font-semibold">
               <Coins className="w-3.5 h-3.5" />
               Crypto
-            </TabsTrigger>
-            <TabsTrigger value="addresses" className="flex flex-col items-center gap-0.5 py-2 text-[10px] data-[state=active]:bg-chart-4 data-[state=active]:text-white font-semibold">
-              <MapPin className="w-3.5 h-3.5" />
-              Addr
             </TabsTrigger>
             <TabsTrigger value="audit" className="flex flex-col items-center gap-0.5 py-2 text-[10px] data-[state=active]:bg-accent data-[state=active]:text-accent-foreground font-semibold">
               <History className="w-3.5 h-3.5" />
@@ -1035,10 +1031,6 @@ const AdminDashboard = () => {
             <AdminCryptoManager />
           </TabsContent>
 
-          {/* Addresses Tab */}
-          <TabsContent value="addresses" className="space-y-3">
-            <AdminAddressManager />
-          </TabsContent>
 
           {/* Audit Logs Tab */}
           <TabsContent value="audit" className="space-y-3">
