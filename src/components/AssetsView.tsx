@@ -118,6 +118,16 @@ export const AssetsView = () => {
     }
   };
 
+  const cryptoLogos: Record<string, string> = {
+    BTC: 'https://assets.coingecko.com/coins/images/1/small/bitcoin.png',
+    ETH: 'https://assets.coingecko.com/coins/images/279/small/ethereum.png',
+    USDT: 'https://assets.coingecko.com/coins/images/325/small/Tether.png',
+    BNB: 'https://assets.coingecko.com/coins/images/825/small/bnb-icon2_2x.png',
+    SOL: 'https://assets.coingecko.com/coins/images/4128/small/solana.png',
+    XRP: 'https://assets.coingecko.com/coins/images/44/small/xrp-symbol-white-128.png',
+    LTC: 'https://assets.coingecko.com/coins/images/2/small/litecoin.png',
+    DOGE: 'https://assets.coingecko.com/coins/images/5/small/dogecoin.png',
+  };
   const cryptoIcons: Record<string, string> = {
     BTC: '₿', ETH: '⟠', USDT: '₮', BNB: '◆', SOL: '◎', XRP: '✕', LTC: 'Ł', DOGE: 'Ð',
   };
@@ -385,14 +395,19 @@ export const AssetsView = () => {
             <span>Value/Spot PnL</span>
           </div>
           <div className="space-y-1">
-            {prices.map((crypto) => {
+            {[...prices].sort((a, b) => b.price - a.price).map((crypto) => {
+              const logo = cryptoLogos[crypto.symbol];
               const icon = cryptoIcons[crypto.symbol] || '•';
               const apr = aprRates[crypto.symbol];
               const colorClass = iconColors[crypto.symbol] || 'bg-muted text-muted-foreground';
               return (
                 <div key={crypto.symbol} className="flex items-center justify-between py-3 px-1">
                   <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-full ${colorClass} flex items-center justify-center text-lg font-bold`}>{icon}</div>
+                    {logo ? (
+                      <img src={logo} alt={crypto.symbol} className="w-10 h-10 rounded-full" />
+                    ) : (
+                      <div className={`w-10 h-10 rounded-full ${colorClass} flex items-center justify-center text-lg font-bold`}>{icon}</div>
+                    )}
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-semibold text-foreground">{crypto.symbol}</span>
