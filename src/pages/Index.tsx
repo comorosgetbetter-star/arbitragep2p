@@ -85,8 +85,8 @@ const Index = () => {
             <Button
               className={`flex-1 h-10 rounded-xl text-sm font-semibold transition-all ${
                 exploreTab === 'staking'
-                  ? 'bg-primary text-primary-foreground shadow-md'
-                  : 'bg-card border border-border text-foreground hover:border-primary/40'
+                  ? 'bg-gold text-gold-foreground shadow-md'
+                  : 'bg-card border border-gold/30 text-gold hover:border-gold/60 hover:bg-gold/5'
               }`}
               onClick={() => setExploreTab('staking')}
             >
@@ -95,8 +95,8 @@ const Index = () => {
             <Button
               className={`flex-1 h-10 rounded-xl text-sm font-semibold transition-all ${
                 exploreTab === 'bots'
-                  ? 'bg-primary text-primary-foreground shadow-md'
-                  : 'bg-card border border-border text-foreground hover:border-primary/40'
+                  ? 'bg-gold text-gold-foreground shadow-md'
+                  : 'bg-card border border-gold/30 text-gold hover:border-gold/60 hover:bg-gold/5'
               }`}
               onClick={() => setExploreTab('bots')}
             >
