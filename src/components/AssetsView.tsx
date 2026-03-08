@@ -77,11 +77,31 @@ export const AssetsView = () => {
   const [showToPicker, setShowToPicker] = useState(false);
 
   // Compute total portfolio value (USDT balance + all crypto holdings at current prices)
+  // Use a stable price snapshot to avoid jumps from simulated price ticks
+  const [stablePrices, setStablePrices] = useState<Record<string, number>>({});
+  useEffect(() => {
+    // Update stable prices only every 30 seconds to prevent visual jumps
+    const updateStable = () => {
+      const map: Record<string, number> = {};
+      prices.forEach(p => { map[p.symbol] = p.price; });
+      setStablePrices(map);
+    };
+    updateStable();
+    const interval = setInterval(updateStable, 30000);
+    return () => clearInterval(interval);
+  }, []);
+  // Also update when crypto balances actually change (conversion, deposit, etc.)
+  useEffect(() => {
+    const map: Record<string, number> = {};
+    prices.forEach(p => { map[p.symbol] = p.price; });
+    setStablePrices(map);
+  }, [balance, cryptoBalances]);
+
   const totalPortfolioValue = (() => {
     let total = balance; // USDT balance
     cryptoBalances.forEach((cb) => {
-      const p = prices.find(pr => pr.symbol === cb.symbol);
-      if (p) total += cb.amount * p.price;
+      const price = stablePrices[cb.symbol] || prices.find(pr => pr.symbol === cb.symbol)?.price || 0;
+      total += cb.amount * price;
     });
     return total;
   })();
@@ -95,7 +115,7 @@ export const AssetsView = () => {
     return age < 24 * 60 * 60 * 1000;
   });
 
-  // Load deposit address when entering deposit view
+  // Load deposit address when entering deposit view; refetch balances when entering convert view
   useEffect(() => {
     if (subView === 'deposit') {
       setDepositLoading(true);
@@ -103,6 +123,10 @@ export const AssetsView = () => {
         setDepositAddr(addr);
         setDepositLoading(false);
       });
+    }
+    if (subView === 'convert') {
+      // Always refetch so newly acquired crypto shows up
+      Promise.all([refetchBalance(), refetchCryptoBalances()]);
     }
   }, [subView]);
 
@@ -278,11 +302,13 @@ export const AssetsView = () => {
   // ── SUB-VIEW: Convert ──
   if (subView === 'convert') {
     // Available cryptos the user has balance in (including USDT)
+    // Use a threshold > 0 to avoid floating point dust
     const availableCryptos = [
-      { symbol: 'USDT', amount: balance },
-      ...cryptoBalances.filter(cb => cb.amount > 0),
+      ...(balance > 0.001 ? [{ symbol: 'USDT', amount: balance }] : []),
+      ...cryptoBalances.filter(cb => cb.amount > 0.000001),
     ];
 
+    // All symbols: user-owned ones + all standard ones for the "To" picker
     const allSymbols = ['USDT', 'BTC', 'ETH', 'BNB', 'SOL', 'XRP'];
     const cryptoNames: Record<string, string> = { USDT: 'Tether', BTC: 'Bitcoin', ETH: 'Ethereum', BNB: 'BNB', SOL: 'Solana', XRP: 'XRP' };
     const fromBalance = convertFrom === 'USDT' ? balance : (cryptoBalances.find(c => c.symbol === convertFrom)?.amount || 0);
