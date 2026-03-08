@@ -47,12 +47,9 @@ const Login = () => {
       });
 
       if (error) {
-        // Check if user is banned
-        const { data: banned } = await supabase
-          .from('banned_users')
-          .select('id')
-          .eq('email', validatedData.email.toLowerCase().trim())
-          .maybeSingle();
+        // Check if user is banned using security definer function
+        const { data: isBanned } = await supabase
+          .rpc('is_email_banned', { _email: validatedData.email.toLowerCase().trim() });
 
         if (banned) {
           toast({
