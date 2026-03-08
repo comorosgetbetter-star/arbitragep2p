@@ -38,56 +38,6 @@ const Index = () => {
 
   const toggleTheme = () => setIsDark(!isDark);
 
-  // Keep Tawk widget above bottom nav on mobile (force re-apply after widget loads)
-  useEffect(() => {
-    const styleId = 'tawk-offset-style';
-    const mobileOffset = 'calc(112px + env(safe-area-inset-bottom, 0px))';
-
-    const applyTawkOffset = () => {
-      const selectors = [
-        '#tawk-bubble-container',
-        '#tawkchat-container',
-        '.tawk-min-container',
-        'iframe[title="chat widget"]',
-        'iframe[src*="tawk.to"]',
-      ];
-
-      selectors.forEach((selector) => {
-        document.querySelectorAll<HTMLElement>(selector).forEach((el) => {
-          el.style.setProperty('bottom', mobileOffset, 'important');
-          el.style.setProperty('inset-block-end', mobileOffset, 'important');
-          el.style.setProperty('z-index', '30', 'important');
-        });
-      });
-    };
-
-    if (!document.getElementById(styleId)) {
-      const style = document.createElement('style');
-      style.id = styleId;
-      style.textContent = `
-        @media (max-width: 768px) {
-          body #tawk-bubble-container,
-          body #tawkchat-container,
-          body .tawk-min-container,
-          body iframe[title="chat widget"],
-          body iframe[src*="tawk.to"] {
-            bottom: ${mobileOffset} !important;
-            inset-block-end: ${mobileOffset} !important;
-            z-index: 30 !important;
-          }
-        }
-      `;
-      document.head.appendChild(style);
-    }
-
-    applyTawkOffset();
-    const intervalId = window.setInterval(applyTawkOffset, 1500);
-
-    return () => {
-      window.clearInterval(intervalId);
-      document.getElementById(styleId)?.remove();
-    };
-  }, []);
 
   const handleBottomTab = (tab: BottomNavTab) => {
     setBottomTab(tab);
