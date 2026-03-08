@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/dialog';
 import { Clock, ShieldCheck, ThumbsUp, BarChart3, Timer, Lock } from 'lucide-react';
 import type { TradeSession } from '@/hooks/useTradeSession';
+import { P2POrdersSkeleton } from '@/components/skeletons/P2POrdersSkeleton';
 
 // Same tiered rate table as Express P2P
 const rateTiers = [
