@@ -198,7 +198,7 @@ const AdminDashboard = () => {
     const { data: { session } } = await supabase.auth.getSession();
     
     if (!session) {
-      navigate('/admin');
+      navigate('/alpha02');
       return;
     }
 
