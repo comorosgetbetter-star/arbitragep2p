@@ -29,7 +29,7 @@ export const ExpressP2P = () => {
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const [pendingPackage, setPendingPackage] = useState<{ usd: number; usdt: number } | null>(null);
   const [existingSession, setExistingSession] = useState<TradeSession | null>(null);
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const navigate = useNavigate();
   const { startSession, clearSession, getStoredSession } = useTradeSession();
 
