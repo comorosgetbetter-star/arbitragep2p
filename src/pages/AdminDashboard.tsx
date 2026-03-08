@@ -839,6 +839,16 @@ const AdminDashboard = () => {
                             <Minus className="w-3 h-3 mr-0.5" />
                             Sub
                           </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            className="h-7 px-2 text-xs bg-destructive/80"
+                            onClick={() => { setBanTarget(member); setBanReason(''); }}
+                            title="Ban user and delete all data"
+                          >
+                            <Ban className="w-3 h-3 mr-0.5" />
+                            Ban
+                          </Button>
                         </div>
                       </div>
                     </CardContent>
