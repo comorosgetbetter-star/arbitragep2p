@@ -31,6 +31,7 @@ import {
 } from 'lucide-react';
 // AdminAddressManager is now merged into AdminCryptoManager
 import { AdminCryptoManager } from '@/components/AdminCryptoManager';
+import { AdminKYCManager } from '@/components/AdminKYCManager';
 import { AdminP2POrderManager } from '@/components/AdminP2POrderManager';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
