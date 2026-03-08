@@ -155,6 +155,9 @@ const Profile = () => {
           </div>
         </div>
 
+        {/* KYC Verification */}
+        <KYCVerification />
+
         {/* Account Settings - Change Email & Password */}
         <AccountSettings
           currentEmail={profile?.email || ''}
