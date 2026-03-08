@@ -20,7 +20,7 @@ import {
   Clock,
   MessageSquare,
   Send,
-  MapPin,
+  
   ShoppingBag,
   EyeOff,
   Coins
