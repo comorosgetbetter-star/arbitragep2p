@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { SupportTicketForm } from '@/components/SupportTicketForm';
 import { ReferralSection } from '@/components/ReferralSection';
+import TwoFactorSetup from '@/components/TwoFactorSetup';
 
 interface ProfileData {
   full_name: string;
@@ -151,6 +152,9 @@ const Profile = () => {
             </div>
           </div>
         </div>
+
+        {/* 2FA Setup */}
+        <TwoFactorSetup />
 
         {/* Referral Section */}
         <ReferralSection />

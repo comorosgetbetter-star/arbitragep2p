@@ -47,6 +47,22 @@ const Login = () => {
       });
 
       if (error) {
+        // Check if user is banned
+        const { data: banned } = await supabase
+          .from('banned_users')
+          .select('id')
+          .eq('email', validatedData.email.toLowerCase().trim())
+          .maybeSingle();
+
+        if (banned) {
+          toast({
+            title: "Account Suspended",
+            description: "This account has been suspended. Contact support for assistance.",
+            variant: "destructive",
+          });
+          return;
+        }
+
         toast({
           title: "Login Failed",
           description: error.message,

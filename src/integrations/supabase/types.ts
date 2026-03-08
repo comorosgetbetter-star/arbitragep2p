@@ -65,6 +65,36 @@ export type Database = {
         }
         Relationships: []
       }
+      banned_users: {
+        Row: {
+          banned_at: string
+          banned_by: string
+          email: string
+          full_name: string | null
+          id: string
+          phone: string | null
+          reason: string
+        }
+        Insert: {
+          banned_at?: string
+          banned_by: string
+          email: string
+          full_name?: string | null
+          id?: string
+          phone?: string | null
+          reason?: string
+        }
+        Update: {
+          banned_at?: string
+          banned_by?: string
+          email?: string
+          full_name?: string | null
+          id?: string
+          phone?: string | null
+          reason?: string
+        }
+        Relationships: []
+      }
       deposit_crypto_settings: {
         Row: {
           created_at: string

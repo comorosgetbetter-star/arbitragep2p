@@ -23,7 +23,8 @@ import {
   
   ShoppingBag,
   EyeOff,
-  Coins
+  Coins,
+  Ban
 } from 'lucide-react';
 // AdminAddressManager is now merged into AdminCryptoManager
 import { AdminCryptoManager } from '@/components/AdminCryptoManager';
@@ -128,6 +129,9 @@ const AdminDashboard = () => {
   const [ticketMessages, setTicketMessages] = useState<TicketMessage[]>([]);
   const [replyMessage, setReplyMessage] = useState('');
   const [isSendingReply, setIsSendingReply] = useState(false);
+  const [banTarget, setBanTarget] = useState<Member | null>(null);
+  const [banReason, setBanReason] = useState('');
+  const [isBanning, setIsBanning] = useState(false);
   const { prices } = useCryptoPrices();
   const [stats, setStats] = useState({
     totalMembers: 0,
@@ -573,6 +577,32 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleBanUser = async () => {
+    if (!banTarget) return;
+    setIsBanning(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Not authenticated');
+
+      const { data, error } = await supabase.functions.invoke('ban-user', {
+        body: { targetUserId: banTarget.user_id, reason: banReason || 'Banned by admin' },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      toast.success(`${banTarget.full_name} has been banned and all data deleted`);
+      setBanTarget(null);
+      setBanReason('');
+      fetchData();
+    } catch (err: any) {
+      console.error('Ban error:', err);
+      toast.error(err.message || 'Failed to ban user');
+    } finally {
+      setIsBanning(false);
+    }
+  };
+
   const filteredMembers = members.filter(member =>
     member.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     member.email.toLowerCase().includes(searchQuery.toLowerCase())
@@ -808,6 +838,16 @@ const AdminDashboard = () => {
                           >
                             <Minus className="w-3 h-3 mr-0.5" />
                             Sub
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            className="h-7 px-2 text-xs bg-destructive/80"
+                            onClick={() => { setBanTarget(member); setBanReason(''); }}
+                            title="Ban user and delete all data"
+                          >
+                            <Ban className="w-3 h-3 mr-0.5" />
+                            Ban
                           </Button>
                         </div>
                       </div>
@@ -1168,6 +1208,45 @@ const AdminDashboard = () => {
               variant={adjustmentType === 'subtract' ? 'destructive' : 'default'}
             >
               {isAdjusting ? 'Processing...' : 'Confirm'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Ban User Dialog */}
+      <Dialog open={!!banTarget} onOpenChange={(open) => { if (!open) setBanTarget(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <Ban className="w-5 h-5" />
+              Ban User
+            </DialogTitle>
+            <DialogDescription>
+              This will permanently delete all data for <strong>{banTarget?.full_name}</strong> ({banTarget?.email}) and prevent them from registering again with the same email or phone.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label htmlFor="ban-reason">Reason for ban</Label>
+              <Textarea
+                id="ban-reason"
+                placeholder="Reason for banning this user..."
+                value={banReason}
+                onChange={(e) => setBanReason(e.target.value)}
+                rows={2}
+              />
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setBanTarget(null)} disabled={isBanning}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleBanUser}
+              disabled={isBanning}
+            >
+              {isBanning ? 'Banning...' : 'Ban & Delete All Data'}
             </Button>
           </DialogFooter>
         </DialogContent>
