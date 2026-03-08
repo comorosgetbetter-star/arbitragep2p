@@ -20,7 +20,7 @@ const TermsOfService = () => {
         <div className="prose prose-sm prose-invert max-w-none space-y-6 text-muted-foreground">
           <section className="space-y-3">
             <h2 className="text-lg font-semibold text-foreground">1. Acceptance of Terms</h2>
-            <p>By accessing or using the ArbitrageP2P platform ("Platform"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree with any part of these Terms, you must not use the Platform. These Terms constitute a legally binding agreement between you ("User," "you," or "your") and ArbitrageP2P ("we," "us," or "our").</p>
+            <p>By accessing or using the PeerBitX platform ("Platform"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree with any part of these Terms, you must not use the Platform. These Terms constitute a legally binding agreement between you ("User," "you," or "your") and PeerBitX ("we," "us," or "our").</p>
             <p>We reserve the right to update or modify these Terms at any time without prior notice. Your continued use of the Platform following any changes constitutes acceptance of those changes. It is your responsibility to review these Terms periodically.</p>
           </section>
 
