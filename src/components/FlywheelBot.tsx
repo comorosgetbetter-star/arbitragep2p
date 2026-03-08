@@ -449,12 +449,11 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
 
   const handleStart = async (plan: typeof FLYWHEEL_PLANS[0]) => {
     if (!user) return;
-    const amountNum = parseFloat(amount || String(plan.minAmount));
-    if (amountNum < plan.minAmount) {
+    if (balance < plan.minAmount) {
       toast({ title: 'Minimum not met', description: `Minimum is $${fmt(plan.minAmount)}`, variant: 'destructive' });
       return;
     }
-    if (amountNum > balance) {
+    if (balance <= 0) {
       toast({ title: 'Insufficient balance', description: `Your balance is $${fmt(balance)}`, variant: 'destructive' });
       return;
     }
