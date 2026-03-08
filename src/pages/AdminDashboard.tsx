@@ -1031,10 +1031,6 @@ const AdminDashboard = () => {
             <AdminCryptoManager />
           </TabsContent>
 
-          {/* Addresses Tab */}
-          <TabsContent value="addresses" className="space-y-3">
-            <AdminAddressManager />
-          </TabsContent>
 
           {/* Audit Logs Tab */}
           <TabsContent value="audit" className="space-y-3">
