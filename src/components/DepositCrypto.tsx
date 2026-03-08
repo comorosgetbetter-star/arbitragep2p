@@ -32,7 +32,7 @@ const NETWORK_META: Record<string, { name: string; chain: string; fee: string; t
 };
 
 export const DepositCrypto = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [cryptoOptions, setCryptoOptions] = useState<CryptoOption[]>([]);
   const [selectedCrypto, setSelectedCrypto] = useState<string>('USDT');
@@ -41,19 +41,27 @@ export const DepositCrypto = () => {
 
   useEffect(() => {
     const fetchCryptos = async () => {
+      if (!user) {
+        setCryptoOptions([]);
+        setLoading(false);
+        return;
+      }
+
       setLoading(true);
       const { data } = await supabase
         .from('deposit_crypto_settings')
         .select('symbol, name, deposit_address, network, is_enabled')
         .eq('is_enabled', true)
         .order('created_at');
+
       if (data) {
         setCryptoOptions(data as CryptoOption[]);
       }
       setLoading(false);
     };
+
     fetchCryptos();
-  }, []);
+  }, [user]);
 
   const currentCrypto = cryptoOptions.find(c => c.symbol === selectedCrypto);
   const address = currentCrypto?.deposit_address || '';
