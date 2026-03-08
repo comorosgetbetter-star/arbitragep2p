@@ -55,7 +55,7 @@ export const StakingView = () => {
     if (amount > balance) {
       toast({
         title: 'Insufficient balance',
-        description: `Your balance is $${balance.toFixed(2)}. Please deposit more funds.`,
+        description: `Your balance is $${balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}. Please deposit more funds.`,
         variant: 'destructive',
       });
       return;
