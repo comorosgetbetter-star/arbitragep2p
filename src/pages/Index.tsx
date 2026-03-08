@@ -34,7 +34,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground relative">
-      <Header isDark={isDark} toggleTheme={toggleTheme} onNavigate={setActiveSection} />
+      <Header isDark={isDark} toggleTheme={toggleTheme} />
 
       <main className="relative z-10 pt-20 pb-8">
         <div className="container mx-auto px-4 max-w-lg">
