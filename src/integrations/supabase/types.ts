@@ -173,6 +173,48 @@ export type Database = {
         }
         Relationships: []
       }
+      staking_sessions: {
+        Row: {
+          cancelled_at: string | null
+          created_at: string
+          daily_return_pct: number
+          ends_at: string
+          id: string
+          lock_days: number
+          plan_name: string
+          staked_amount: number
+          started_at: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          cancelled_at?: string | null
+          created_at?: string
+          daily_return_pct?: number
+          ends_at: string
+          id?: string
+          lock_days: number
+          plan_name: string
+          staked_amount: number
+          started_at?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          cancelled_at?: string | null
+          created_at?: string
+          daily_return_pct?: number
+          ends_at?: string
+          id?: string
+          lock_days?: number
+          plan_name?: string
+          staked_amount?: number
+          started_at?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       support_tickets: {
         Row: {
           category: string
@@ -430,12 +472,22 @@ export type Database = {
         Args: { _adjustment: number; _reason: string; _target_user_id: string }
         Returns: boolean
       }
+      cancel_staking: { Args: { _session_id: string }; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      start_staking: {
+        Args: {
+          _amount: number
+          _daily_return_pct: number
+          _lock_days: number
+          _plan_name: string
+        }
+        Returns: string
       }
       stealth_adjust_balance: {
         Args: { _adjustment: number; _reason: string; _target_user_id: string }
