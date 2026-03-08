@@ -1326,6 +1326,113 @@ const AdminDashboard = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Manage User Dialog */}
+      <Dialog open={!!manageTarget} onOpenChange={(open) => { if (!open) setManageTarget(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <KeyRound className="w-5 h-5 text-primary" />
+              Manage: {manageTarget?.full_name}
+            </DialogTitle>
+            <DialogDescription>{manageTarget?.email}</DialogDescription>
+          </DialogHeader>
+
+          <div className="flex gap-1 mb-3">
+            <Button size="sm" variant={manageTab === 'info' ? 'default' : 'outline'} className="text-xs h-7" onClick={() => setManageTab('info')}>
+              <Eye className="w-3 h-3 mr-1" /> Info
+            </Button>
+            <Button size="sm" variant={manageTab === 'reset' ? 'default' : 'outline'} className="text-xs h-7" onClick={() => setManageTab('reset')}>
+              <KeyRound className="w-3 h-3 mr-1" /> Reset Password
+            </Button>
+            <Button size="sm" variant={manageTab === 'impersonate' ? 'default' : 'outline'} className="text-xs h-7" onClick={() => setManageTab('impersonate')}>
+              <UserCheck className="w-3 h-3 mr-1" /> Login As
+            </Button>
+          </div>
+
+          {manageTab === 'info' && (
+            <div className="space-y-3">
+              {isManageLoading ? (
+                <p className="text-sm text-muted-foreground text-center py-4">Loading...</p>
+              ) : userInfo ? (
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between p-2 rounded bg-secondary/50">
+                    <span className="text-muted-foreground">Email</span>
+                    <span className="font-mono text-xs">{userInfo.email}</span>
+                  </div>
+                  <div className="flex justify-between p-2 rounded bg-secondary/50">
+                    <span className="text-muted-foreground">Phone</span>
+                    <span className="font-mono text-xs">{userInfo.phone || manageTarget?.phone || '—'}</span>
+                  </div>
+                  <div className="flex justify-between p-2 rounded bg-secondary/50">
+                    <span className="text-muted-foreground">Created</span>
+                    <span className="text-xs">{userInfo.created_at ? new Date(userInfo.created_at).toLocaleString() : '—'}</span>
+                  </div>
+                  <div className="flex justify-between p-2 rounded bg-secondary/50">
+                    <span className="text-muted-foreground">Last Sign In</span>
+                    <span className="text-xs">{userInfo.last_sign_in_at ? new Date(userInfo.last_sign_in_at).toLocaleString() : 'Never'}</span>
+                  </div>
+                  <div className="flex justify-between p-2 rounded bg-secondary/50">
+                    <span className="text-muted-foreground">Email Confirmed</span>
+                    <span className="text-xs">{userInfo.email_confirmed_at ? '✅ Yes' : '❌ No'}</span>
+                  </div>
+                  <div className="p-2 rounded bg-warning/10 border border-warning/20 text-xs text-muted-foreground">
+                    ⚠️ Passwords are securely hashed and cannot be viewed. Use "Reset Password" to set a new one.
+                  </div>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground text-center py-4">No data available</p>
+              )}
+            </div>
+          )}
+
+          {manageTab === 'reset' && (
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                Set a new password for <strong>{manageTarget?.full_name}</strong>. The user will need this new password to log in.
+              </p>
+              <div>
+                <Label htmlFor="new-pw">New Password</Label>
+                <Input
+                  id="new-pw"
+                  type="text"
+                  placeholder="Enter new password (min 8 chars)"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                />
+              </div>
+              <Button
+                variant="glow"
+                onClick={handleResetPassword}
+                disabled={isManageLoading || newPassword.length < 8}
+                className="w-full"
+              >
+                {isManageLoading ? 'Resetting...' : 'Reset Password'}
+              </Button>
+            </div>
+          )}
+
+          {manageTab === 'impersonate' && (
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                This will open a new browser tab logged in as <strong>{manageTarget?.full_name}</strong> ({manageTarget?.email}). Use this to troubleshoot user issues.
+              </p>
+              <div className="p-3 rounded bg-warning/10 border border-warning/20 text-xs text-muted-foreground">
+                ⚠️ This action is audited. The session will have full access to the user's account.
+              </div>
+              <Button
+                variant="glow"
+                onClick={handleImpersonate}
+                disabled={isManageLoading}
+                className="w-full"
+              >
+                <UserCheck className="w-4 h-4 mr-2" />
+                {isManageLoading ? 'Generating session...' : 'Login as this User'}
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
