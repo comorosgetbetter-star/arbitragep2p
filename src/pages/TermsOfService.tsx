@@ -85,7 +85,7 @@ const TermsOfService = () => {
               <li>Cybersecurity risks, including hacking and phishing, may result in loss of funds.</li>
               <li>Past performance is not indicative of future results.</li>
             </ul>
-            <p>ArbitrageP2P does not provide financial, tax, or legal advice. You should consult with qualified professionals before making any decisions related to cryptocurrency transactions.</p>
+            <p>PeerBitX does not provide financial, tax, or legal advice. You should consult with qualified professionals before making any decisions related to cryptocurrency transactions.</p>
           </section>
 
           <section className="space-y-3">
