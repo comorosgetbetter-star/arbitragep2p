@@ -181,10 +181,10 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground relative">
+    <div className="min-h-screen bg-background text-foreground relative flex flex-col">
       <Header isDark={isDark} toggleTheme={toggleTheme} />
 
-      <main className="relative z-10 pt-20 pb-24 md:pb-8">
+      <main className="relative z-10 pt-20 pb-24 md:pb-8 flex-1">
         {renderContent()}
       </main>
 
