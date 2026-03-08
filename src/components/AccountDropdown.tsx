@@ -88,7 +88,7 @@ export const AccountDropdown = () => {
     navigate('/profile');
   };
 
-  if (!user) {
+  if (!user || isAdmin) {
     return (
       <Button
         variant="ghost"
