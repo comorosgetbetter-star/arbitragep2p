@@ -6,6 +6,7 @@ import { useUserData } from '@/contexts/UserDataContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { BotTradingView } from '@/components/BotTradingView';
 import { FlywheelBot } from '@/components/FlywheelBot';
+import { BotsSkeleton } from '@/components/skeletons/BotsSkeleton';
 
 interface BotItem {
   id: string;
