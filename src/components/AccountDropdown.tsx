@@ -22,14 +22,37 @@ export const AccountDropdown = () => {
 
   // Check if user is admin — if so, don't show profile on frontend
   useEffect(() => {
-    if (!user) { setIsAdmin(false); return; }
-    supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', user.id)
-      .eq('role', 'admin')
-      .single()
-      .then(({ data }) => setIsAdmin(!!data));
+    if (!user) {
+      setIsAdmin(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    const checkAdmin = async () => {
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .eq('role', 'admin')
+        .maybeSingle();
+
+      if (cancelled) return;
+
+      if (error) {
+        console.warn('[AccountDropdown] admin role check failed:', error.message);
+        setIsAdmin(false);
+        return;
+      }
+
+      setIsAdmin(!!data);
+    };
+
+    void checkAdmin();
+
+    return () => {
+      cancelled = true;
+    };
   }, [user]);
 
   useEffect(() => {
