@@ -1,7 +1,7 @@
-import { Home, BarChart3, ArrowLeftRight, LineChart, Wallet } from 'lucide-react';
+import { Home, BarChart3, ArrowLeftRight, Compass, Wallet } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export type BottomNavTab = 'home' | 'markets' | 'trade' | 'futures' | 'assets';
+export type BottomNavTab = 'home' | 'markets' | 'trade' | 'explore' | 'assets';
 
 interface BottomNavProps {
   activeTab: BottomNavTab;
@@ -12,7 +12,7 @@ const tabs: { id: BottomNavTab; label: string; icon: React.ElementType }[] = [
   { id: 'home', label: 'Home', icon: Home },
   { id: 'markets', label: 'Markets', icon: BarChart3 },
   { id: 'trade', label: 'Trade', icon: ArrowLeftRight },
-  { id: 'futures', label: 'Futures', icon: LineChart },
+  { id: 'explore', label: 'Explore', icon: Compass },
   { id: 'assets', label: 'Assets', icon: Wallet },
 ];
 

@@ -10,6 +10,7 @@ import { FAQ } from '@/components/FAQ';
 import { Footer } from '@/components/Footer';
 import { BottomNav, BottomNavTab } from '@/components/BottomNav';
 import { MarketsView } from '@/components/MarketsView';
+import { StakingView } from '@/components/StakingView';
 import { Button } from '@/components/ui/button';
 import { Download, Zap, ShoppingBag, ArrowLeft } from 'lucide-react';
 
@@ -55,10 +56,11 @@ const Index = () => {
       );
     }
 
-    if (bottomTab === 'futures') {
+    if (bottomTab === 'explore') {
       return (
-        <div className="container mx-auto px-4 max-w-lg text-center py-20">
-          <p className="text-muted-foreground">Futures coming soon</p>
+        <div className="container mx-auto px-4 max-w-lg">
+          <h2 className="text-lg font-display font-bold mb-4 pt-2">Explore</h2>
+          <StakingView />
         </div>
       );
     }
