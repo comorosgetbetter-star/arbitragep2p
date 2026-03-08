@@ -46,7 +46,7 @@ function getEmailHTML(code: string, fullName: string): string {
                     <img src="${LOGO_URL}" alt="PeerBitX" width="38" height="38" style="display:block;border-radius:8px;border:0;" />
                   </td>
                   <td style="vertical-align:middle;">
-                    <span style="font-size:22px;font-weight:700;color:#ffffff;letter-spacing:-0.3px;line-height:1;">ArbitrageP2P</span>
+                    <span style="font-size:22px;font-weight:700;color:#ffffff;letter-spacing:-0.3px;line-height:1;">PeerBitX</span>
                   </td>
                 </tr>
               </table>
