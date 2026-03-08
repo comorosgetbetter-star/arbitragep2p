@@ -334,6 +334,19 @@ export const AssetsView = () => {
               <p className="text-sm text-muted-foreground">
                 {convertAmountNum} {convertFrom} → {convertedValue.toFixed(convertTo === 'USDT' ? 2 : 6)} {convertTo}
               </p>
+              <Button
+                variant="outline"
+                className="mt-4"
+                onClick={() => {
+                  setConvertSuccess(false);
+                  setConvertFrom('');
+                  setConvertTo('');
+                  setConvertAmount('');
+                  setSubView('main');
+                }}
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" /> Go Back to Assets
+              </Button>
             </>
           ) : (
             <>
