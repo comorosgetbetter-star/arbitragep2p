@@ -634,7 +634,7 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
                 </div>
                 <div className="bg-secondary/50 rounded-lg p-3 text-center">
                   <p className="text-[10px] text-muted-foreground">Duration</p>
-                  <p className="text-sm font-bold text-foreground">{confirmPlan.duration}</p>
+                  <p className="text-sm font-bold text-foreground">{selectedDuration.label}</p>
                 </div>
                 <div className="bg-secondary/50 rounded-lg p-3 text-center">
                   <p className="text-[10px] text-muted-foreground">Amount</p>
