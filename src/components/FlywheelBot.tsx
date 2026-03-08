@@ -36,11 +36,18 @@ interface TradeRound {
   timestamp: number;
 }
 
+const DURATION_OPTIONS = [
+  { label: '1 min', minutes: 1 },
+  { label: '2 min', minutes: 2 },
+  { label: '5 min', minutes: 5 },
+  { label: '10 min', minutes: 10 },
+];
+
 const FLYWHEEL_PLANS = [
-  { id: 'turbo-1h', name: 'Turbo 1H', duration: '1 hour', lockMinutes: 60, dailyReturnPct: 120, minAmount: 100, badge: 'Fast' },
-  { id: 'turbo-3h', name: 'Turbo 3H', duration: '3 hours', lockMinutes: 180, dailyReturnPct: 80, minAmount: 250, badge: 'Popular' },
-  { id: 'turbo-6h', name: 'Turbo 6H', duration: '6 hours', lockMinutes: 360, dailyReturnPct: 60, minAmount: 500, badge: 'Steady' },
-  { id: 'turbo-12h', name: 'Turbo 12H', duration: '12 hours', lockMinutes: 720, dailyReturnPct: 40, minAmount: 1000, badge: 'Safe' },
+  { id: 'turbo-sprint', name: 'Turbo Sprint', dailyReturnPct: 120, minAmount: 100, badge: 'Fast' },
+  { id: 'turbo-rush', name: 'Turbo Rush', dailyReturnPct: 80, minAmount: 250, badge: 'Popular' },
+  { id: 'turbo-wave', name: 'Turbo Wave', dailyReturnPct: 60, minAmount: 500, badge: 'Steady' },
+  { id: 'turbo-titan', name: 'Turbo Titan', dailyReturnPct: 40, minAmount: 1000, badge: 'Safe' },
 ];
 
 // Deriv-style active session card with round-by-round win/loss
@@ -365,6 +372,7 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
   const { balance, refetchBalance } = useUserData();
   const { toast } = useToast();
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const [selectedDuration, setSelectedDuration] = useState(DURATION_OPTIONS[0]);
   const [amount, setAmount] = useState('');
   const [isStarting, setIsStarting] = useState(false);
   const [activeSessions, setActiveSessions] = useState<FlywheelSession[]>([]);
@@ -419,11 +427,12 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
         _plan_name: confirmPlan.name,
         _amount: amountNum,
         _daily_return_pct: confirmPlan.dailyReturnPct,
-        _lock_minutes: confirmPlan.lockMinutes,
+        _lock_minutes: selectedDuration.minutes,
       });
       if (error) throw error;
       toast({ title: 'Flywheel started! 🚀', description: `$${fmt(amountNum)} deployed on ${confirmPlan.name}` });
       setSelectedPlan(null);
+      setSelectedDuration(DURATION_OPTIONS[0]);
       setAmount('');
       refetchBalance();
       fetchSessions();
@@ -517,7 +526,7 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
                     </div>
                     <div>
                       <p className="font-semibold text-foreground text-sm">{plan.name}</p>
-                      <p className="text-xs text-muted-foreground">{plan.duration} cycle • {plan.dailyReturnPct}%/day</p>
+                      <p className="text-xs text-muted-foreground">{plan.dailyReturnPct}%/day</p>
                     </div>
                   </div>
                   <Badge className="bg-gold/15 text-gold border-0 text-[10px]">{plan.badge}</Badge>
@@ -540,6 +549,25 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
 
                 {isSelected ? (
                   <div className="space-y-3">
+                    {/* Duration selector */}
+                    <div>
+                      <label className="text-xs text-muted-foreground mb-1.5 block">Duration</label>
+                      <div className="grid grid-cols-4 gap-1.5">
+                        {DURATION_OPTIONS.map((opt) => (
+                          <button
+                            key={opt.minutes}
+                            onClick={() => setSelectedDuration(opt)}
+                            className={`py-2 px-1 rounded-lg text-xs font-semibold border transition-all ${
+                              selectedDuration.minutes === opt.minutes
+                                ? 'bg-gold/20 border-gold/50 text-gold'
+                                : 'bg-secondary/50 border-border/30 text-muted-foreground hover:border-border'
+                            }`}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                     <div>
                       <label className="text-xs text-muted-foreground mb-1 block">Amount (USDT)</label>
                       <Input
@@ -606,7 +634,7 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
                 </div>
                 <div className="bg-secondary/50 rounded-lg p-3 text-center">
                   <p className="text-[10px] text-muted-foreground">Duration</p>
-                  <p className="text-sm font-bold text-foreground">{confirmPlan.duration}</p>
+                  <p className="text-sm font-bold text-foreground">{selectedDuration.label}</p>
                 </div>
                 <div className="bg-secondary/50 rounded-lg p-3 text-center">
                   <p className="text-[10px] text-muted-foreground">Amount</p>
