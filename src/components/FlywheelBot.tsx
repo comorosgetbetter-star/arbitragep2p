@@ -473,7 +473,7 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
 
   // If viewing a session, show full-page bot view
   if (viewingSession) {
-    return <ActiveBotView session={viewingSession} onCancelled={handleSessionDone} />;
+    return <ActiveBotView session={viewingSession} onCancelled={handleSessionDone} onBack={() => setViewingSession(null)} />;
   }
 
   return (
