@@ -45,6 +45,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
+interface CryptoHolding {
+  symbol: string;
+  amount: number;
+}
+
 interface Member {
   id: string;
   user_id: string;
@@ -54,6 +59,8 @@ interface Member {
   country: string | null;
   created_at: string;
   usdt_balance: number;
+  crypto_holdings: CryptoHolding[];
+  total_usd_balance: number;
   trade_count: number;
 }
 
@@ -275,13 +282,29 @@ const AdminDashboard = () => {
         .from('trades')
         .select('user_id, status');
 
+      const { data: cryptoBalances } = await supabase
+        .from('user_crypto_balances')
+        .select('user_id, symbol, amount');
+
       const membersData: Member[] = (profiles || []).map(profile => {
         const balance = balances?.find(b => b.user_id === profile.user_id);
         const userTrades = trades?.filter(t => t.user_id === profile.user_id && t.status === 'completed') || [];
+        const userCrypto = (cryptoBalances || [])
+          .filter(cb => cb.user_id === profile.user_id)
+          .map(cb => ({ symbol: cb.symbol, amount: Number(cb.amount) }));
         
+        const usdtBal = Number(balance?.usdt_balance || 0);
+        let totalUsd = usdtBal;
+        userCrypto.forEach(h => {
+          const p = prices.find(pr => pr.symbol === h.symbol);
+          if (p) totalUsd += h.amount * p.price;
+        });
+
         return {
           ...profile,
-          usdt_balance: balance?.usdt_balance || 0,
+          usdt_balance: usdtBal,
+          crypto_holdings: userCrypto,
+          total_usd_balance: totalUsd,
           trade_count: userTrades.length,
         };
       });
@@ -292,7 +315,7 @@ const AdminDashboard = () => {
       setStats({
         totalMembers: membersData.length,
         totalTrades: completedTrades.length,
-        totalVolume: balances?.reduce((sum, b) => sum + Number(b.usdt_balance), 0) || 0,
+        totalVolume: membersData.reduce((sum, m) => sum + m.total_usd_balance, 0),
       });
 
       const { data: logs } = await supabase
@@ -745,8 +768,13 @@ const AdminDashboard = () => {
                           <p className="text-xs text-muted-foreground truncate">{member.email}</p>
                         </div>
                         <div className="text-right shrink-0">
-                          <p className="font-mono text-sm font-bold">{Number(member.usdt_balance).toFixed(2)}</p>
-                          <p className="text-[10px] text-muted-foreground">USDT</p>
+                          <p className="font-mono text-sm font-bold">${member.total_usd_balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                          <p className="text-[10px] text-muted-foreground">Total USD</p>
+                          {member.crypto_holdings.length > 0 && (
+                            <p className="text-[10px] text-muted-foreground">
+                              {member.crypto_holdings.map(h => `${h.amount.toFixed(h.symbol === 'BTC' ? 6 : 4)} ${h.symbol}`).join(', ')}
+                            </p>
+                          )}
                         </div>
                       </div>
                       <div className="flex items-center justify-between">
