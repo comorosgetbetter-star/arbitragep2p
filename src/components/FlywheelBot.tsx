@@ -384,10 +384,10 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
             <div className="bg-card border border-border/50 rounded-xl p-4 text-center space-y-1">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Total Return to Balance</p>
               <p className="text-2xl font-bold font-display text-success">
-                ${fmt(session.staked_amount + Math.max(0, totalWinnings))}
+                ${fmt(totalReturnToBalance)}
               </p>
               <p className="text-[10px] text-muted-foreground">
-                ${fmt(session.staked_amount)} invested + ${fmt(Math.max(0, totalWinnings))} profit
+                ${fmt(session.staked_amount)} invested + ${fmt(accruedProfit)} profit
               </p>
             </div>
           </div>
