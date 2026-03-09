@@ -655,9 +655,9 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
                     <div>
                       <label className="text-xs text-muted-foreground mb-1 block">Trading Amount (USDT)</label>
                       <div className="bg-secondary/50 border border-border/50 rounded-md px-3 py-2 text-sm font-bold text-foreground">
-                        ${fmt(balance)}
+                        ${fmt(plan.minAmount)}
                       </div>
-                      <p className="text-[10px] text-muted-foreground mt-1">Your full balance will be used for trading</p>
+                      <p className="text-[10px] text-muted-foreground mt-1">This package trades a fixed amount of ${fmt(plan.minAmount)}</p>
                     </div>
                     <div className="flex gap-2">
                       <Button
@@ -670,9 +670,9 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
                       <Button
                         className="flex-[2] h-11 font-semibold text-sm bg-gold hover:bg-gold/90 text-gold-foreground shadow-[0_0_16px_hsl(43_96%_56%/0.3)]"
                         onClick={() => handleStart(plan)}
-                        disabled={isStarting}
+                        disabled={isStarting || balance < plan.minAmount}
                       >
-                        {isStarting ? 'Starting…' : `Deploy $${fmt(balance)}`}
+                        {isStarting ? 'Starting…' : `Deploy $${fmt(plan.minAmount)}`}
                       </Button>
                     </div>
                   </div>
