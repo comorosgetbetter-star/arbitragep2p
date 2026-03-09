@@ -229,15 +229,18 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
           <CardContent className="p-4 space-y-1">
             <div className="flex items-center gap-1.5">
               <Trophy className="h-4 w-4 text-gold" />
-              <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Net Profit</p>
+              <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Accrued Profit</p>
             </div>
-            <p className={`text-3xl font-bold font-display tabular-nums ${totalWinnings >= 0 ? 'text-success' : 'text-destructive'}`}>
-              {totalWinnings >= 0 ? '+' : '-'}${fmt(Math.abs(totalWinnings))}
+            <p className="text-3xl font-bold font-display tabular-nums text-success">
+              +${fmt(accruedProfit)}
             </p>
             <div className="flex items-center gap-3 text-xs text-muted-foreground">
               <span className="text-success">{trades.filter(t => t.isWin).length} wins</span>
               <span className="text-destructive">{trades.filter(t => !t.isWin).length} losses</span>
               <span>{trades.length} total trades</span>
+              <span className={simulatedPnl >= 0 ? 'text-success' : 'text-destructive'}>
+                Sim: {simulatedPnl >= 0 ? '+' : '-'}${fmt(Math.abs(simulatedPnl))}
+              </span>
             </div>
           </CardContent>
         </Card>
@@ -250,8 +253,8 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
           </div>
           <div className="bg-secondary/50 rounded-xl p-3 text-center">
             <p className="text-[10px] text-muted-foreground">Current Value</p>
-            <p className={`text-sm font-bold ${totalWinnings >= 0 ? 'text-success' : 'text-destructive'}`}>
-              ${fmt(session.staked_amount + totalWinnings)}
+            <p className="text-sm font-bold text-success">
+              ${fmt(totalReturnToBalance)}
             </p>
           </div>
         </div>
