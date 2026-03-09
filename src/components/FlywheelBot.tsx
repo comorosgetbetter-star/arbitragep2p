@@ -750,7 +750,7 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
                 </div>
                 <div className="bg-secondary/50 rounded-lg p-3 text-center">
                   <p className="text-[10px] text-muted-foreground">Amount</p>
-                  <p className="text-sm font-bold text-primary">${fmt(balance)}</p>
+                  <p className="text-sm font-bold text-primary">${fmt(confirmPlan.minAmount)}</p>
                 </div>
                 <div className="bg-secondary/50 rounded-lg p-3 text-center">
                   <p className="text-[10px] text-muted-foreground">Daily Rate</p>
@@ -758,7 +758,7 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
                 </div>
               </div>
               <p className="text-xs text-muted-foreground text-center">
-                ${fmt(balance)} USDT will be deducted from your balance.
+                ${fmt(confirmPlan.minAmount)} USDT will be deducted from your balance.
               </p>
             </div>
           )}
