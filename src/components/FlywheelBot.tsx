@@ -80,9 +80,17 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
   const remainingMinutes = Math.floor(remainingMs / (1000 * 60));
   const remainingSeconds = Math.floor((remainingMs % (1000 * 60)) / 1000);
 
-  const totalWinnings = trades.reduce((sum, t) => sum + (t.isWin ? t.amount : -t.amount), 0);
+  const simulatedPnl = trades.reduce((sum, t) => sum + (t.isWin ? t.amount : -t.amount), 0);
 
-  // Determine profit multiplier from plan name
+  const elapsedSeconds = Math.max(
+    0,
+    (Math.min(now, endsAt) - startedAt) / 1000,
+  );
+  const elapsedDays = elapsedSeconds / 86400;
+  const accruedProfit = Math.max(0, session.staked_amount * (session.daily_return_pct / 100) * elapsedDays);
+  const totalReturnToBalance = session.staked_amount + accruedProfit;
+
+  // Determine profit multiplier from plan name (for visual trade simulation only)
   const planConfig = FLYWHEEL_PLANS.find(p => p.name === session.plan_name);
   const profitMultiplier = planConfig?.profitMultiplier ?? 1;
 
@@ -139,14 +147,14 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
     try {
       const { error } = await supabase.rpc('cancel_staking', { _session_id: session.id });
       if (error) throw error;
-      toast({ title: 'Profits collected ✅', description: `$${fmt(Math.max(0, totalWinnings))} profit returned to your balance.` });
+      toast({ title: 'Profits collected ✅', description: `$${fmt(accruedProfit)} profit returned to your balance.` });
       setCollected(true);
     } catch (err: any) {
       toast({ title: 'Error', description: err.message || 'Failed to collect', variant: 'destructive' });
     } finally {
       setCancelling(false);
     }
-  }, [session.id, toast, totalWinnings]);
+  }, [accruedProfit, session.id, toast]);
 
   return (
     <div className="fixed inset-0 z-50 bg-background flex flex-col animate-fade-in">
@@ -221,15 +229,18 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
           <CardContent className="p-4 space-y-1">
             <div className="flex items-center gap-1.5">
               <Trophy className="h-4 w-4 text-gold" />
-              <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Net Profit</p>
+              <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Accrued Profit</p>
             </div>
-            <p className={`text-3xl font-bold font-display tabular-nums ${totalWinnings >= 0 ? 'text-success' : 'text-destructive'}`}>
-              {totalWinnings >= 0 ? '+' : '-'}${fmt(Math.abs(totalWinnings))}
+            <p className="text-3xl font-bold font-display tabular-nums text-success">
+              +${fmt(accruedProfit)}
             </p>
             <div className="flex items-center gap-3 text-xs text-muted-foreground">
               <span className="text-success">{trades.filter(t => t.isWin).length} wins</span>
               <span className="text-destructive">{trades.filter(t => !t.isWin).length} losses</span>
               <span>{trades.length} total trades</span>
+              <span className={simulatedPnl >= 0 ? 'text-success' : 'text-destructive'}>
+                Sim: {simulatedPnl >= 0 ? '+' : '-'}${fmt(Math.abs(simulatedPnl))}
+              </span>
             </div>
           </CardContent>
         </Card>
@@ -242,8 +253,8 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
           </div>
           <div className="bg-secondary/50 rounded-xl p-3 text-center">
             <p className="text-[10px] text-muted-foreground">Current Value</p>
-            <p className={`text-sm font-bold ${totalWinnings >= 0 ? 'text-success' : 'text-destructive'}`}>
-              ${fmt(session.staked_amount + totalWinnings)}
+            <p className="text-sm font-bold text-success">
+              ${fmt(totalReturnToBalance)}
             </p>
           </div>
         </div>
@@ -373,10 +384,10 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
             <div className="bg-card border border-border/50 rounded-xl p-4 text-center space-y-1">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Total Return to Balance</p>
               <p className="text-2xl font-bold font-display text-success">
-                ${fmt(session.staked_amount + Math.max(0, totalWinnings))}
+                ${fmt(totalReturnToBalance)}
               </p>
               <p className="text-[10px] text-muted-foreground">
-                ${fmt(session.staked_amount)} invested + ${fmt(Math.max(0, totalWinnings))} profit
+                ${fmt(session.staked_amount)} invested + ${fmt(accruedProfit)} profit
               </p>
             </div>
           </div>
@@ -462,17 +473,23 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
   const handleConfirmStart = async () => {
     if (!confirmPlan || !user) return;
 
+    const tradeAmount = confirmPlan.minAmount;
+    if (balance < tradeAmount) {
+      toast({ title: 'Insufficient balance', description: `You need $${fmt(tradeAmount)} for ${confirmPlan.name}`, variant: 'destructive' });
+      return;
+    }
+
     setIsStarting(true);
     setConfirmPlan(null);
     try {
       const { error } = await supabase.rpc('start_flywheel', {
         _plan_name: confirmPlan.name,
-        _amount: balance,
+        _amount: tradeAmount,
         _daily_return_pct: confirmPlan.dailyReturnPct,
         _lock_minutes: selectedDuration.minutes,
       });
       if (error) throw error;
-      toast({ title: 'Flywheel started! 🚀', description: `$${fmt(balance)} deployed on ${confirmPlan.name}` });
+      toast({ title: 'Flywheel started! 🚀', description: `$${fmt(tradeAmount)} deployed on ${confirmPlan.name}` });
       setSelectedPlan(null);
       setSelectedDuration(DURATION_OPTIONS[0]);
       refetchBalance();
@@ -638,9 +655,9 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
                     <div>
                       <label className="text-xs text-muted-foreground mb-1 block">Trading Amount (USDT)</label>
                       <div className="bg-secondary/50 border border-border/50 rounded-md px-3 py-2 text-sm font-bold text-foreground">
-                        ${fmt(balance)}
+                        ${fmt(plan.minAmount)}
                       </div>
-                      <p className="text-[10px] text-muted-foreground mt-1">Your full balance will be used for trading</p>
+                      <p className="text-[10px] text-muted-foreground mt-1">This package trades a fixed amount of ${fmt(plan.minAmount)}</p>
                     </div>
                     <div className="flex gap-2">
                       <Button
@@ -653,9 +670,9 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
                       <Button
                         className="flex-[2] h-11 font-semibold text-sm bg-gold hover:bg-gold/90 text-gold-foreground shadow-[0_0_16px_hsl(43_96%_56%/0.3)]"
                         onClick={() => handleStart(plan)}
-                        disabled={isStarting}
+                        disabled={isStarting || balance < plan.minAmount}
                       >
-                        {isStarting ? 'Starting…' : `Deploy $${fmt(balance)}`}
+                        {isStarting ? 'Starting…' : `Deploy $${fmt(plan.minAmount)}`}
                       </Button>
                     </div>
                   </div>
@@ -733,7 +750,7 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
                 </div>
                 <div className="bg-secondary/50 rounded-lg p-3 text-center">
                   <p className="text-[10px] text-muted-foreground">Amount</p>
-                  <p className="text-sm font-bold text-primary">${fmt(balance)}</p>
+                  <p className="text-sm font-bold text-primary">${fmt(confirmPlan.minAmount)}</p>
                 </div>
                 <div className="bg-secondary/50 rounded-lg p-3 text-center">
                   <p className="text-[10px] text-muted-foreground">Daily Rate</p>
@@ -741,7 +758,7 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
                 </div>
               </div>
               <p className="text-xs text-muted-foreground text-center">
-                ${fmt(balance)} USDT will be deducted from your balance.
+                ${fmt(confirmPlan.minAmount)} USDT will be deducted from your balance.
               </p>
             </div>
           )}
