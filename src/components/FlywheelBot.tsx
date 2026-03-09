@@ -297,7 +297,7 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
       </div>
 
       {/* Bottom action bar */}
-      <div className="p-4 border-t border-border/30 bg-card/80 backdrop-blur-sm space-y-2">
+      <div className="p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] mb-16 md:mb-0 border-t border-border/30 bg-card/80 backdrop-blur-sm space-y-2">
         {collected ? (
           /* Profits collected — show only Back button */
           <Button
