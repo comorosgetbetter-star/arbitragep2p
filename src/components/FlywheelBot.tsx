@@ -473,17 +473,23 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
   const handleConfirmStart = async () => {
     if (!confirmPlan || !user) return;
 
+    const tradeAmount = confirmPlan.minAmount;
+    if (balance < tradeAmount) {
+      toast({ title: 'Insufficient balance', description: `You need $${fmt(tradeAmount)} for ${confirmPlan.name}`, variant: 'destructive' });
+      return;
+    }
+
     setIsStarting(true);
     setConfirmPlan(null);
     try {
       const { error } = await supabase.rpc('start_flywheel', {
         _plan_name: confirmPlan.name,
-        _amount: balance,
+        _amount: tradeAmount,
         _daily_return_pct: confirmPlan.dailyReturnPct,
         _lock_minutes: selectedDuration.minutes,
       });
       if (error) throw error;
-      toast({ title: 'Flywheel started! 🚀', description: `$${fmt(balance)} deployed on ${confirmPlan.name}` });
+      toast({ title: 'Flywheel started! 🚀', description: `$${fmt(tradeAmount)} deployed on ${confirmPlan.name}` });
       setSelectedPlan(null);
       setSelectedDuration(DURATION_OPTIONS[0]);
       refetchBalance();
