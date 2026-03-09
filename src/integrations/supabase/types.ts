@@ -210,6 +210,7 @@ export type Database = {
           seller_name: string
           trades_count: number
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           avg_trading_time?: string
@@ -226,6 +227,7 @@ export type Database = {
           seller_name: string
           trades_count?: number
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           avg_trading_time?: string
@@ -242,6 +244,7 @@ export type Database = {
           seller_name?: string
           trades_count?: number
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
