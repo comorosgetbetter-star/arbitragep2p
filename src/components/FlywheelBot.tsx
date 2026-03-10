@@ -121,10 +121,10 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
   const remainingMinutes = Math.floor(remainingMs / (1000 * 60));
   const remainingSeconds = Math.floor((remainingMs % (1000 * 60)) / 1000);
 
-  const simulatedPnl = trades.reduce((sum, t) => sum + (t.isWin ? t.amount : -t.amount), 0);
-
   const accruedProfit = calculateSessionAccruedProfit(session, now);
   const totalReturnToBalance = session.staked_amount + accruedProfit;
+  const winsCount = trades.filter((trade) => trade.isWin).length;
+  const lossesCount = trades.length - winsCount;
 
   // Determine profit multiplier from plan name (for visual trade simulation only)
   const planConfig = getFlywheelPlanByName(session.plan_name);
@@ -230,7 +230,7 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
                 </span>
               </div>
               <p className={`text-2xl font-bold font-display tabular-nums ${lastResult.isWin ? 'text-success' : 'text-destructive'}`}>
-                {lastResult.isWin ? '+' : '-'}${fmt(lastResult.amount)}
+                {lastResult.isWin ? '+' : '-'}{fmt(lastResult.amount)} pts
               </p>
             </div>
           ) : isTrading && !isCompleted ? (
@@ -266,19 +266,19 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
           <CardContent className="p-4 space-y-1">
             <div className="flex items-center gap-1.5">
               <Trophy className="h-4 w-4 text-gold" />
-              <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Accrued Profit</p>
+              <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Settlement Profit</p>
             </div>
             <p className="text-3xl font-bold font-display tabular-nums text-success">
               +${fmt(accruedProfit)}
             </p>
             <div className="flex items-center gap-3 text-xs text-muted-foreground">
-              <span className="text-success">{trades.filter(t => t.isWin).length} wins</span>
-              <span className="text-destructive">{trades.filter(t => !t.isWin).length} losses</span>
+              <span className="text-success">{winsCount} wins</span>
+              <span className="text-destructive">{lossesCount} losses</span>
               <span>{trades.length} total trades</span>
-              <span className={simulatedPnl >= 0 ? 'text-success' : 'text-destructive'}>
-                Sim: {simulatedPnl >= 0 ? '+' : '-'}${fmt(Math.abs(simulatedPnl))}
-              </span>
             </div>
+            <p className="text-[10px] text-muted-foreground">
+              Settlement profit is calculated from package rate and elapsed session time.
+            </p>
           </CardContent>
         </Card>
 
@@ -334,7 +334,7 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
                     </span>
                   </div>
                   <span className={`font-bold tabular-nums ${trade.isWin ? 'text-success' : 'text-destructive'}`}>
-                    {trade.isWin ? '+' : '-'}${fmt(trade.amount)}
+                    {trade.isWin ? '+' : '-'}{fmt(trade.amount)} pts
                   </span>
                 </div>
               ))}
@@ -407,17 +407,16 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
               </div>
               <div className="bg-success/10 rounded-lg p-3 text-center">
                 <p className="text-[10px] text-muted-foreground">Wins</p>
-                <p className="text-sm font-bold text-success">
-                  {trades.filter(t => t.isWin).length} (+${fmt(trades.filter(t => t.isWin).reduce((s, t) => s + t.amount, 0))})
-                </p>
+                <p className="text-sm font-bold text-success">{winsCount}</p>
               </div>
               <div className="bg-destructive/10 rounded-lg p-3 text-center">
                 <p className="text-[10px] text-muted-foreground">Losses</p>
-                <p className="text-sm font-bold text-destructive">
-                  {trades.filter(t => !t.isWin).length} (-${fmt(trades.filter(t => !t.isWin).reduce((s, t) => s + t.amount, 0))})
-                </p>
+                <p className="text-sm font-bold text-destructive">{lossesCount}</p>
               </div>
             </div>
+            <p className="text-[10px] text-muted-foreground text-center">
+              Win/loss rounds are live visual signals. Final settlement uses package rate × elapsed session time.
+            </p>
             <div className="bg-card border border-border/50 rounded-xl p-4 text-center space-y-1">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Total Return to Balance</p>
               <p className="text-2xl font-bold font-display text-success">
