@@ -203,7 +203,7 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
           </div>
           <div>
             <p className="text-sm font-semibold text-foreground">{session.plan_name}</p>
-            <p className="text-[10px] text-muted-foreground">{session.daily_return_pct}% daily • ${fmt(session.staked_amount)} invested</p>
+            <p className="text-[10px] text-muted-foreground">{displayRate}% package rate • ${fmt(session.staked_amount)} invested</p>
           </div>
         </div>
         <Badge className={isCompleted ? 'bg-success/15 text-success border-0' : 'bg-primary/15 text-primary border-0 animate-pulse'}>
