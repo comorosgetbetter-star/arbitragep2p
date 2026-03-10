@@ -732,10 +732,7 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
         <div className="space-y-3">
           <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Recent Runs</h3>
           {recentRuns.map((run) => {
-            const startMs = new Date(run.started_at).getTime();
-            const endMs = new Date(run.ends_at).getTime();
-            const durationDays = (endMs - startMs) / (1000 * 60 * 60 * 24);
-            const estProfit = run.staked_amount * (run.daily_return_pct / 100) * durationDays;
+            const estProfit = calculateSessionEstimatedProfit(run);
             return (
               <Card key={run.id} className="border-border/50">
                 <CardContent className="p-3 flex items-center justify-between">
