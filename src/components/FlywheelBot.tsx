@@ -414,6 +414,9 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
                 <p className="text-sm font-bold text-destructive">{lossesCount}</p>
               </div>
             </div>
+            <p className="text-[10px] text-muted-foreground text-center">
+              Win/loss rounds are live visual signals. Final settlement uses package rate × elapsed session time.
+            </p>
             <div className="bg-card border border-border/50 rounded-xl p-4 text-center space-y-1">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Total Return to Balance</p>
               <p className="text-2xl font-bold font-display text-success">
