@@ -230,7 +230,7 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
                 </span>
               </div>
               <p className={`text-2xl font-bold font-display tabular-nums ${lastResult.isWin ? 'text-success' : 'text-destructive'}`}>
-                {lastResult.isWin ? '+' : '-'}${fmt(lastResult.amount)}
+                {lastResult.isWin ? '+' : '-'}{fmt(lastResult.amount)} pts
               </p>
             </div>
           ) : isTrading && !isCompleted ? (
