@@ -790,7 +790,7 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
                   <p className="text-sm font-bold text-primary">${fmt(confirmPlan.minAmount)}</p>
                 </div>
                 <div className="bg-secondary/50 rounded-lg p-3 text-center">
-                  <p className="text-[10px] text-muted-foreground">Daily Rate</p>
+                  <p className="text-[10px] text-muted-foreground">Package Rate</p>
                   <p className="text-sm font-bold text-success">{confirmPlan.dailyReturnPct}%</p>
                 </div>
               </div>
