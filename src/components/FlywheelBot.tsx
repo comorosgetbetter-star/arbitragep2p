@@ -407,15 +407,11 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
               </div>
               <div className="bg-success/10 rounded-lg p-3 text-center">
                 <p className="text-[10px] text-muted-foreground">Wins</p>
-                <p className="text-sm font-bold text-success">
-                  {trades.filter(t => t.isWin).length} (+${fmt(trades.filter(t => t.isWin).reduce((s, t) => s + t.amount, 0))})
-                </p>
+                <p className="text-sm font-bold text-success">{winsCount}</p>
               </div>
               <div className="bg-destructive/10 rounded-lg p-3 text-center">
                 <p className="text-[10px] text-muted-foreground">Losses</p>
-                <p className="text-sm font-bold text-destructive">
-                  {trades.filter(t => !t.isWin).length} (-${fmt(trades.filter(t => !t.isWin).reduce((s, t) => s + t.amount, 0))})
-                </p>
+                <p className="text-sm font-bold text-destructive">{lossesCount}</p>
               </div>
             </div>
             <div className="bg-card border border-border/50 rounded-xl p-4 text-center space-y-1">
