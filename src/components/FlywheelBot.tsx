@@ -266,7 +266,7 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
           <CardContent className="p-4 space-y-1">
             <div className="flex items-center gap-1.5">
               <Trophy className="h-4 w-4 text-gold" />
-              <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Accrued Profit</p>
+              <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Settlement Profit</p>
             </div>
             <p className="text-3xl font-bold font-display tabular-nums text-success">
               +${fmt(accruedProfit)}
