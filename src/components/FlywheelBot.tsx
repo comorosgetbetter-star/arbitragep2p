@@ -43,12 +43,53 @@ const DURATION_OPTIONS = [
   { label: '10 min', minutes: 10 },
 ];
 
+const FLYWHEEL_PACKAGE_MINUTE_DIVISOR = 10;
+
 const FLYWHEEL_PLANS = [
   { id: 'turbo-sprint', name: 'Turbo Sprint', dailyReturnPct: 120, minAmount: 100, badge: 'Fast', profitMultiplier: 1 },
   { id: 'turbo-rush', name: 'Turbo Rush', dailyReturnPct: 80, minAmount: 250, badge: 'Popular', profitMultiplier: 1.5 },
   { id: 'turbo-wave', name: 'Turbo Wave', dailyReturnPct: 60, minAmount: 500, badge: 'Steady', profitMultiplier: 2.2 },
   { id: 'turbo-titan', name: 'Turbo Titan', dailyReturnPct: 40, minAmount: 1000, badge: 'Safe', profitMultiplier: 3 },
 ];
+
+const isFlywheelPlan = (planName: string) => planName.toLowerCase().startsWith('turbo');
+
+const getFlywheelPlanByName = (planName: string) =>
+  FLYWHEEL_PLANS.find((plan) => plan.name === planName);
+
+const calculateSessionAccruedProfit = (session: FlywheelSession, nowMs: number) => {
+  const startedAtMs = new Date(session.started_at).getTime();
+  const endsAtMs = new Date(session.ends_at).getTime();
+  const elapsedSeconds = Math.max(0, (Math.min(nowMs, endsAtMs) - startedAtMs) / 1000);
+
+  if (isFlywheelPlan(session.plan_name)) {
+    const elapsedMinutes = elapsedSeconds / 60;
+    return Math.max(
+      0,
+      session.staked_amount * (session.daily_return_pct / 100) * (elapsedMinutes / FLYWHEEL_PACKAGE_MINUTE_DIVISOR),
+    );
+  }
+
+  const elapsedDays = elapsedSeconds / 86400;
+  return Math.max(0, session.staked_amount * (session.daily_return_pct / 100) * elapsedDays);
+};
+
+const calculateSessionEstimatedProfit = (session: FlywheelSession) => {
+  const startedAtMs = new Date(session.started_at).getTime();
+  const endsAtMs = new Date(session.ends_at).getTime();
+  const elapsedSeconds = Math.max(0, (endsAtMs - startedAtMs) / 1000);
+
+  if (isFlywheelPlan(session.plan_name)) {
+    const elapsedMinutes = elapsedSeconds / 60;
+    return Math.max(
+      0,
+      session.staked_amount * (session.daily_return_pct / 100) * (elapsedMinutes / FLYWHEEL_PACKAGE_MINUTE_DIVISOR),
+    );
+  }
+
+  const elapsedDays = elapsedSeconds / 86400;
+  return Math.max(0, session.staked_amount * (session.daily_return_pct / 100) * elapsedDays);
+};
 
 // Full-page Deriv-style active bot view
 const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSession; onCancelled: () => void; onBack: () => void }) => {
