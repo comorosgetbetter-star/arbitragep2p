@@ -43,12 +43,53 @@ const DURATION_OPTIONS = [
   { label: '10 min', minutes: 10 },
 ];
 
+const FLYWHEEL_PACKAGE_MINUTE_DIVISOR = 10;
+
 const FLYWHEEL_PLANS = [
   { id: 'turbo-sprint', name: 'Turbo Sprint', dailyReturnPct: 120, minAmount: 100, badge: 'Fast', profitMultiplier: 1 },
   { id: 'turbo-rush', name: 'Turbo Rush', dailyReturnPct: 80, minAmount: 250, badge: 'Popular', profitMultiplier: 1.5 },
   { id: 'turbo-wave', name: 'Turbo Wave', dailyReturnPct: 60, minAmount: 500, badge: 'Steady', profitMultiplier: 2.2 },
   { id: 'turbo-titan', name: 'Turbo Titan', dailyReturnPct: 40, minAmount: 1000, badge: 'Safe', profitMultiplier: 3 },
 ];
+
+const isFlywheelPlan = (planName: string) => planName.toLowerCase().startsWith('turbo');
+
+const getFlywheelPlanByName = (planName: string) =>
+  FLYWHEEL_PLANS.find((plan) => plan.name === planName);
+
+const calculateSessionAccruedProfit = (session: FlywheelSession, nowMs: number) => {
+  const startedAtMs = new Date(session.started_at).getTime();
+  const endsAtMs = new Date(session.ends_at).getTime();
+  const elapsedSeconds = Math.max(0, (Math.min(nowMs, endsAtMs) - startedAtMs) / 1000);
+
+  if (isFlywheelPlan(session.plan_name)) {
+    const elapsedMinutes = elapsedSeconds / 60;
+    return Math.max(
+      0,
+      session.staked_amount * (session.daily_return_pct / 100) * (elapsedMinutes / FLYWHEEL_PACKAGE_MINUTE_DIVISOR),
+    );
+  }
+
+  const elapsedDays = elapsedSeconds / 86400;
+  return Math.max(0, session.staked_amount * (session.daily_return_pct / 100) * elapsedDays);
+};
+
+const calculateSessionEstimatedProfit = (session: FlywheelSession) => {
+  const startedAtMs = new Date(session.started_at).getTime();
+  const endsAtMs = new Date(session.ends_at).getTime();
+  const elapsedSeconds = Math.max(0, (endsAtMs - startedAtMs) / 1000);
+
+  if (isFlywheelPlan(session.plan_name)) {
+    const elapsedMinutes = elapsedSeconds / 60;
+    return Math.max(
+      0,
+      session.staked_amount * (session.daily_return_pct / 100) * (elapsedMinutes / FLYWHEEL_PACKAGE_MINUTE_DIVISOR),
+    );
+  }
+
+  const elapsedDays = elapsedSeconds / 86400;
+  return Math.max(0, session.staked_amount * (session.daily_return_pct / 100) * elapsedDays);
+};
 
 // Full-page Deriv-style active bot view
 const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSession; onCancelled: () => void; onBack: () => void }) => {
@@ -82,17 +123,13 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
 
   const simulatedPnl = trades.reduce((sum, t) => sum + (t.isWin ? t.amount : -t.amount), 0);
 
-  const elapsedSeconds = Math.max(
-    0,
-    (Math.min(now, endsAt) - startedAt) / 1000,
-  );
-  const elapsedDays = elapsedSeconds / 86400;
-  const accruedProfit = Math.max(0, session.staked_amount * (session.daily_return_pct / 100) * elapsedDays);
+  const accruedProfit = calculateSessionAccruedProfit(session, now);
   const totalReturnToBalance = session.staked_amount + accruedProfit;
 
   // Determine profit multiplier from plan name (for visual trade simulation only)
-  const planConfig = FLYWHEEL_PLANS.find(p => p.name === session.plan_name);
+  const planConfig = getFlywheelPlanByName(session.plan_name);
   const profitMultiplier = planConfig?.profitMultiplier ?? 1;
+  const displayRate = planConfig?.dailyReturnPct ?? session.daily_return_pct;
 
   useEffect(() => {
     if (isCompleted || session.status !== 'active') return;
@@ -166,7 +203,7 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
           </div>
           <div>
             <p className="text-sm font-semibold text-foreground">{session.plan_name}</p>
-            <p className="text-[10px] text-muted-foreground">{session.daily_return_pct}% daily • ${fmt(session.staked_amount)} invested</p>
+            <p className="text-[10px] text-muted-foreground">{displayRate}% package rate • ${fmt(session.staked_amount)} invested</p>
           </div>
         </div>
         <Badge className={isCompleted ? 'bg-success/15 text-success border-0' : 'bg-primary/15 text-primary border-0 animate-pulse'}>
@@ -610,7 +647,7 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
                     </div>
                     <div>
                       <p className="font-semibold text-foreground text-sm">{plan.name}</p>
-                      <p className="text-xs text-muted-foreground">{plan.dailyReturnPct}%/day</p>
+                      <p className="text-xs text-muted-foreground">{plan.dailyReturnPct}% package rate</p>
                     </div>
                   </div>
                   <Badge className="bg-gold/15 text-gold border-0 text-[10px]">{plan.badge}</Badge>
@@ -623,7 +660,7 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
                   </div>
                   <div className="bg-secondary/50 rounded-lg p-2">
                     <p className="text-[10px] text-muted-foreground">Rate</p>
-                    <p className="text-xs font-bold text-primary">{plan.dailyReturnPct}%/day</p>
+                    <p className="text-xs font-bold text-primary">{plan.dailyReturnPct}% package</p>
                   </div>
                   <div className="bg-secondary/50 rounded-lg p-2">
                     <p className="text-[10px] text-muted-foreground">Est. Profit</p>
@@ -695,10 +732,7 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
         <div className="space-y-3">
           <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Recent Runs</h3>
           {recentRuns.map((run) => {
-            const startMs = new Date(run.started_at).getTime();
-            const endMs = new Date(run.ends_at).getTime();
-            const durationDays = (endMs - startMs) / (1000 * 60 * 60 * 24);
-            const estProfit = run.staked_amount * (run.daily_return_pct / 100) * durationDays;
+            const estProfit = calculateSessionEstimatedProfit(run);
             return (
               <Card key={run.id} className="border-border/50">
                 <CardContent className="p-3 flex items-center justify-between">
@@ -753,7 +787,7 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
                   <p className="text-sm font-bold text-primary">${fmt(confirmPlan.minAmount)}</p>
                 </div>
                 <div className="bg-secondary/50 rounded-lg p-3 text-center">
-                  <p className="text-[10px] text-muted-foreground">Daily Rate</p>
+                  <p className="text-[10px] text-muted-foreground">Package Rate</p>
                   <p className="text-sm font-bold text-success">{confirmPlan.dailyReturnPct}%</p>
                 </div>
               </div>
