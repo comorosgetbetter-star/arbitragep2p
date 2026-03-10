@@ -660,7 +660,7 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
                   </div>
                   <div className="bg-secondary/50 rounded-lg p-2">
                     <p className="text-[10px] text-muted-foreground">Rate</p>
-                    <p className="text-xs font-bold text-primary">{plan.dailyReturnPct}%/day</p>
+                    <p className="text-xs font-bold text-primary">{plan.dailyReturnPct}% package</p>
                   </div>
                   <div className="bg-secondary/50 rounded-lg p-2">
                     <p className="text-[10px] text-muted-foreground">Est. Profit</p>
