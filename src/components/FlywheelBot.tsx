@@ -647,7 +647,7 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
                     </div>
                     <div>
                       <p className="font-semibold text-foreground text-sm">{plan.name}</p>
-                      <p className="text-xs text-muted-foreground">{plan.dailyReturnPct}%/day</p>
+                      <p className="text-xs text-muted-foreground">{plan.dailyReturnPct}% package rate</p>
                     </div>
                   </div>
                   <Badge className="bg-gold/15 text-gold border-0 text-[10px]">{plan.badge}</Badge>
