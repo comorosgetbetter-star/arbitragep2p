@@ -121,10 +121,10 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
   const remainingMinutes = Math.floor(remainingMs / (1000 * 60));
   const remainingSeconds = Math.floor((remainingMs % (1000 * 60)) / 1000);
 
-  const simulatedPnl = trades.reduce((sum, t) => sum + (t.isWin ? t.amount : -t.amount), 0);
-
   const accruedProfit = calculateSessionAccruedProfit(session, now);
   const totalReturnToBalance = session.staked_amount + accruedProfit;
+  const winsCount = trades.filter((trade) => trade.isWin).length;
+  const lossesCount = trades.length - winsCount;
 
   // Determine profit multiplier from plan name (for visual trade simulation only)
   const planConfig = getFlywheelPlanByName(session.plan_name);
