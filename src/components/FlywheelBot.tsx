@@ -272,13 +272,13 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
               +${fmt(accruedProfit)}
             </p>
             <div className="flex items-center gap-3 text-xs text-muted-foreground">
-              <span className="text-success">{trades.filter(t => t.isWin).length} wins</span>
-              <span className="text-destructive">{trades.filter(t => !t.isWin).length} losses</span>
+              <span className="text-success">{winsCount} wins</span>
+              <span className="text-destructive">{lossesCount} losses</span>
               <span>{trades.length} total trades</span>
-              <span className={simulatedPnl >= 0 ? 'text-success' : 'text-destructive'}>
-                Sim: {simulatedPnl >= 0 ? '+' : '-'}${fmt(Math.abs(simulatedPnl))}
-              </span>
             </div>
+            <p className="text-[10px] text-muted-foreground">
+              Settlement profit is calculated from package rate and elapsed session time.
+            </p>
           </CardContent>
         </Card>
 
