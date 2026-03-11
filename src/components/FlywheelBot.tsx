@@ -122,11 +122,10 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
   const remainingMinutes = Math.floor(remainingMs / (1000 * 60));
   const remainingSeconds = Math.floor((remainingMs % (1000 * 60)) / 1000);
 
-  const accruedProfit = calculateSessionAccruedProfit(session, now);
-  const totalReturnToBalance = session.staked_amount + accruedProfit;
-
-  // Cumulative trade net is always kept in sync
+  // The displayed profit is ALWAYS the exact sum of trade wins minus losses — nothing else.
   const tradeNet = trades.reduce((sum, t) => sum + (t.isWin ? t.amount : -t.amount), 0);
+  const accruedProfit = tradeNet;
+  const totalReturnToBalance = session.staked_amount + tradeNet;
   const winsCount = trades.filter((trade) => trade.isWin).length;
   const lossesCount = trades.length - winsCount;
 
@@ -292,7 +291,7 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
               <span>Net: +${fmt(tradeNet)}</span>
             </div>
             <p className="text-[10px] text-muted-foreground">
-              Profit is the net total of all trade wins minus losses.
+              Running total of all trade results
             </p>
           </CardContent>
         </Card>
