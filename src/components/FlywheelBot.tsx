@@ -103,6 +103,7 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
   const [tradingCountdown, setTradingCountdown] = useState(0);
   const [lastResult, setLastResult] = useState<TradeRound | null>(null);
   const roundIdRef = useRef(0);
+  const cumulativeNetRef = useRef(0);
   const tradesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
