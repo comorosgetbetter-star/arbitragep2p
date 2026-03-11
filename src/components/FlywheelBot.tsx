@@ -124,12 +124,14 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
 
   const accruedProfit = calculateSessionAccruedProfit(session, now);
   const totalReturnToBalance = session.staked_amount + accruedProfit;
+
+  // Cumulative trade net is always kept in sync
+  const tradeNet = trades.reduce((sum, t) => sum + (t.isWin ? t.amount : -t.amount), 0);
   const winsCount = trades.filter((trade) => trade.isWin).length;
   const lossesCount = trades.length - winsCount;
 
   // Determine profit multiplier from plan name (for visual trade simulation only)
   const planConfig = getFlywheelPlanByName(session.plan_name);
-  const profitMultiplier = planConfig?.profitMultiplier ?? 1;
   const displayRate = planConfig?.dailyReturnPct ?? session.daily_return_pct;
 
   useEffect(() => {
@@ -150,22 +152,34 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
 
       setTimeout(() => {
         setIsTrading(false);
-        const isWin = Math.random() < 0.7;
-        const baseAmount = session.staked_amount * 0.005 * profitMultiplier;
+        const currentAccrued = calculateSessionAccruedProfit(session, Date.now());
+        const delta = currentAccrued - cumulativeNetRef.current;
+
+        // Decide win or loss. If delta is very small or negative, force a small loss visual
+        // 70% wins, 30% losses — but losses are small so net trends up to match accrued
+        const forceLoss = delta > 0 && Math.random() < 0.25;
+
+        let isWin: boolean;
         let amount: number;
-        if (isWin) {
-          amount = baseAmount * (0.8 + Math.random() * 2.5);
+
+        if (forceLoss && delta > 0.02) {
+          // Show a small loss (10-30% of delta), the next win will compensate
+          isWin = false;
+          amount = Math.round(delta * (0.1 + Math.random() * 0.2) * 100) / 100;
+          amount = Math.max(0.01, amount);
+          cumulativeNetRef.current -= amount;
         } else {
-          amount = baseAmount * (0.3 + Math.random() * 0.8);
+          // Win: capture the full delta so cumulative matches accrued
+          isWin = true;
+          amount = Math.max(0.01, Math.round(delta * 100) / 100);
+          cumulativeNetRef.current += amount;
         }
-        amount = Math.round(amount * 100) / 100;
 
         roundIdRef.current += 1;
         const newTrade: TradeRound = { id: roundIdRef.current, isWin, amount, timestamp: Date.now() };
         setTrades(prev => [...prev, newTrade]);
         setLastResult(newTrade);
 
-        // Clear result flash after 2s
         setTimeout(() => setLastResult(null), 2500);
       }, tradeDuration);
     };
@@ -173,7 +187,7 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
     const initialTimeout = setTimeout(runTradeRound, 1000);
     const interval = setInterval(runTradeRound, 4000 + Math.random() * 3000);
     return () => { clearTimeout(initialTimeout); clearInterval(interval); };
-  }, [isCompleted, session.status, session.staked_amount, profitMultiplier]);
+  }, [isCompleted, session.status, session.staked_amount, session.started_at, session.ends_at, session.daily_return_pct, session.plan_name]);
 
   useEffect(() => {
     tradesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
