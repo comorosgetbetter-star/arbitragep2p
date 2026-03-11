@@ -76,7 +76,7 @@ export const StakingView = () => {
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [user, fetchSessions]);
-  if (loading) {
+  if (loading || (user && dataLoading)) {
     return <StakingSkeleton />;
   }
 
