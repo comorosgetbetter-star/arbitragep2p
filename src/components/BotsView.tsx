@@ -58,8 +58,8 @@ export const BotsView = () => {
   const [activeBot, setActiveBot] = useState<BotItem | null>(null);
   const [showFlywheel, setShowFlywheel] = useState(false);
 
-  // Auth loading state
-  if (loading) {
+  // Auth or data loading state
+  if (loading || (user && dataLoading)) {
     return <BotsSkeleton />;
   }
 
