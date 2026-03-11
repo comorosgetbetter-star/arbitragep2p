@@ -289,7 +289,7 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
             <div className="flex items-center gap-3 text-xs text-muted-foreground">
               <span className="text-success">{winsCount} wins</span>
               <span className="text-destructive">{lossesCount} losses</span>
-              <span>{trades.length} total trades</span>
+              <span>Net: +${fmt(tradeNet)}</span>
             </div>
             <p className="text-[10px] text-muted-foreground">
               Settlement profit is calculated from package rate and elapsed session time.
