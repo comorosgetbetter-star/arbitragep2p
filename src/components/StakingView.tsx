@@ -44,7 +44,7 @@ interface StakingSession {
 
 export const StakingView = () => {
   const { user, loading } = useAuth();
-  const { balance, refetchBalance } = useUserData();
+  const { balance, refetchBalance, isLoading: dataLoading } = useUserData();
   const { prices } = useCryptoPrices();
   const { toast } = useToast();
   const navigate = useNavigate();
