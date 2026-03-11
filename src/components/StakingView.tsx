@@ -44,7 +44,7 @@ interface StakingSession {
 
 export const StakingView = () => {
   const { user, loading } = useAuth();
-  const { balance, refetchBalance } = useUserData();
+  const { balance, refetchBalance, isLoading: dataLoading } = useUserData();
   const { prices } = useCryptoPrices();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -76,7 +76,7 @@ export const StakingView = () => {
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [user, fetchSessions]);
-  if (loading) {
+  if (loading || (user && dataLoading)) {
     return <StakingSkeleton />;
   }
 

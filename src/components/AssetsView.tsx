@@ -50,7 +50,7 @@ const getRotatedDepositAddress = async () => {
 
 export const AssetsView = () => {
   const { user, loading } = useAuth();
-  const { balance, cryptoBalances, deposits, withdrawals, refetchBalance, refetchCryptoBalances } = useUserData();
+  const { balance, cryptoBalances, deposits, withdrawals, refetchBalance, refetchCryptoBalances, isLoading: dataLoading } = useUserData();
   const { prices } = useCryptoPrices();
   const navigate = useNavigate();
   const [hidden, setHidden] = useState(false);
@@ -187,7 +187,7 @@ export const AssetsView = () => {
     LTC: 'bg-slate-500/20 text-slate-400', DOGE: 'bg-amber-500/20 text-amber-400',
   };
 
-  if (loading) {
+  if (loading || (user && dataLoading)) {
     return <AssetsMainSkeleton />;
   }
 
