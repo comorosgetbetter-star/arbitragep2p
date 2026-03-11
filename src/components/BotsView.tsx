@@ -53,7 +53,7 @@ const bots: BotItem[] = [
 
 export const BotsView = () => {
   const { user, loading } = useAuth();
-  const { balance } = useUserData();
+  const { balance, isLoading: dataLoading } = useUserData();
   const navigate = useNavigate();
   const [activeBot, setActiveBot] = useState<BotItem | null>(null);
   const [showFlywheel, setShowFlywheel] = useState(false);
