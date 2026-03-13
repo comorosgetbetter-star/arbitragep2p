@@ -115,28 +115,12 @@ export const AssetsView = () => {
     return age < 24 * 60 * 60 * 1000;
   });
 
-  // Load deposit address when entering deposit view; refetch balances when entering convert view
+  // Load balances when entering convert view
   useEffect(() => {
-    if (subView === 'deposit') {
-      setDepositLoading(true);
-      getRotatedDepositAddress().then((addr) => {
-        setDepositAddr(addr);
-        setDepositLoading(false);
-      });
-    }
     if (subView === 'convert') {
-      // Always refetch so newly acquired crypto shows up
       Promise.all([refetchBalance(), refetchCryptoBalances()]);
     }
   }, [subView]);
-
-  const handleCopyAddr = () => {
-    if (depositAddr) {
-      navigator.clipboard.writeText(depositAddr.address);
-      setAddrCopied(true);
-      setTimeout(() => setAddrCopied(false), 2000);
-    }
-  };
 
   const handleSubmitWithdrawal = async () => {
     if (!user || !withdrawAmount || !walletAddress) return;
