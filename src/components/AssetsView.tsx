@@ -58,10 +58,7 @@ export const AssetsView = () => {
   const [allocationOpen, setAllocationOpen] = useState(true);
   const [subView, setSubView] = useState<AssetsSubView>('main');
 
-  // Deposit state
-  const [depositAddr, setDepositAddr] = useState<{ id: string; address: string; network: string } | null>(null);
-  const [depositLoading, setDepositLoading] = useState(false);
-  const [addrCopied, setAddrCopied] = useState(false);
+  // Deposit state removed – now using shared DepositCrypto component
 
   // Withdraw state
   const [withdrawAmount, setWithdrawAmount] = useState('');
