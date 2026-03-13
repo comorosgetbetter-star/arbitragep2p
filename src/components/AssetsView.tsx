@@ -208,46 +208,13 @@ export const AssetsView = () => {
 
   // ── SUB-VIEW: Deposit ──
   if (subView === 'deposit') {
-    const meta = depositAddr ? NETWORK_META[depositAddr.network] || { name: depositAddr.network.toUpperCase(), chain: depositAddr.network, fee: 'Variable', time: '~5 min' } : null;
     return (
       <div className="space-y-5">
         <button onClick={() => setSubView('main')} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
           <ArrowLeft className="h-4 w-4" /> Back
         </button>
-        <h2 className="text-lg font-display font-bold">Deposit USDT</h2>
-        {depositLoading ? (
-          <DepositSkeleton />
-        ) : !depositAddr ? (
-          <p className="text-sm text-muted-foreground text-center py-6">No deposit addresses available. Please contact support.</p>
-        ) : (
-          <>
-            <div className="text-center">
-              <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-3">
-                <span className="text-2xl font-bold text-primary">₮</span>
-              </div>
-              <p className="font-display font-semibold text-foreground">USDT ({meta?.name})</p>
-              <p className="text-sm text-muted-foreground">{meta?.chain}</p>
-            </div>
-            <div className="bg-secondary/50 rounded-xl p-4">
-              <p className="text-xs text-muted-foreground mb-2">Deposit Address</p>
-              <div className="flex items-center gap-2">
-                <code className="flex-1 text-sm font-mono text-foreground break-all">{depositAddr.address}</code>
-                <Button variant="ghost" size="icon" onClick={handleCopyAddr} className="shrink-0">
-                  {addrCopied ? <Check className="h-4 w-4 text-success" /> : <Copy className="h-4 w-4" />}
-                </Button>
-              </div>
-            </div>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between"><span className="text-muted-foreground">Network</span><span className="text-foreground">{meta?.chain}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">Minimum Deposit</span><span className="text-foreground">1 USDT</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">Network Fee</span><span className="text-foreground">{meta?.fee}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">Arrival Time</span><span className="text-foreground">{meta?.time}</span></div>
-            </div>
-            <div className="p-3 rounded-lg bg-warning/10 border border-warning/20">
-              <p className="text-xs text-warning">⚠️ Only send USDT on the {meta?.chain}. Sending other tokens or using a different network may result in permanent loss of funds.</p>
-            </div>
-          </>
-        )}
+        <h2 className="text-lg font-display font-bold">Deposit Crypto</h2>
+        <DepositCrypto />
       </div>
     );
   }
