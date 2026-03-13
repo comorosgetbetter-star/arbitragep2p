@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { DepositCrypto } from '@/components/DepositCrypto';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserData } from '@/contexts/UserDataContext';
 import { useCryptoPrices } from '@/hooks/useCryptoPrices';
