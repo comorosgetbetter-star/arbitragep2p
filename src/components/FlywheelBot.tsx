@@ -210,144 +210,134 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
   return (
     <div className="fixed inset-0 z-50 bg-background flex flex-col animate-fade-in">
       {/* Top bar */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border/30 bg-card/80 backdrop-blur-sm">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-primary/20 flex items-center justify-center">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border/20 bg-card/90 backdrop-blur-sm">
+        <div className="flex items-center gap-2.5">
+          <div className="w-7 h-7 rounded-md bg-primary/15 flex items-center justify-center">
             <ArrowDownUp className="h-3.5 w-3.5 text-primary" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-foreground">{session.plan_name}</p>
-            <p className="text-[10px] text-muted-foreground">{displayRate}% package rate • ${fmt(session.staked_amount)} invested</p>
+            <p className="text-sm font-semibold text-foreground tracking-tight">{session.plan_name}</p>
+            <p className="text-[10px] text-muted-foreground font-mono">{displayRate}% • ${fmt(session.staked_amount)}</p>
           </div>
         </div>
-        <Badge className={isCompleted ? 'bg-success/15 text-success border-0' : 'bg-primary/15 text-primary border-0 animate-pulse'}>
-          {isCompleted ? 'Complete' : 'Live'}
+        <Badge className={`text-[10px] font-mono tracking-wider ${isCompleted ? 'bg-success/10 text-success border-0' : 'bg-primary/10 text-primary border-0 animate-pulse'}`}>
+          {isCompleted ? 'DONE' : 'LIVE'}
         </Badge>
       </div>
 
-      {/* Main content - stable layout, no jumping */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {/* Result flash / Trading indicator - fixed height container to prevent layout shift */}
-        <div className="h-[76px] relative">
+      {/* Main content */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-3">
+        {/* Result flash / Trading indicator */}
+        <div className="h-[72px] relative">
           {lastResult ? (
-            <div className={`absolute inset-0 rounded-xl p-4 text-center ${
-              lastResult.isWin ? 'bg-success/15 border border-success/30' : 'bg-destructive/15 border border-destructive/30'
+            <div className={`absolute inset-0 rounded-lg p-3 text-center border ${
+              lastResult.isWin ? 'bg-success/8 border-success/20' : 'bg-destructive/8 border-destructive/20'
             }`}>
-              <div className="flex items-center justify-center gap-2 mb-1">
+              <div className="flex items-center justify-center gap-1.5 mb-0.5">
                 {lastResult.isWin ? (
-                  <CheckCircle2 className="h-6 w-6 text-success" />
+                  <CheckCircle2 className="h-5 w-5 text-success" />
                 ) : (
-                  <XCircle className="h-6 w-6 text-destructive" />
+                  <XCircle className="h-5 w-5 text-destructive" />
                 )}
-                <span className={`text-lg font-bold ${lastResult.isWin ? 'text-success' : 'text-destructive'}`}>
+                <span className={`text-xs font-bold font-mono uppercase tracking-wider ${lastResult.isWin ? 'text-success' : 'text-destructive'}`}>
                   {lastResult.isWin ? 'WIN' : 'LOSS'}
                 </span>
               </div>
-              <p className={`text-2xl font-bold font-display tabular-nums ${lastResult.isWin ? 'text-success' : 'text-destructive'}`}>
+              <p className={`text-2xl font-bold font-mono ${lastResult.isWin ? 'text-success' : 'text-destructive'}`}>
                 {lastResult.isWin ? '+' : '-'}${fmt(lastResult.amount)}
               </p>
             </div>
           ) : isTrading && !isCompleted ? (
-            <div className="absolute inset-0 bg-primary/10 border border-primary/20 rounded-xl p-4 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                <Zap className="h-5 w-5 text-primary" />
+            <div className="absolute inset-0 bg-card border border-border/30 rounded-lg p-3 flex items-center gap-3">
+              <div className="w-9 h-9 rounded-md bg-primary/10 flex items-center justify-center">
+                <Zap className="h-4 w-4 text-primary" />
               </div>
               <div className="flex-1">
-                <p className="text-sm font-semibold text-primary">Bot is trading...</p>
-                <p className="text-xs text-muted-foreground">Analyzing market patterns • {tradingCountdown}s</p>
+                <p className="text-xs font-semibold text-foreground tracking-tight">Executing trade…</p>
+                <p className="text-[10px] text-muted-foreground font-mono">{tradingCountdown}s remaining</p>
               </div>
               <div className="flex gap-0.5 items-end">
-                <div className="w-1.5 h-4 bg-primary/40 rounded-full animate-[pulse_0.6s_ease-in-out_infinite]" />
-                <div className="w-1.5 h-6 bg-primary/60 rounded-full animate-[pulse_0.6s_ease-in-out_infinite_0.1s]" />
-                <div className="w-1.5 h-3 bg-primary/30 rounded-full animate-[pulse_0.6s_ease-in-out_infinite_0.2s]" />
-                <div className="w-1.5 h-5 bg-primary/50 rounded-full animate-[pulse_0.6s_ease-in-out_infinite_0.3s]" />
+                <div className="w-1 h-3 bg-primary/30 rounded-full animate-[pulse_0.6s_ease-in-out_infinite]" />
+                <div className="w-1 h-5 bg-primary/50 rounded-full animate-[pulse_0.6s_ease-in-out_infinite_0.1s]" />
+                <div className="w-1 h-2.5 bg-primary/25 rounded-full animate-[pulse_0.6s_ease-in-out_infinite_0.2s]" />
+                <div className="w-1 h-4 bg-primary/40 rounded-full animate-[pulse_0.6s_ease-in-out_infinite_0.3s]" />
               </div>
             </div>
           ) : isCompleted ? (
-            <div className="absolute inset-0 bg-success/10 border border-success/30 rounded-xl p-4 flex items-center justify-center gap-2">
-              <Trophy className="h-6 w-6 text-success" />
-              <span className="text-lg font-bold text-success">Trading Complete!</span>
+            <div className="absolute inset-0 bg-success/5 border border-success/20 rounded-lg p-3 flex items-center justify-center gap-2">
+              <Trophy className="h-5 w-5 text-success" />
+              <span className="text-sm font-bold text-success tracking-tight">Session Complete</span>
             </div>
           ) : (
-            <div className="absolute inset-0 bg-secondary/30 border border-border/20 rounded-xl p-4 flex items-center justify-center">
-              <p className="text-sm text-muted-foreground">Waiting for first trade...</p>
+            <div className="absolute inset-0 bg-card border border-border/20 rounded-lg p-3 flex items-center justify-center">
+              <p className="text-xs text-muted-foreground">Waiting for first trade…</p>
             </div>
           )}
         </div>
 
-        {/* Total profit card */}
-        <Card className="border-border/30">
-          <CardContent className="p-4 space-y-1">
+        {/* Profit card */}
+        <div className="bg-card border border-border/30 rounded-lg p-4 space-y-1.5">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5">
-              <Trophy className="h-4 w-4 text-gold" />
-              <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Settlement Profit</p>
+              <Trophy className="h-3.5 w-3.5 text-gold" />
+              <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-medium">Net Profit</p>
             </div>
-            <p className="text-3xl font-bold font-display tabular-nums text-success">
-              +${fmt(accruedProfit)}
-            </p>
-            <div className="flex items-center gap-3 text-xs text-muted-foreground">
-              <span className="text-success">{winsCount} wins</span>
-              <span className="text-destructive">{lossesCount} losses</span>
-              <span>Net: +${fmt(tradeNet)}</span>
+            <div className="flex items-center gap-2 text-[10px] font-mono">
+              <span className="text-success">{winsCount}W</span>
+              <span className="text-muted-foreground">/</span>
+              <span className="text-destructive">{lossesCount}L</span>
             </div>
-            <p className="text-[10px] text-muted-foreground">
-              Running total of all trade results
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Stats row */}
-        <div className="grid grid-cols-2 gap-2">
-          <div className="bg-secondary/50 rounded-xl p-3 text-center">
-            <p className="text-[10px] text-muted-foreground">Invested</p>
-            <p className="text-sm font-bold text-foreground">${fmt(session.staked_amount)}</p>
           </div>
-          <div className="bg-secondary/50 rounded-xl p-3 text-center">
-            <p className="text-[10px] text-muted-foreground">Current Value</p>
-            <p className="text-sm font-bold text-success">
-              ${fmt(totalReturnToBalance)}
-            </p>
+          <p className="text-3xl font-bold font-mono text-success tracking-tight">
+            +${fmt(accruedProfit)}
+          </p>
+        </div>
+
+        {/* Stats */}
+        <div className="grid grid-cols-2 gap-2">
+          <div className="bg-secondary/40 rounded-lg p-2.5 text-center">
+            <p className="text-[9px] text-muted-foreground uppercase tracking-wider">Invested</p>
+            <p className="text-sm font-mono font-bold text-foreground">${fmt(session.staked_amount)}</p>
+          </div>
+          <div className="bg-secondary/40 rounded-lg p-2.5 text-center">
+            <p className="text-[9px] text-muted-foreground uppercase tracking-wider">Value</p>
+            <p className="text-sm font-mono font-bold text-success">${fmt(totalReturnToBalance)}</p>
           </div>
         </div>
 
         {/* Progress */}
-        <div className="space-y-1.5">
-          <div className="flex justify-between text-xs text-muted-foreground">
-            <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {remainingMinutes}m {remainingSeconds}s left</span>
-            <span>{progressPct.toFixed(1)}%</span>
+        <div className="space-y-1">
+          <div className="flex justify-between text-[10px] text-muted-foreground font-mono">
+            <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {remainingMinutes}:{remainingSeconds.toString().padStart(2, '0')}</span>
+            <span>{progressPct.toFixed(0)}%</span>
           </div>
-          <Progress value={progressPct} className="h-2.5" />
+          <Progress value={progressPct} className="h-1.5" />
         </div>
 
         {/* Trade history */}
         <div className="space-y-1.5">
-          <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Trade History</p>
-          <ScrollArea className="h-[200px] rounded-xl border border-border/30 bg-card/50">
-            <div className="p-2 space-y-1">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-medium">Trades</p>
+          <ScrollArea className="h-[200px] rounded-lg border border-border/20 bg-card/50">
+            <div className="p-1.5 space-y-0.5">
               {trades.length === 0 && !isTrading && (
-                <p className="text-xs text-muted-foreground text-center py-8">Waiting for first trade...</p>
+                <p className="text-xs text-muted-foreground text-center py-8">Waiting…</p>
               )}
               {trades.map((trade, idx) => (
                 <div
                   key={trade.id}
-                  className={`flex items-center justify-between px-3 py-2 rounded-lg text-xs animate-fade-in ${
-                    trade.isWin ? 'bg-success/8' : 'bg-destructive/8'
+                  className={`flex items-center justify-between px-2.5 py-1.5 rounded text-xs animate-fade-in ${
+                    trade.isWin ? 'bg-success/5' : 'bg-destructive/5'
                   }`}
                 >
                   <div className="flex items-center gap-2">
                     {trade.isWin ? (
-                      <CheckCircle2 className="h-4 w-4 text-success" />
+                      <CheckCircle2 className="h-3.5 w-3.5 text-success" />
                     ) : (
-                      <XCircle className="h-4 w-4 text-destructive" />
+                      <XCircle className="h-3.5 w-3.5 text-destructive" />
                     )}
-                    <span className="text-muted-foreground font-medium">Trade #{idx + 1}</span>
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded font-semibold ${
-                      trade.isWin ? 'bg-success/15 text-success' : 'bg-destructive/15 text-destructive'
-                    }`}>
-                      {trade.isWin ? 'WIN' : 'LOSS'}
-                    </span>
+                    <span className="text-muted-foreground font-mono text-[11px]">#{idx + 1}</span>
                   </div>
-                  <span className={`font-bold tabular-nums ${trade.isWin ? 'text-success' : 'text-destructive'}`}>
+                  <span className={`font-bold font-mono text-[11px] ${trade.isWin ? 'text-success' : 'text-destructive'}`}>
                     {trade.isWin ? '+' : '-'}${fmt(trade.amount)}
                   </span>
                 </div>
@@ -581,105 +571,92 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
       </div>
 
       {/* Hero */}
-      <Card className="border-primary/20 bg-gradient-to-br from-primary/10 via-card to-card">
-        <CardContent className="p-5">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
-              <ArrowDownUp className="h-4 w-4 text-primary" />
-            </div>
-            <h2 className="text-lg font-display font-bold text-foreground">Flywheel</h2>
+      <div className="bg-card border border-border/30 rounded-xl p-4">
+        <div className="flex items-center gap-2.5 mb-2">
+          <div className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center">
+            <ArrowDownUp className="h-4 w-4 text-primary" />
           </div>
-          <p className="text-sm text-muted-foreground mb-3">
-            Automated trading bot. Watch trades execute <span className="text-primary font-semibold">in real-time</span> with win/loss results.
-          </p>
-          <div className="flex items-center gap-4 text-xs text-muted-foreground">
-            <div className="flex items-center gap-1"><Zap className="h-3.5 w-3.5 text-primary" /><span>Live trades</span></div>
-            <div className="flex items-center gap-1"><TrendingUp className="h-3.5 w-3.5 text-success" /><span>70% win rate</span></div>
-            <div className="flex items-center gap-1"><Clock className="h-3.5 w-3.5 text-warning" /><span>Hour cycles</span></div>
-          </div>
-        </CardContent>
-      </Card>
+          <h2 className="text-base font-display font-bold text-foreground tracking-tight">Flywheel</h2>
+        </div>
+        <p className="text-xs text-muted-foreground mb-3 leading-relaxed">
+          Automated cycle trading. Watch trades execute in real-time.
+        </p>
+        <div className="flex items-center gap-4 text-[10px] text-muted-foreground">
+          <div className="flex items-center gap-1"><Zap className="h-3 w-3 text-primary" /><span>Live trades</span></div>
+          <div className="flex items-center gap-1"><TrendingUp className="h-3 w-3 text-success" /><span>~70% win rate</span></div>
+          <div className="flex items-center gap-1"><Clock className="h-3 w-3 text-muted-foreground" /><span>1-10 min</span></div>
+        </div>
+      </div>
 
       {/* Balance */}
-      <Card className="border-border/50">
-        <CardContent className="p-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-              <Wallet className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">USDT Balance</p>
-              <p className="text-xl font-bold font-display text-foreground">
-                ${balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="flex items-center justify-between bg-card border border-border/30 rounded-xl px-4 py-3">
+        <span className="text-xs text-muted-foreground tracking-wide">Balance</span>
+        <span className="text-base font-mono font-semibold text-foreground">
+          ${balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          <span className="text-xs text-muted-foreground ml-1 font-sans font-normal">USDT</span>
+        </span>
+      </div>
 
       {/* Active Sessions - shown as resumable cards */}
       {activeSessions.length > 0 && (
-        <div className="space-y-3">
-          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Active Bots</h3>
+        <div className="space-y-2">
+          <h3 className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">Active</h3>
           {activeSessions.map((session) => (
-            <Card key={session.id} className="border-primary/30 cursor-pointer hover:border-primary/50 transition-all" onClick={() => setViewingSession(session)}>
-              <CardContent className="p-3 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
-                    <ArrowDownUp className="h-4 w-4 text-primary" />
+            <div key={session.id} className="bg-card border border-primary/20 rounded-xl p-3 flex items-center justify-between cursor-pointer hover:border-primary/40 transition-all" onClick={() => setViewingSession(session)}>
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-md bg-primary/10 flex items-center justify-center">
+                  <ArrowDownUp className="h-3.5 w-3.5 text-primary" />
                   </div>
-                  <div>
-                    <p className="text-sm font-semibold text-foreground">{session.plan_name}</p>
-                    <p className="text-[10px] text-muted-foreground">${fmt(session.staked_amount)} invested</p>
+                <div>
+                    <p className="text-sm font-semibold text-foreground tracking-tight">{session.plan_name}</p>
+                    <p className="text-[10px] text-muted-foreground font-mono">${fmt(session.staked_amount)}</p>
                   </div>
                 </div>
-                <Badge className="bg-primary/15 text-primary border-0 animate-pulse">Running</Badge>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
+                <Badge className="bg-primary/10 text-primary border-0 text-[9px] font-mono tracking-wider animate-pulse">LIVE</Badge>
+              </div>
+            ))}
+          </div>
+        )}
 
       {/* Plans */}
-      <div className="space-y-3">
-        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Trading Cycles</h3>
+      <div className="space-y-2.5">
+        <h3 className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">Packages</h3>
         {FLYWHEEL_PLANS.map((plan) => {
           const isSelected = selectedPlan === plan.id;
           const estProfit = plan.minAmount * (plan.dailyReturnPct / 100);
 
           return (
-            <Card
+            <div
               key={plan.id}
-              className={`border transition-all ${isSelected ? 'border-gold/50 bg-gold/5 ring-1 ring-gold/30' : 'border-border/50'}`}
+              className={`bg-card border rounded-xl p-3.5 transition-all ${isSelected ? 'border-gold/40 ring-1 ring-gold/20' : 'border-border/30'}`}
             >
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <div className="w-9 h-9 rounded-xl bg-gold/15 flex items-center justify-center">
-                      <ArrowDownUp className="h-4 w-4 text-gold" />
-                    </div>
-                    <div>
-                      <p className="font-semibold text-foreground text-sm">{plan.name}</p>
-                      <p className="text-xs text-muted-foreground">{plan.dailyReturnPct}% package rate</p>
-                    </div>
+              <div className="flex items-center justify-between mb-2.5">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-md bg-gold/10 flex items-center justify-center">
+                    <ArrowDownUp className="h-3.5 w-3.5 text-gold" />
                   </div>
-                  <Badge className="bg-gold/15 text-gold border-0 text-[10px]">{plan.badge}</Badge>
+                  <div>
+                    <p className="font-semibold text-foreground text-sm tracking-tight">{plan.name}</p>
+                    <p className="text-[10px] text-muted-foreground font-mono">{plan.dailyReturnPct}%</p>
+                  </div>
                 </div>
+                <Badge className="bg-gold/10 text-gold border-0 text-[9px] font-mono tracking-wider">{plan.badge}</Badge>
+              </div>
 
-                <div className="grid grid-cols-3 gap-2 mb-3 text-center">
-                  <div className="bg-secondary/50 rounded-lg p-2">
-                    <p className="text-[10px] text-muted-foreground">Min</p>
-                    <p className="text-xs font-bold text-foreground">${fmt(plan.minAmount)}</p>
-                  </div>
-                  <div className="bg-secondary/50 rounded-lg p-2">
-                    <p className="text-[10px] text-muted-foreground">Rate</p>
-                    <p className="text-xs font-bold text-primary">{plan.dailyReturnPct}% package</p>
-                  </div>
-                  <div className="bg-secondary/50 rounded-lg p-2">
-                    <p className="text-[10px] text-muted-foreground">Est. Profit</p>
-                    <p className="text-xs font-bold text-success">+${fmt(estProfit)}</p>
-                  </div>
+              <div className="grid grid-cols-3 gap-1.5 mb-3 text-center">
+                <div className="bg-secondary/30 rounded-md p-1.5">
+                  <p className="text-[9px] text-muted-foreground uppercase">Min</p>
+                  <p className="text-[11px] font-mono font-bold text-foreground">${fmt(plan.minAmount, 0)}</p>
                 </div>
+                <div className="bg-secondary/30 rounded-md p-1.5">
+                  <p className="text-[9px] text-muted-foreground uppercase">Rate</p>
+                  <p className="text-[11px] font-mono font-bold text-primary">{plan.dailyReturnPct}%</p>
+                </div>
+                <div className="bg-secondary/30 rounded-md p-1.5">
+                  <p className="text-[9px] text-muted-foreground uppercase">Est.</p>
+                  <p className="text-[11px] font-mono font-bold text-success">+${fmt(estProfit, 0)}</p>
+                </div>
+              </div>
 
                 {isSelected ? (
                   <div className="space-y-3">
@@ -734,42 +711,39 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
                     Start Trading
                   </Button>
                 )}
-              </CardContent>
-            </Card>
+            </div>
           );
         })}
       </div>
 
       {/* Recent Runs */}
       {recentRuns.length > 0 && (
-        <div className="space-y-3">
-          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Recent Runs</h3>
+        <div className="space-y-2">
+          <h3 className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">History</h3>
           {recentRuns.map((run) => {
             const estProfit = calculateSessionEstimatedProfit(run);
             return (
-              <Card key={run.id} className="border-border/50">
-                <CardContent className="p-3 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-success/15 flex items-center justify-center">
-                      <CheckCircle2 className="h-4 w-4 text-success" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-foreground">{run.plan_name}</p>
-                      <p className="text-[10px] text-muted-foreground">
-                        ${fmt(run.staked_amount)} invested • {new Date(run.started_at).toLocaleDateString()}
-                      </p>
-                    </div>
+              <div key={run.id} className="bg-card border border-border/20 rounded-xl p-3 flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-md bg-success/10 flex items-center justify-center">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-success" />
                   </div>
-                  <span className="text-sm font-bold text-success">+${fmt(estProfit)}</span>
-                </CardContent>
-              </Card>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground tracking-tight">{run.plan_name}</p>
+                    <p className="text-[10px] text-muted-foreground font-mono">
+                      ${fmt(run.staked_amount)} • {new Date(run.started_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+                <span className="text-sm font-mono font-bold text-success">+${fmt(estProfit)}</span>
+              </div>
             );
           })}
         </div>
       )}
 
-      <p className="text-[10px] text-muted-foreground text-center px-4 pb-4">
-        Bot trading involves risk. Returns are estimates based on market conditions. You can stop a bot at any time to collect accrued profits.
+      <p className="text-[9px] text-muted-foreground/60 text-center px-4 pb-4">
+        Trading involves risk. Past performance does not guarantee future returns.
       </p>
 
       {/* Start Confirmation Dialog */}

@@ -1,4 +1,4 @@
-import { Eye } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserData } from '@/contexts/UserDataContext';
 import { useCryptoPrices } from '@/hooks/useCryptoPrices';
@@ -28,20 +28,20 @@ export const PortfolioCard = () => {
 
   return (
     <div className="mb-6">
-      <div className="flex items-center gap-2 mb-1">
-        <span className="text-sm text-muted-foreground">Est total value</span>
+      <div className="flex items-center gap-2 mb-1.5">
+        <span className="text-xs text-muted-foreground tracking-wide">Estimated total value</span>
         <button onClick={() => setHidden(!hidden)} className="text-muted-foreground hover:text-foreground transition-colors">
-          <Eye className="h-4 w-4" />
+          {hidden ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
         </button>
       </div>
       <div className="flex items-baseline gap-2">
-        <span className="text-4xl font-bold font-display">
-          {hidden ? '****' : displayBalance}
+        <span className="text-[2rem] font-bold font-mono leading-none tracking-tight">
+          {hidden ? '••••••' : displayBalance}
         </span>
-        <span className="text-lg text-muted-foreground">USD</span>
+        <span className="text-sm text-muted-foreground font-medium">USD</span>
       </div>
-      <p className="text-sm text-muted-foreground mt-1">
-        Today's PnL <span className="text-destructive">-$0.02 (0.00%)</span>
+      <p className="text-xs text-muted-foreground mt-2">
+        24h PnL <span className="text-destructive font-mono">-$0.02 (0.00%)</span>
       </p>
     </div>
   );

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
-import { ChevronRight, ArrowDownUp, DollarSign, TrendingUp, RefreshCw, Signal, Wallet, Lock, Loader2 } from 'lucide-react';
+import { ChevronRight, ArrowDownUp, DollarSign, TrendingUp, RefreshCw, Signal, Lock } from 'lucide-react';
 import { useUserData } from '@/contexts/UserDataContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { BotTradingView } from '@/components/BotTradingView';
@@ -14,40 +14,69 @@ interface BotItem {
   description: string;
   icon: React.ReactNode;
   badge?: string;
+  badgeColor?: string;
+  stats: { label: string; value: string }[];
 }
 
 const bots: BotItem[] = [
   {
     id: 'flywheel',
     name: 'Flywheel',
-    description: 'Maximize with dual crypto. Buy low, sell high, and trade in cycles.',
-    icon: <ArrowDownUp className="h-5 w-5 text-foreground" />,
+    description: 'Automated cycle trading with real-time win/loss tracking.',
+    icon: <ArrowDownUp className="h-5 w-5" />,
     badge: 'Hot',
+    badgeColor: 'bg-destructive/15 text-destructive',
+    stats: [
+      { label: 'Win Rate', value: '~70%' },
+      { label: 'Min', value: '$100' },
+      { label: 'Cycles', value: '1-10m' },
+    ],
   },
   {
     id: 'futures-dca',
     name: 'Futures DCA',
-    description: 'Enter low, exit high in stages.',
-    icon: <DollarSign className="h-5 w-5 text-foreground" />,
+    description: 'Dollar-cost average into positions with staged entries.',
+    icon: <DollarSign className="h-5 w-5" />,
+    stats: [
+      { label: 'Strategy', value: 'DCA' },
+      { label: 'Risk', value: 'Med' },
+      { label: 'Type', value: 'Futures' },
+    ],
   },
   {
     id: 'futures-grid',
-    name: 'Futures Grid (Crypto-M)',
-    description: 'Amplify your non-stablecoin returns with automated compounding.',
-    icon: <TrendingUp className="h-5 w-5 text-foreground" />,
+    name: 'Futures Grid',
+    description: 'Profit from volatility with automated grid orders.',
+    icon: <TrendingUp className="h-5 w-5" />,
     badge: 'New',
+    badgeColor: 'bg-primary/15 text-primary',
+    stats: [
+      { label: 'Strategy', value: 'Grid' },
+      { label: 'Risk', value: 'High' },
+      { label: 'Type', value: 'Futures' },
+    ],
   },
   {
     id: 'spot-dca',
     name: 'Spot DCA',
-    description: 'Triggered by indicators, gradually grow your crypto holdings.',
-    icon: <RefreshCw className="h-5 w-5 text-foreground" />,
+    description: 'Indicator-triggered accumulation for long-term growth.',
+    icon: <RefreshCw className="h-5 w-5" />,
+    stats: [
+      { label: 'Strategy', value: 'DCA' },
+      { label: 'Risk', value: 'Low' },
+      { label: 'Type', value: 'Spot' },
+    ],
   },
   {
     id: 'signal-bot',
     name: 'Signal Bot',
-    description: 'Trade with low-latency signals automatically.',
-    icon: <Signal className="h-5 w-5 text-foreground" />,
+    description: 'Execute trades from low-latency market signals.',
+    icon: <Signal className="h-5 w-5" />,
+    stats: [
+      { label: 'Latency', value: '<50ms' },
+      { label: 'Risk', value: 'Med' },
+      { label: 'Type', value: 'Multi' },
+    ],
   },
 ];
 
@@ -58,17 +87,15 @@ export const BotsView = () => {
   const [activeBot, setActiveBot] = useState<BotItem | null>(null);
   const [showFlywheel, setShowFlywheel] = useState(false);
 
-  // Auth or data loading state
   if (loading || (user && dataLoading)) {
     return <BotsSkeleton />;
   }
 
-  // Auth gate
   if (!user) {
     return (
       <div className="flex flex-col items-center justify-center py-20 px-4">
-        <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
-          <Lock className="h-8 w-8 text-primary" />
+        <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+          <Lock className="h-7 w-7 text-primary" />
         </div>
         <p className="text-foreground font-display font-bold text-lg mb-1">Sign in to continue</p>
         <p className="text-muted-foreground text-sm mb-4 text-center">Log in to use trading bots</p>
@@ -79,12 +106,10 @@ export const BotsView = () => {
     );
   }
 
-  // Flywheel sub-view
   if (showFlywheel) {
     return <FlywheelBot onBack={() => setShowFlywheel(false)} />;
   }
 
-  // Other bot sub-view
   if (activeBot) {
     return (
       <BotTradingView
@@ -104,43 +129,53 @@ export const BotsView = () => {
   };
 
   return (
-    <div className="space-y-4">
-      {/* Balance card */}
-      <div className="bg-card border border-border/50 rounded-2xl p-4 flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-          <Wallet className="h-5 w-5 text-primary" />
-        </div>
-        <div>
-          <p className="text-[11px] text-muted-foreground uppercase tracking-wider">Available Balance</p>
-          <p className="text-xl font-display font-bold text-foreground">
-            ${balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          </p>
-        </div>
+    <div className="space-y-5">
+      {/* Balance strip */}
+      <div className="flex items-center justify-between bg-card border border-border/40 rounded-xl px-4 py-3">
+        <span className="text-xs text-muted-foreground tracking-wide">Available</span>
+        <span className="text-base font-mono font-semibold text-foreground">
+          ${balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          <span className="text-xs text-muted-foreground ml-1.5 font-sans font-normal">USDT</span>
+        </span>
       </div>
 
-      <h3 className="text-base font-display font-bold text-foreground">Popular bots</h3>
-      <div className="space-y-1">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-display font-semibold text-foreground tracking-tight">Trading Bots</h3>
+        <span className="text-[11px] text-muted-foreground">{bots.length} available</span>
+      </div>
+
+      <div className="space-y-2.5">
         {bots.map((bot) => (
           <button
             key={bot.id}
             onClick={() => handleBotClick(bot)}
-            className="w-full flex items-center gap-3.5 p-3.5 rounded-xl hover:bg-secondary/50 transition-colors text-left"
+            className="w-full bg-card border border-border/40 rounded-xl p-3.5 hover:border-border/70 hover:bg-card/80 transition-all text-left group"
           >
-            <div className="w-11 h-11 rounded-full bg-secondary border border-border/50 flex items-center justify-center shrink-0">
-              {bot.icon}
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <p className="text-sm font-bold text-foreground">{bot.name}</p>
-                {bot.badge && (
-                  <Badge className="bg-primary/90 text-primary-foreground text-[10px] px-1.5 py-0 h-4 border-0 font-semibold">
-                    {bot.badge}
-                  </Badge>
-                )}
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center shrink-0 text-foreground/80 group-hover:text-foreground transition-colors">
+                {bot.icon}
               </div>
-              <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{bot.description}</p>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-0.5">
+                  <span className="text-sm font-semibold text-foreground tracking-tight">{bot.name}</span>
+                  {bot.badge && (
+                    <Badge className={`${bot.badgeColor} text-[9px] px-1.5 py-0 h-4 border-0 font-bold uppercase tracking-wider`}>
+                      {bot.badge}
+                    </Badge>
+                  )}
+                </div>
+                <p className="text-[11px] text-muted-foreground leading-relaxed mb-2">{bot.description}</p>
+                <div className="flex gap-3">
+                  {bot.stats.map((stat) => (
+                    <div key={stat.label} className="flex items-center gap-1">
+                      <span className="text-[10px] text-muted-foreground">{stat.label}</span>
+                      <span className="text-[10px] font-mono font-semibold text-foreground/80">{stat.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <ChevronRight className="h-4 w-4 text-muted-foreground/50 shrink-0 mt-1 group-hover:text-muted-foreground transition-colors" />
             </div>
-            <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
           </button>
         ))}
       </div>
