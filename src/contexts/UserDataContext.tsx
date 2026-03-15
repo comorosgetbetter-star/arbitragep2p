@@ -41,6 +41,7 @@ const UserDataContext = createContext<UserDataContextType>({
   withdrawals: [],
   deposits: [],
   isLoading: true,
+  loadedForUser: null,
   refetchBalance: async () => {},
   refetchCryptoBalances: async () => {},
   refetchWithdrawals: async () => {},
