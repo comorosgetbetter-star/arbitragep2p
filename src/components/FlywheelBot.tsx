@@ -131,16 +131,13 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
   const planConfig = getFlywheelPlanByName(session.plan_name);
   const displayRate = planConfig?.dailyReturnPct ?? session.daily_return_pct;
 
-  // Target profit scales with package size: ~1.5-2% of staked amount
-  const targetProfitRef = useRef(
-    session.staked_amount * (0.015 + Math.random() * 0.005)
+  // Target profit: the expected accrued profit for the session, but with +/- $1.5-2 variance
+  const targetVarianceRef = useRef(
+    (Math.random() < 0.5 ? -1 : 1) * (1.5 + Math.random() * 0.5)
   );
 
   useEffect(() => {
     if (isCompleted || session.status !== 'active') return;
-
-    // Base trade size scales with staked amount
-    const baseTradeSize = session.staked_amount * 0.003; // ~0.3% per trade
 
     const runTradeRound = () => {
       setIsTrading(true);
@@ -158,34 +155,29 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
       setTimeout(() => {
         setIsTrading(false);
 
-        const currentNet = cumulativeNetRef.current;
-        const elapsed = Math.max(0, Date.now() - new Date(session.started_at).getTime());
-        const total = new Date(session.ends_at).getTime() - new Date(session.started_at).getTime();
-        const progressRatio = Math.min(1, elapsed / total);
-        const expectedAtThisPoint = targetProfitRef.current * progressRatio;
-        const drift = currentNet - expectedAtThisPoint;
+        // Calculate expected accrued profit at this point + the variance offset
+        const currentAccrued = calculateSessionAccruedProfit(session, Date.now());
+        const targetNow = currentAccrued + targetVarianceRef.current * (Math.min(1, (Date.now() - new Date(session.started_at).getTime()) / (new Date(session.ends_at).getTime() - new Date(session.started_at).getTime())));
+        const delta = targetNow - cumulativeNetRef.current;
 
-        // Base win rate ~55%, adjusted by drift to guide toward target
-        let winProbability = 0.55;
-        if (drift > baseTradeSize * 2) {
-          // Ahead of target → more losses
-          winProbability = 0.35;
-        } else if (drift < -baseTradeSize * 2) {
-          // Behind target → more wins
-          winProbability = 0.75;
-        }
+        // Decide win or loss: ~40% loss rate, but guided by drift
+        const forceLoss = delta < 0 || (delta > 0 && Math.random() < 0.38);
 
-        const isWin = Math.random() < winProbability;
+        let isWin: boolean;
+        let amount: number;
 
-        // Vary trade amounts: 0.5x to 1.8x of base size
-        const varianceMult = 0.5 + Math.random() * 1.3;
-        let amount = Math.round(baseTradeSize * varianceMult * 100) / 100;
-        amount = Math.max(0.01, amount);
-
-        if (isWin) {
-          cumulativeNetRef.current += amount;
-        } else {
+        if (forceLoss && cumulativeNetRef.current > 0.02) {
+          isWin = false;
+          // Loss amount: varied portion of the overshoot or random small amount
+          const lossBase = Math.abs(delta) > 0.5 ? Math.abs(delta) * (0.2 + Math.random() * 0.4) : 0.1 + Math.random() * 0.5;
+          amount = Math.round(lossBase * 100) / 100;
+          amount = Math.max(0.01, amount);
           cumulativeNetRef.current -= amount;
+        } else {
+          isWin = true;
+          const winBase = Math.abs(delta) > 0.01 ? Math.abs(delta) * (0.3 + Math.random() * 0.5) : 0.1 + Math.random() * 0.6;
+          amount = Math.max(0.01, Math.round(winBase * 100) / 100);
+          cumulativeNetRef.current += amount;
         }
 
         roundIdRef.current += 1;
