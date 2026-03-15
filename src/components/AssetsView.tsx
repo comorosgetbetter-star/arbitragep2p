@@ -171,7 +171,7 @@ export const AssetsView = () => {
     LTC: 'bg-slate-500/20 text-slate-400', DOGE: 'bg-amber-500/20 text-amber-400',
   };
 
-  if (loading || (user && dataLoading)) {
+  if (loading || (user && (dataLoading || loadedForUser !== user.id))) {
     return <AssetsMainSkeleton />;
   }
 
