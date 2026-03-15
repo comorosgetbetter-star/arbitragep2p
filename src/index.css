@@ -2,30 +2,30 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
 @layer base {
   :root {
-    --background: 240 6% 3%;
-    --foreground: 0 0% 93%;
+    --background: 220 20% 10%;
+    --foreground: 210 20% 93%;
 
-    --card: 240 5% 6%;
-    --card-foreground: 0 0% 93%;
+    --card: 220 18% 13%;
+    --card-foreground: 210 20% 93%;
 
-    --popover: 240 5% 8%;
-    --popover-foreground: 0 0% 93%;
+    --popover: 220 18% 15%;
+    --popover-foreground: 210 20% 93%;
 
-    --primary: 265 85% 58%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 45 100% 51%;
+    --primary-foreground: 0 0% 4%;
 
-    --secondary: 250 12% 10%;
-    --secondary-foreground: 0 0% 90%;
+    --secondary: 220 14% 16%;
+    --secondary-foreground: 210 15% 85%;
 
-    --muted: 250 8% 12%;
-    --muted-foreground: 240 5% 45%;
+    --muted: 220 12% 18%;
+    --muted-foreground: 215 10% 50%;
 
-    --accent: 285 75% 52%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 45 100% 51%;
+    --accent-foreground: 0 0% 4%;
 
     --destructive: 0 68% 52%;
     --destructive-foreground: 0 0% 98%;
@@ -33,57 +33,57 @@
     --success: 152 60% 42%;
     --success-foreground: 0 0% 98%;
 
-    --gold: 43 96% 56%;
+    --gold: 45 100% 51%;
     --gold-foreground: 0 0% 4%;
 
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 6%;
 
-    --border: 240 6% 12%;
-    --input: 240 6% 10%;
-    --ring: 265 85% 58%;
+    --border: 220 12% 18%;
+    --input: 220 14% 16%;
+    --ring: 45 100% 51%;
 
-    --radius: 0.625rem;
+    --radius: 0.5rem;
 
-    --gradient-primary: linear-gradient(135deg, hsl(265 85% 58%) 0%, hsl(310 80% 52%) 100%);
-    --gradient-card: linear-gradient(180deg, hsl(240 5% 7%) 0%, hsl(240 5% 5%) 100%);
-    --gradient-glow: radial-gradient(ellipse at center, hsl(265 85% 58% / 0.08) 0%, transparent 70%);
-    
-    --shadow-glow: 0 0 30px hsl(265 85% 58% / 0.15);
-    --shadow-card: 0 2px 16px hsl(0 0% 0% / 0.5);
-    --shadow-elevated: 0 8px 32px hsl(0 0% 0% / 0.6), 0 0 0 1px hsl(240 6% 12% / 0.5);
+    --gradient-primary: linear-gradient(135deg, hsl(45 100% 51%) 0%, hsl(38 92% 50%) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(220 18% 14%) 0%, hsl(220 18% 12%) 100%);
+    --gradient-glow: radial-gradient(ellipse at center, hsl(45 100% 51% / 0.06) 0%, transparent 70%);
 
-    --sidebar-background: 240 5% 6%;
-    --sidebar-foreground: 0 0% 93%;
-    --sidebar-primary: 265 85% 58%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 250 12% 10%;
-    --sidebar-accent-foreground: 0 0% 90%;
-    --sidebar-border: 240 6% 12%;
-    --sidebar-ring: 265 85% 58%;
+    --shadow-glow: 0 0 20px hsl(45 100% 51% / 0.1);
+    --shadow-card: 0 1px 3px hsl(0 0% 0% / 0.3);
+    --shadow-elevated: 0 4px 16px hsl(0 0% 0% / 0.4);
+
+    --sidebar-background: 220 18% 12%;
+    --sidebar-foreground: 210 20% 93%;
+    --sidebar-primary: 45 100% 51%;
+    --sidebar-primary-foreground: 0 0% 4%;
+    --sidebar-accent: 220 14% 16%;
+    --sidebar-accent-foreground: 210 15% 85%;
+    --sidebar-border: 220 12% 18%;
+    --sidebar-ring: 45 100% 51%;
   }
 
   .light {
-    --background: 0 0% 97%;
-    --foreground: 260 20% 11%;
+    --background: 210 20% 97%;
+    --foreground: 220 20% 11%;
 
     --card: 0 0% 100%;
-    --card-foreground: 260 20% 11%;
+    --card-foreground: 220 20% 11%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 260 20% 11%;
+    --popover-foreground: 220 20% 11%;
 
-    --primary: 280 80% 55%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 45 100% 51%;
+    --primary-foreground: 0 0% 4%;
 
-    --secondary: 260 20% 96%;
-    --secondary-foreground: 260 20% 11%;
+    --secondary: 220 15% 95%;
+    --secondary-foreground: 220 20% 11%;
 
-    --muted: 260 15% 94%;
-    --muted-foreground: 260 10% 47%;
+    --muted: 220 12% 93%;
+    --muted-foreground: 220 10% 47%;
 
-    --accent: 300 70% 45%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 45 100% 51%;
+    --accent-foreground: 0 0% 4%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
@@ -91,22 +91,22 @@
     --success: 142 76% 36%;
     --success-foreground: 0 0% 100%;
 
-    --gold: 45 100% 50%;
+    --gold: 45 100% 51%;
     --gold-foreground: 0 0% 4%;
 
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 6%;
 
-    --border: 260 15% 91%;
-    --input: 260 15% 91%;
-    --ring: 280 80% 55%;
+    --border: 220 12% 90%;
+    --input: 220 12% 90%;
+    --ring: 45 100% 51%;
 
-    --gradient-primary: linear-gradient(135deg, hsl(280 80% 55%) 0%, hsl(320 80% 50%) 100%);
-    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(0 0% 97%) 100%);
-    --gradient-glow: radial-gradient(ellipse at center, hsl(280 80% 60% / 0.08) 0%, transparent 70%);
+    --gradient-primary: linear-gradient(135deg, hsl(45 100% 51%) 0%, hsl(38 92% 50%) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(210 20% 97%) 100%);
+    --gradient-glow: radial-gradient(ellipse at center, hsl(45 100% 51% / 0.06) 0%, transparent 70%);
 
-    --shadow-glow: 0 0 40px hsl(280 80% 60% / 0.1);
-    --shadow-card: 0 4px 24px hsl(260 20% 11% / 0.08);
+    --shadow-glow: 0 0 20px hsl(45 100% 51% / 0.08);
+    --shadow-card: 0 1px 4px hsl(220 20% 11% / 0.06);
   }
 }
 
@@ -117,24 +117,25 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'Geist', system-ui, -apple-system, sans-serif;
-    letter-spacing: -0.01em;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    letter-spacing: -0.006em;
+    font-size: 14px;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Outfit', 'Geist', system-ui, sans-serif;
-    letter-spacing: -0.025em;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    letter-spacing: -0.02em;
+    font-weight: 600;
   }
 }
 
 @layer components {
   .glass-card {
-    @apply bg-card/90 backdrop-blur-xl border border-border/40 shadow-lg transition-all duration-200;
-    background: var(--gradient-card);
+    @apply bg-card border border-border/50 transition-all duration-150;
   }
 
   .glass-card:hover {
-    @apply border-border/60;
+    @apply border-border/70;
   }
 
   .mono {
@@ -161,36 +162,14 @@
     @apply text-destructive;
   }
 
-  .ticker-pulse {
-    animation: ticker-pulse 2s ease-in-out infinite;
-  }
-
-  .float-animation {
-    animation: float 6s ease-in-out infinite;
-  }
-
-  .shimmer {
-    background: linear-gradient(
-      90deg,
-      transparent 0%,
-      hsl(var(--primary) / 0.1) 50%,
-      transparent 100%
-    );
-    background-size: 200% 100%;
-    animation: shimmer 2s infinite;
-  }
-
-  /* Smooth page transitions */
   .page-transition {
     @apply animate-fade-in;
   }
 
-  /* Interactive elements */
   .interactive-card {
-    @apply transition-all duration-200 hover:scale-[1.02] active:scale-[0.98];
+    @apply transition-all duration-150 hover:bg-muted/30 active:scale-[0.99];
   }
 
-  /* Focus ring improvements */
   .focus-ring {
     @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background;
   }
@@ -201,69 +180,28 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
-  
+
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
 }
 
-@keyframes ticker-pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.7;
-  }
-}
-
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
-}
-
 @keyframes fade-in-up {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes scale-in {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+  from { opacity: 0; transform: scale(0.97); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 @keyframes slide-in-right {
-  from {
-    opacity: 0;
-    transform: translateX(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
+  from { opacity: 0; transform: translateX(12px); }
+  to { opacity: 1; transform: translateX(0); }
 }
 
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
