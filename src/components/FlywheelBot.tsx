@@ -196,6 +196,63 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
     return () => { clearTimeout(initialTimeout); clearInterval(interval); };
   }, [isCompleted, session.status, session.staked_amount, session.started_at, session.ends_at, session.daily_return_pct, session.plan_name]);
 
+  // Catch up profits when phone wakes up / tab becomes visible again
+  useEffect(() => {
+    if (session.status !== 'active') return;
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState !== 'visible') return;
+
+      const nowMs = Date.now();
+      const endsAtMs = new Date(session.ends_at).getTime();
+      const startedAtMs = new Date(session.started_at).getTime();
+      const effectiveNow = Math.min(nowMs, endsAtMs);
+      const progressRatio = Math.min(1, (effectiveNow - startedAtMs) / (endsAtMs - startedAtMs));
+
+      // Where the profit should be at this point in time
+      const expectedAccrued = calculateSessionAccruedProfit(session, effectiveNow);
+      const targetNow = expectedAccrued + targetVarianceRef.current * progressRatio;
+
+      // If cumulative is already close, no catch-up needed
+      const gap = targetNow - cumulativeNetRef.current;
+      if (Math.abs(gap) < 0.02) return;
+
+      // Generate synthetic trades to bridge the gap
+      const numSyntheticTrades = 3 + Math.floor(Math.random() * 4); // 3-6 trades
+      let remaining = gap;
+
+      const syntheticTrades: TradeRound[] = [];
+      for (let i = 0; i < numSyntheticTrades; i++) {
+        const isLast = i === numSyntheticTrades - 1;
+        let portion: number;
+        if (isLast) {
+          portion = remaining;
+        } else {
+          portion = remaining * (0.15 + Math.random() * 0.35);
+        }
+        const isWin = portion >= 0;
+        const amount = Math.max(0.01, Math.round(Math.abs(portion) * 100) / 100);
+
+        roundIdRef.current += 1;
+        syntheticTrades.push({
+          id: roundIdRef.current,
+          isWin,
+          amount,
+          timestamp: effectiveNow - (numSyntheticTrades - i) * 1000,
+        });
+
+        remaining -= isWin ? amount : -amount;
+        cumulativeNetRef.current += isWin ? amount : -amount;
+      }
+
+      setTrades(prev => [...prev, ...syntheticTrades]);
+      setNow(Date.now());
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [session.status, session.started_at, session.ends_at, session.staked_amount, session.daily_return_pct, session.plan_name]);
+
   useEffect(() => {
     tradesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [trades.length]);
