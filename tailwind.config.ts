@@ -14,8 +14,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['Geist', 'system-ui', '-apple-system', 'sans-serif'],
-        display: ['Outfit', 'Geist', 'system-ui', 'sans-serif'],
+        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
+        display: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
         mono: ['JetBrains Mono', 'SF Mono', 'Fira Code', 'monospace'],
       },
       colors: {
