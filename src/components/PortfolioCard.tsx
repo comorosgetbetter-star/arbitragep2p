@@ -22,6 +22,9 @@ export const PortfolioCard = () => {
     return <PortfolioSkeleton />;
   }
 
+  // Once data is fully loaded, sync hidden state
+  const isHidden = user ? hidden : true;
+
   const totalPortfolioValue = (() => {
     let total = balance;
     cryptoBalances.forEach((cb) => {
@@ -38,12 +41,12 @@ export const PortfolioCard = () => {
       <div className="flex items-center gap-2 mb-1.5">
         <span className="text-xs text-muted-foreground tracking-wide">Estimated total value</span>
         <button onClick={() => setHidden(!hidden)} className="text-muted-foreground hover:text-foreground transition-colors">
-          {hidden ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+          {isHidden ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
         </button>
       </div>
       <div className="flex items-baseline gap-2">
         <span className="text-[2rem] font-bold font-mono leading-none tracking-tight">
-          {hidden ? '••••••' : displayBalance}
+          {isHidden ? '••••••' : displayBalance}
         </span>
         <span className="text-sm text-muted-foreground font-medium">USD</span>
       </div>
