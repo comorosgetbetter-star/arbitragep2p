@@ -34,17 +34,19 @@ export const PortfolioCard = () => {
 
   const displayBalance = user ? totalPortfolioValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00';
 
+  const effectiveHidden = user ? hidden : true;
+
   return (
     <div className="mb-6">
       <div className="flex items-center gap-2 mb-1.5">
         <span className="text-xs text-muted-foreground tracking-wide">Estimated total value</span>
         <button onClick={() => setHidden(!hidden)} className="text-muted-foreground hover:text-foreground transition-colors">
-          {isHidden ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+          {effectiveHidden ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
         </button>
       </div>
       <div className="flex items-baseline gap-2">
         <span className="text-[2rem] font-bold font-mono leading-none tracking-tight">
-          {isHidden ? '••••••' : displayBalance}
+          {effectiveHidden ? '••••••' : displayBalance}
         </span>
         <span className="text-sm text-muted-foreground font-medium">USD</span>
       </div>
