@@ -589,7 +589,7 @@ export const AssetsView = () => {
   ];
 
   // Show skeleton while auth or user data is still loading
-  if (loading || (user && dataLoading)) {
+  if (loading || (user && (dataLoading || loadedForUser !== user.id))) {
     return <AssetsMainSkeleton />;
   }
 

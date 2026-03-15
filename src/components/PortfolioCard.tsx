@@ -18,7 +18,7 @@ export const PortfolioCard = () => {
     }
   }, [user, authLoading]);
 
-  if (authLoading || (user && dataLoading)) {
+  if (authLoading || (user && (dataLoading || loadedForUser !== user.id))) {
     return <PortfolioSkeleton />;
   }
 
