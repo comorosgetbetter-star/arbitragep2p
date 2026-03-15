@@ -71,6 +71,8 @@ export const AssetsView = () => {
   const [convertFrom, setConvertFrom] = useState('');
   const [convertTo, setConvertTo] = useState('');
   const [convertAmount, setConvertAmount] = useState('');
+  const [fromDropdownOpen, setFromDropdownOpen] = useState(false);
+  const [toDropdownOpen, setToDropdownOpen] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
   const [convertSuccess, setConvertSuccess] = useState(false);
   const [showFromPicker, setShowFromPicker] = useState(false);
