@@ -204,6 +204,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
       withdrawals,
       deposits,
       isLoading,
+      loadedForUser,
       refetchBalance: fetchBalance,
       refetchCryptoBalances: fetchCryptoBalances,
       refetchWithdrawals: fetchWithdrawals,
