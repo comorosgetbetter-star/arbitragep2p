@@ -9,7 +9,7 @@ export const PortfolioCard = () => {
   const { user, loading: authLoading } = useAuth();
   const { balance, cryptoBalances, isLoading: dataLoading } = useUserData();
   const { prices } = useCryptoPrices();
-  const [hidden, setHidden] = useState(false);
+  const [hidden, setHidden] = useState(!user);
 
   if (authLoading || (user && dataLoading)) {
     return <PortfolioSkeleton />;
