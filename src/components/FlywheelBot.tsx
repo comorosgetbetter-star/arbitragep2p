@@ -131,10 +131,13 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
   const planConfig = getFlywheelPlanByName(session.plan_name);
   const displayRate = planConfig?.dailyReturnPct ?? session.daily_return_pct;
 
-  // Target profit: the expected accrued profit for the session, but with +/- $1.5-2 variance
+  // Variance scales with the expected profit for this session (based on staked amount & rate)
+  const expectedFullProfit = calculateSessionEstimatedProfit(session);
   const targetVarianceRef = useRef(
-    (Math.random() < 0.5 ? -1 : 1) * (1.5 + Math.random() * 0.5)
+    (Math.random() < 0.5 ? -1 : 1) * expectedFullProfit * (0.1 + Math.random() * 0.05)
   );
+  // Base trade size scales with staked amount (~0.3-0.5% per trade)
+  const baseTradeSize = session.staked_amount * 0.004;
 
   useEffect(() => {
     if (isCompleted || session.status !== 'active') return;
@@ -155,12 +158,12 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
       setTimeout(() => {
         setIsTrading(false);
 
-        // Calculate expected accrued profit at this point + the variance offset
         const currentAccrued = calculateSessionAccruedProfit(session, Date.now());
-        const targetNow = currentAccrued + targetVarianceRef.current * (Math.min(1, (Date.now() - new Date(session.started_at).getTime()) / (new Date(session.ends_at).getTime() - new Date(session.started_at).getTime())));
+        const progressRatio = Math.min(1, (Date.now() - new Date(session.started_at).getTime()) / (new Date(session.ends_at).getTime() - new Date(session.started_at).getTime()));
+        const targetNow = currentAccrued + targetVarianceRef.current * progressRatio;
         const delta = targetNow - cumulativeNetRef.current;
 
-        // Decide win or loss: ~40% loss rate, but guided by drift
+        // ~38% loss rate, adjusted by drift
         const forceLoss = delta < 0 || (delta > 0 && Math.random() < 0.38);
 
         let isWin: boolean;
@@ -168,14 +171,13 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
 
         if (forceLoss && cumulativeNetRef.current > 0.02) {
           isWin = false;
-          // Loss amount: varied portion of the overshoot or random small amount
-          const lossBase = Math.abs(delta) > 0.5 ? Math.abs(delta) * (0.2 + Math.random() * 0.4) : 0.1 + Math.random() * 0.5;
+          const lossBase = Math.abs(delta) > baseTradeSize ? Math.abs(delta) * (0.2 + Math.random() * 0.4) : baseTradeSize * (0.3 + Math.random() * 0.7);
           amount = Math.round(lossBase * 100) / 100;
           amount = Math.max(0.01, amount);
           cumulativeNetRef.current -= amount;
         } else {
           isWin = true;
-          const winBase = Math.abs(delta) > 0.01 ? Math.abs(delta) * (0.3 + Math.random() * 0.5) : 0.1 + Math.random() * 0.6;
+          const winBase = Math.abs(delta) > baseTradeSize * 0.5 ? Math.abs(delta) * (0.3 + Math.random() * 0.5) : baseTradeSize * (0.4 + Math.random() * 0.8);
           amount = Math.max(0.01, Math.round(winBase * 100) / 100);
           cumulativeNetRef.current += amount;
         }
