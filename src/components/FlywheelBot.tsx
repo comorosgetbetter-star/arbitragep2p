@@ -122,14 +122,12 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
   const remainingMinutes = Math.floor(remainingMs / (1000 * 60));
   const remainingSeconds = Math.floor((remainingMs % (1000 * 60)) / 1000);
 
-  // The displayed profit is ALWAYS the exact sum of trade wins minus losses — nothing else.
   const tradeNet = trades.reduce((sum, t) => sum + (t.isWin ? t.amount : -t.amount), 0);
   const accruedProfit = tradeNet;
   const totalReturnToBalance = session.staked_amount + tradeNet;
   const winsCount = trades.filter((trade) => trade.isWin).length;
   const lossesCount = trades.length - winsCount;
 
-  // Determine profit multiplier from plan name (for visual trade simulation only)
   const planConfig = getFlywheelPlanByName(session.plan_name);
   const displayRate = planConfig?.dailyReturnPct ?? session.daily_return_pct;
 
@@ -154,21 +152,17 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
         const currentAccrued = calculateSessionAccruedProfit(session, Date.now());
         const delta = currentAccrued - cumulativeNetRef.current;
 
-        // Decide win or loss. If delta is very small or negative, force a small loss visual
-        // 70% wins, 30% losses — but losses are small so net trends up to match accrued
         const forceLoss = delta > 0 && Math.random() < 0.25;
 
         let isWin: boolean;
         let amount: number;
 
         if (forceLoss && delta > 0.02) {
-          // Show a small loss (10-30% of delta), the next win will compensate
           isWin = false;
           amount = Math.round(delta * (0.1 + Math.random() * 0.2) * 100) / 100;
           amount = Math.max(0.01, amount);
           cumulativeNetRef.current -= amount;
         } else {
-          // Win: capture the full delta so cumulative matches accrued
           isWin = true;
           amount = Math.max(0.01, Math.round(delta * 100) / 100);
           cumulativeNetRef.current += amount;
@@ -212,15 +206,15 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
       {/* Top bar */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border/20 bg-card/90 backdrop-blur-sm">
         <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-md bg-primary/15 flex items-center justify-center">
-            <ArrowDownUp className="h-3.5 w-3.5 text-primary" />
+          <div className="w-8 h-8 rounded-md bg-primary/15 flex items-center justify-center">
+            <ArrowDownUp className="h-4 w-4 text-primary" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-foreground tracking-tight">{session.plan_name}</p>
-            <p className="text-[10px] text-muted-foreground font-mono">{displayRate}% • ${fmt(session.staked_amount)}</p>
+            <p className="text-base font-semibold text-foreground tracking-tight">{session.plan_name}</p>
+            <p className="text-xs text-muted-foreground font-mono">{displayRate}% • ${fmt(session.staked_amount)}</p>
           </div>
         </div>
-        <Badge className={`text-[10px] font-mono tracking-wider ${isCompleted ? 'bg-success/10 text-success border-0' : 'bg-primary/10 text-primary border-0 animate-pulse'}`}>
+        <Badge className={`text-xs font-mono tracking-wider ${isCompleted ? 'bg-success/10 text-success border-0' : 'bg-primary/10 text-primary border-0 animate-pulse'}`}>
           {isCompleted ? 'DONE' : 'LIVE'}
         </Badge>
       </div>
@@ -228,7 +222,7 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
       {/* Main content */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {/* Result flash / Trading indicator */}
-        <div className="h-[72px] relative">
+        <div className="h-[80px] relative">
           {lastResult ? (
             <div className={`absolute inset-0 rounded-lg p-3 text-center border ${
               lastResult.isWin ? 'bg-success/8 border-success/20' : 'bg-destructive/8 border-destructive/20'
@@ -239,7 +233,7 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
                 ) : (
                   <XCircle className="h-5 w-5 text-destructive" />
                 )}
-                <span className={`text-xs font-bold font-mono uppercase tracking-wider ${lastResult.isWin ? 'text-success' : 'text-destructive'}`}>
+                <span className={`text-sm font-bold font-mono uppercase tracking-wider ${lastResult.isWin ? 'text-success' : 'text-destructive'}`}>
                   {lastResult.isWin ? 'WIN' : 'LOSS'}
                 </span>
               </div>
@@ -249,12 +243,12 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
             </div>
           ) : isTrading && !isCompleted ? (
             <div className="absolute inset-0 bg-card border border-border/30 rounded-lg p-3 flex items-center gap-3">
-              <div className="w-9 h-9 rounded-md bg-primary/10 flex items-center justify-center">
-                <Zap className="h-4 w-4 text-primary" />
+              <div className="w-10 h-10 rounded-md bg-primary/10 flex items-center justify-center">
+                <Zap className="h-5 w-5 text-primary" />
               </div>
               <div className="flex-1">
-                <p className="text-xs font-semibold text-foreground tracking-tight">Executing trade…</p>
-                <p className="text-[10px] text-muted-foreground font-mono">{tradingCountdown}s remaining</p>
+                <p className="text-sm font-semibold text-foreground tracking-tight">Executing trade…</p>
+                <p className="text-xs text-muted-foreground font-mono">{tradingCountdown}s remaining</p>
               </div>
               <div className="flex gap-0.5 items-end">
                 <div className="w-1 h-3 bg-primary/30 rounded-full animate-[pulse_0.6s_ease-in-out_infinite]" />
@@ -266,11 +260,11 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
           ) : isCompleted ? (
             <div className="absolute inset-0 bg-success/5 border border-success/20 rounded-lg p-3 flex items-center justify-center gap-2">
               <Trophy className="h-5 w-5 text-success" />
-              <span className="text-sm font-bold text-success tracking-tight">Session Complete</span>
+              <span className="text-base font-bold text-success tracking-tight">Session Complete</span>
             </div>
           ) : (
             <div className="absolute inset-0 bg-card border border-border/20 rounded-lg p-3 flex items-center justify-center">
-              <p className="text-xs text-muted-foreground">Waiting for first trade…</p>
+              <p className="text-sm text-muted-foreground">Waiting for first trade…</p>
             </div>
           )}
         </div>
@@ -279,10 +273,10 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
         <div className="bg-card border border-border/30 rounded-lg p-4 space-y-1.5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5">
-              <Trophy className="h-3.5 w-3.5 text-gold" />
-              <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-medium">Net Profit</p>
+              <Trophy className="h-4 w-4 text-gold" />
+              <p className="text-xs text-muted-foreground uppercase tracking-widest font-medium">Net Profit</p>
             </div>
-            <div className="flex items-center gap-2 text-[10px] font-mono">
+            <div className="flex items-center gap-2 text-xs font-mono">
               <span className="text-success">{winsCount}W</span>
               <span className="text-muted-foreground">/</span>
               <span className="text-destructive">{lossesCount}L</span>
@@ -295,49 +289,49 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
 
         {/* Stats */}
         <div className="grid grid-cols-2 gap-2">
-          <div className="bg-secondary/40 rounded-lg p-2.5 text-center">
-            <p className="text-[9px] text-muted-foreground uppercase tracking-wider">Invested</p>
-            <p className="text-sm font-mono font-bold text-foreground">${fmt(session.staked_amount)}</p>
+          <div className="bg-secondary/40 rounded-lg p-3 text-center">
+            <p className="text-xs text-muted-foreground uppercase tracking-wider">Invested</p>
+            <p className="text-base font-mono font-bold text-foreground">${fmt(session.staked_amount)}</p>
           </div>
-          <div className="bg-secondary/40 rounded-lg p-2.5 text-center">
-            <p className="text-[9px] text-muted-foreground uppercase tracking-wider">Value</p>
-            <p className="text-sm font-mono font-bold text-success">${fmt(totalReturnToBalance)}</p>
+          <div className="bg-secondary/40 rounded-lg p-3 text-center">
+            <p className="text-xs text-muted-foreground uppercase tracking-wider">Value</p>
+            <p className="text-base font-mono font-bold text-success">${fmt(totalReturnToBalance)}</p>
           </div>
         </div>
 
         {/* Progress */}
-        <div className="space-y-1">
-          <div className="flex justify-between text-[10px] text-muted-foreground font-mono">
-            <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {remainingMinutes}:{remainingSeconds.toString().padStart(2, '0')}</span>
+        <div className="space-y-1.5">
+          <div className="flex justify-between text-xs text-muted-foreground font-mono">
+            <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" /> {remainingMinutes}:{remainingSeconds.toString().padStart(2, '0')}</span>
             <span>{progressPct.toFixed(0)}%</span>
           </div>
-          <Progress value={progressPct} className="h-1.5" />
+          <Progress value={progressPct} className="h-2" />
         </div>
 
         {/* Trade history */}
         <div className="space-y-1.5">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-medium">Trades</p>
+          <p className="text-xs text-muted-foreground uppercase tracking-widest font-medium">Trades</p>
           <ScrollArea className="h-[200px] rounded-lg border border-border/20 bg-card/50">
-            <div className="p-1.5 space-y-0.5">
+            <div className="p-2 space-y-1">
               {trades.length === 0 && !isTrading && (
-                <p className="text-xs text-muted-foreground text-center py-8">Waiting…</p>
+                <p className="text-sm text-muted-foreground text-center py-8">Waiting…</p>
               )}
               {trades.map((trade, idx) => (
                 <div
                   key={trade.id}
-                  className={`flex items-center justify-between px-2.5 py-1.5 rounded text-xs animate-fade-in ${
+                  className={`flex items-center justify-between px-3 py-2 rounded text-sm animate-fade-in ${
                     trade.isWin ? 'bg-success/5' : 'bg-destructive/5'
                   }`}
                 >
                   <div className="flex items-center gap-2">
                     {trade.isWin ? (
-                      <CheckCircle2 className="h-3.5 w-3.5 text-success" />
+                      <CheckCircle2 className="h-4 w-4 text-success" />
                     ) : (
-                      <XCircle className="h-3.5 w-3.5 text-destructive" />
+                      <XCircle className="h-4 w-4 text-destructive" />
                     )}
-                    <span className="text-muted-foreground font-mono text-[11px]">#{idx + 1}</span>
+                    <span className="text-muted-foreground font-mono text-xs">#{idx + 1}</span>
                   </div>
-                  <span className={`font-bold font-mono text-[11px] ${trade.isWin ? 'text-success' : 'text-destructive'}`}>
+                  <span className={`font-bold font-mono text-sm ${trade.isWin ? 'text-success' : 'text-destructive'}`}>
                     {trade.isWin ? '+' : '-'}${fmt(trade.amount)}
                   </span>
                 </div>
@@ -351,19 +345,17 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
       {/* Bottom action bar */}
       <div className="p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] mb-16 md:mb-0 border-t border-border/30 bg-card/80 backdrop-blur-sm space-y-2">
         {collected ? (
-          /* Profits collected — show only Back button */
           <Button
-            className="w-full h-12 font-semibold"
+            className="w-full h-12 font-semibold text-base"
             onClick={onCancelled}
           >
             <ArrowLeft className="h-4 w-4 mr-1.5" />
             Back to Packages
           </Button>
         ) : !isCompleted && session.status === 'active' ? (
-          /* Bot is still running — show only Cancel button */
           <Button
             variant="outline"
-            className="w-full h-12 border-destructive/30 text-destructive hover:bg-destructive/10 font-semibold"
+            className="w-full h-12 border-destructive/30 text-destructive hover:bg-destructive/10 font-semibold text-base"
             onClick={() => setShowCancelConfirm(true)}
             disabled={cancelling}
           >
@@ -371,9 +363,8 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
             {cancelling ? 'Stopping…' : 'Cancel Bot'}
           </Button>
         ) : (
-          /* Bot finished — show Collect Profits */
           <Button
-            className="w-full h-12 bg-success hover:bg-success/90 text-success-foreground font-semibold"
+            className="w-full h-12 bg-success hover:bg-success/90 text-success-foreground font-semibold text-base"
             onClick={() => setShowCancelConfirm(true)}
           >
             <Trophy className="h-4 w-4 mr-1.5" />
@@ -386,14 +377,14 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
       <Dialog open={showCancelConfirm} onOpenChange={setShowCancelConfirm}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+            <DialogTitle className="flex items-center gap-2 text-lg">
               {isCompleted ? (
                 <><Trophy className="h-5 w-5 text-gold" /> Collect Profits</>
               ) : (
                 <><AlertTriangle className="h-5 w-5 text-warning" /> Cancel Bot?</>
               )}
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-sm">
               {isCompleted
                 ? 'Your trading session is complete. Review your results.'
                 : 'Are you sure you want to stop the bot early? You can still collect any profits earned so far.'}
@@ -402,41 +393,41 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
           <div className="space-y-3 py-2">
             <div className="grid grid-cols-2 gap-3">
               <div className="bg-secondary/50 rounded-lg p-3 text-center">
-                <p className="text-[10px] text-muted-foreground">Invested</p>
-                <p className="text-sm font-bold text-foreground">${fmt(session.staked_amount)}</p>
+                <p className="text-xs text-muted-foreground">Invested</p>
+                <p className="text-base font-bold text-foreground">${fmt(session.staked_amount)}</p>
               </div>
               <div className="bg-secondary/50 rounded-lg p-3 text-center">
-                <p className="text-[10px] text-muted-foreground">Trades</p>
-                <p className="text-sm font-bold text-foreground">{trades.length}</p>
+                <p className="text-xs text-muted-foreground">Trades</p>
+                <p className="text-base font-bold text-foreground">{trades.length}</p>
               </div>
               <div className="bg-success/10 rounded-lg p-3 text-center">
-                <p className="text-[10px] text-muted-foreground">Wins</p>
-                <p className="text-sm font-bold text-success">{winsCount}</p>
+                <p className="text-xs text-muted-foreground">Wins</p>
+                <p className="text-base font-bold text-success">{winsCount}</p>
               </div>
               <div className="bg-destructive/10 rounded-lg p-3 text-center">
-                <p className="text-[10px] text-muted-foreground">Losses</p>
-                <p className="text-sm font-bold text-destructive">{lossesCount}</p>
+                <p className="text-xs text-muted-foreground">Losses</p>
+                <p className="text-base font-bold text-destructive">{lossesCount}</p>
               </div>
             </div>
-            <p className="text-[10px] text-muted-foreground text-center">
+            <p className="text-xs text-muted-foreground text-center">
               Settlement profit is the net result of all winning and losing trades.
             </p>
             <div className="bg-card border border-border/50 rounded-xl p-4 text-center space-y-1">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Total Return to Balance</p>
+              <p className="text-xs text-muted-foreground uppercase tracking-wider">Total Return to Balance</p>
               <p className="text-2xl font-bold font-display text-success">
                 ${fmt(totalReturnToBalance)}
               </p>
-              <p className="text-[10px] text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 ${fmt(session.staked_amount)} invested + ${fmt(accruedProfit)} profit
               </p>
             </div>
           </div>
           <DialogFooter className="flex gap-2 sm:gap-2">
-            <Button variant="outline" onClick={() => setShowCancelConfirm(false)} className="flex-1">
+            <Button variant="outline" onClick={() => setShowCancelConfirm(false)} className="flex-1 text-sm">
               {isCompleted ? 'Back' : 'Keep Trading'}
             </Button>
             <Button
-              className={`flex-1 ${isCompleted ? 'bg-success hover:bg-success/90 text-success-foreground' : 'bg-destructive hover:bg-destructive/90 text-destructive-foreground'}`}
+              className={`flex-1 text-sm ${isCompleted ? 'bg-success hover:bg-success/90 text-success-foreground' : 'bg-destructive hover:bg-destructive/90 text-destructive-foreground'}`}
               onClick={handleConfirmCancel}
               disabled={cancelling}
             >
@@ -473,7 +464,6 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
       .order('started_at', { ascending: false });
     if (data) setActiveSessions(data as FlywheelSession[]);
 
-    // Fetch recent completed runs
     const { data: completed } = await supabase
       .from('staking_sessions')
       .select('id, plan_name, staked_amount, daily_return_pct, lock_days, started_at, ends_at, status')
@@ -547,14 +537,12 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
     fetchSessions();
   };
 
-  // Auto-open first active session, or open newly created one
   useEffect(() => {
     if (activeSessions.length > 0 && !viewingSession) {
       setViewingSession(activeSessions[0]);
     }
   }, [activeSessions]);
 
-  // If viewing a session, show full-page bot view
   if (viewingSession) {
     return <ActiveBotView session={viewingSession} onCancelled={handleSessionDone} onBack={() => setViewingSession(null)} />;
   }
@@ -567,60 +555,60 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
           <ArrowLeft className="h-4 w-4" />
           Back
         </button>
-        <span className="text-xs text-muted-foreground font-medium">Flywheel Bot</span>
+        <span className="text-sm text-muted-foreground font-medium">Flywheel Bot</span>
       </div>
 
       {/* Hero */}
       <div className="bg-card border border-border/30 rounded-xl p-4">
         <div className="flex items-center gap-2.5 mb-2">
-          <div className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center">
-            <ArrowDownUp className="h-4 w-4 text-primary" />
+          <div className="w-9 h-9 rounded-md bg-primary/10 flex items-center justify-center">
+            <ArrowDownUp className="h-5 w-5 text-primary" />
           </div>
-          <h2 className="text-base font-display font-bold text-foreground tracking-tight">Flywheel</h2>
+          <h2 className="text-lg font-display font-bold text-foreground tracking-tight">Flywheel</h2>
         </div>
-        <p className="text-xs text-muted-foreground mb-3 leading-relaxed">
+        <p className="text-sm text-muted-foreground mb-3 leading-relaxed">
           Automated cycle trading. Watch trades execute in real-time.
         </p>
-        <div className="flex items-center gap-4 text-[10px] text-muted-foreground">
-          <div className="flex items-center gap-1"><Zap className="h-3 w-3 text-primary" /><span>Live trades</span></div>
-          <div className="flex items-center gap-1"><TrendingUp className="h-3 w-3 text-success" /><span>~70% win rate</span></div>
-          <div className="flex items-center gap-1"><Clock className="h-3 w-3 text-muted-foreground" /><span>1-10 min</span></div>
+        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+          <div className="flex items-center gap-1"><Zap className="h-3.5 w-3.5 text-primary" /><span>Live trades</span></div>
+          <div className="flex items-center gap-1"><TrendingUp className="h-3.5 w-3.5 text-success" /><span>~70% win rate</span></div>
+          <div className="flex items-center gap-1"><Clock className="h-3.5 w-3.5 text-muted-foreground" /><span>1-10 min</span></div>
         </div>
       </div>
 
       {/* Balance */}
       <div className="flex items-center justify-between bg-card border border-border/30 rounded-xl px-4 py-3">
-        <span className="text-xs text-muted-foreground tracking-wide">Balance</span>
-        <span className="text-base font-mono font-semibold text-foreground">
+        <span className="text-sm text-muted-foreground tracking-wide">Balance</span>
+        <span className="text-lg font-mono font-semibold text-foreground">
           ${balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          <span className="text-xs text-muted-foreground ml-1 font-sans font-normal">USDT</span>
+          <span className="text-sm text-muted-foreground ml-1 font-sans font-normal">USDT</span>
         </span>
       </div>
 
-      {/* Active Sessions - shown as resumable cards */}
+      {/* Active Sessions */}
       {activeSessions.length > 0 && (
         <div className="space-y-2">
-          <h3 className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">Active</h3>
+          <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-widest">Active</h3>
           {activeSessions.map((session) => (
-            <div key={session.id} className="bg-card border border-primary/20 rounded-xl p-3 flex items-center justify-between cursor-pointer hover:border-primary/40 transition-all" onClick={() => setViewingSession(session)}>
+            <div key={session.id} className="bg-card border border-primary/20 rounded-xl p-3.5 flex items-center justify-between cursor-pointer hover:border-primary/40 transition-all" onClick={() => setViewingSession(session)}>
               <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-md bg-primary/10 flex items-center justify-center">
-                  <ArrowDownUp className="h-3.5 w-3.5 text-primary" />
-                  </div>
-                <div>
-                    <p className="text-sm font-semibold text-foreground tracking-tight">{session.plan_name}</p>
-                    <p className="text-[10px] text-muted-foreground font-mono">${fmt(session.staked_amount)}</p>
-                  </div>
+                <div className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center">
+                  <ArrowDownUp className="h-4 w-4 text-primary" />
                 </div>
-                <Badge className="bg-primary/10 text-primary border-0 text-[9px] font-mono tracking-wider animate-pulse">LIVE</Badge>
+                <div>
+                  <p className="text-base font-semibold text-foreground tracking-tight">{session.plan_name}</p>
+                  <p className="text-xs text-muted-foreground font-mono">${fmt(session.staked_amount)}</p>
+                </div>
               </div>
-            ))}
-          </div>
-        )}
+              <Badge className="bg-primary/10 text-primary border-0 text-xs font-mono tracking-wider animate-pulse">LIVE</Badge>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Plans */}
       <div className="space-y-2.5">
-        <h3 className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">Packages</h3>
+        <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-widest">Packages</h3>
         {FLYWHEEL_PLANS.map((plan) => {
           const isSelected = selectedPlan === plan.id;
           const estProfit = plan.minAmount * (plan.dailyReturnPct / 100);
@@ -628,89 +616,89 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
           return (
             <div
               key={plan.id}
-              className={`bg-card border rounded-xl p-3.5 transition-all ${isSelected ? 'border-gold/40 ring-1 ring-gold/20' : 'border-border/30'}`}
+              className={`bg-card border rounded-xl p-4 transition-all ${isSelected ? 'border-gold/40 ring-1 ring-gold/20' : 'border-border/30'}`}
             >
-              <div className="flex items-center justify-between mb-2.5">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-md bg-gold/10 flex items-center justify-center">
-                    <ArrowDownUp className="h-3.5 w-3.5 text-gold" />
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-md bg-gold/10 flex items-center justify-center">
+                    <ArrowDownUp className="h-4 w-4 text-gold" />
                   </div>
                   <div>
-                    <p className="font-semibold text-foreground text-sm tracking-tight">{plan.name}</p>
-                    <p className="text-[10px] text-muted-foreground font-mono">{plan.dailyReturnPct}%</p>
+                    <p className="font-semibold text-foreground text-base tracking-tight">{plan.name}</p>
+                    <p className="text-xs text-muted-foreground font-mono">{plan.dailyReturnPct}%</p>
                   </div>
                 </div>
-                <Badge className="bg-gold/10 text-gold border-0 text-[9px] font-mono tracking-wider">{plan.badge}</Badge>
+                <Badge className="bg-gold/10 text-gold border-0 text-xs font-mono tracking-wider">{plan.badge}</Badge>
               </div>
 
-              <div className="grid grid-cols-3 gap-1.5 mb-3 text-center">
-                <div className="bg-secondary/30 rounded-md p-1.5">
-                  <p className="text-[9px] text-muted-foreground uppercase">Min</p>
-                  <p className="text-[11px] font-mono font-bold text-foreground">${fmt(plan.minAmount, 0)}</p>
+              <div className="grid grid-cols-3 gap-2 mb-3 text-center">
+                <div className="bg-secondary/30 rounded-md p-2">
+                  <p className="text-xs text-muted-foreground uppercase">Min</p>
+                  <p className="text-sm font-mono font-bold text-foreground">${fmt(plan.minAmount, 0)}</p>
                 </div>
-                <div className="bg-secondary/30 rounded-md p-1.5">
-                  <p className="text-[9px] text-muted-foreground uppercase">Rate</p>
-                  <p className="text-[11px] font-mono font-bold text-primary">{plan.dailyReturnPct}%</p>
+                <div className="bg-secondary/30 rounded-md p-2">
+                  <p className="text-xs text-muted-foreground uppercase">Rate</p>
+                  <p className="text-sm font-mono font-bold text-primary">{plan.dailyReturnPct}%</p>
                 </div>
-                <div className="bg-secondary/30 rounded-md p-1.5">
-                  <p className="text-[9px] text-muted-foreground uppercase">Est.</p>
-                  <p className="text-[11px] font-mono font-bold text-success">+${fmt(estProfit, 0)}</p>
+                <div className="bg-secondary/30 rounded-md p-2">
+                  <p className="text-xs text-muted-foreground uppercase">Est.</p>
+                  <p className="text-sm font-mono font-bold text-success">+${fmt(estProfit, 0)}</p>
                 </div>
               </div>
 
-                {isSelected ? (
-                  <div className="space-y-3">
-                    {/* Duration selector */}
-                    <div>
-                      <label className="text-xs text-muted-foreground mb-1.5 block">Duration</label>
-                      <div className="grid grid-cols-4 gap-1.5">
-                        {DURATION_OPTIONS.map((opt) => (
-                          <button
-                            key={opt.minutes}
-                            onClick={() => setSelectedDuration(opt)}
-                            className={`py-2 px-1 rounded-lg text-xs font-semibold border transition-all ${
-                              selectedDuration.minutes === opt.minutes
-                                ? 'bg-gold/20 border-gold/50 text-gold'
-                                : 'bg-secondary/50 border-border/30 text-muted-foreground hover:border-border'
-                            }`}
-                          >
-                            {opt.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                    <div>
-                      <label className="text-xs text-muted-foreground mb-1 block">Trading Amount (USDT)</label>
-                      <div className="bg-secondary/50 border border-border/50 rounded-md px-3 py-2 text-sm font-bold text-foreground">
-                        ${fmt(plan.minAmount)}
-                      </div>
-                      <p className="text-[10px] text-muted-foreground mt-1">This package trades a fixed amount of ${fmt(plan.minAmount)}</p>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        className="flex-1 h-11 font-semibold text-sm border-border/50"
-                        onClick={() => { setSelectedPlan(null); }}
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        className="flex-[2] h-11 font-semibold text-sm bg-gold hover:bg-gold/90 text-gold-foreground shadow-[0_0_16px_hsl(43_96%_56%/0.3)]"
-                        onClick={() => handleStart(plan)}
-                        disabled={isStarting || balance < plan.minAmount}
-                      >
-                        {isStarting ? 'Starting…' : `Deploy $${fmt(plan.minAmount)}`}
-                      </Button>
+              {isSelected ? (
+                <div className="space-y-3">
+                  {/* Duration selector */}
+                  <div>
+                    <label className="text-sm text-muted-foreground mb-1.5 block">Duration</label>
+                    <div className="grid grid-cols-4 gap-1.5">
+                      {DURATION_OPTIONS.map((opt) => (
+                        <button
+                          key={opt.minutes}
+                          onClick={() => setSelectedDuration(opt)}
+                          className={`py-2.5 px-1 rounded-lg text-sm font-semibold border transition-all ${
+                            selectedDuration.minutes === opt.minutes
+                              ? 'bg-gold/20 border-gold/50 text-gold'
+                              : 'bg-secondary/50 border-border/30 text-muted-foreground hover:border-border'
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
                     </div>
                   </div>
-                ) : (
-                  <Button
-                    className="w-full h-11 font-semibold text-sm bg-gold/15 hover:bg-gold/25 text-gold border border-gold/30"
-                    onClick={() => { setSelectedPlan(plan.id); }}
-                  >
-                    Start Trading
-                  </Button>
-                )}
+                  <div>
+                    <label className="text-sm text-muted-foreground mb-1 block">Trading Amount (USDT)</label>
+                    <div className="bg-secondary/50 border border-border/50 rounded-md px-3 py-2.5 text-base font-bold text-foreground">
+                      ${fmt(plan.minAmount)}
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">This package trades a fixed amount of ${fmt(plan.minAmount)}</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      className="flex-1 h-12 font-semibold text-sm border-border/50"
+                      onClick={() => { setSelectedPlan(null); }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      className="flex-[2] h-12 font-semibold text-sm bg-gold hover:bg-gold/90 text-gold-foreground shadow-[0_0_16px_hsl(43_96%_56%/0.3)]"
+                      onClick={() => handleStart(plan)}
+                      disabled={isStarting || balance < plan.minAmount}
+                    >
+                      {isStarting ? 'Starting…' : `Deploy $${fmt(plan.minAmount)}`}
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <Button
+                  className="w-full h-12 font-semibold text-sm bg-gold/15 hover:bg-gold/25 text-gold border border-gold/30"
+                  onClick={() => { setSelectedPlan(plan.id); }}
+                >
+                  Start Trading
+                </Button>
+              )}
             </div>
           );
         })}
@@ -719,30 +707,30 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
       {/* Recent Runs */}
       {recentRuns.length > 0 && (
         <div className="space-y-2">
-          <h3 className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">History</h3>
+          <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-widest">History</h3>
           {recentRuns.map((run) => {
             const estProfit = calculateSessionEstimatedProfit(run);
             return (
-              <div key={run.id} className="bg-card border border-border/20 rounded-xl p-3 flex items-center justify-between">
+              <div key={run.id} className="bg-card border border-border/20 rounded-xl p-3.5 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-7 h-7 rounded-md bg-success/10 flex items-center justify-center">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-success" />
+                  <div className="w-8 h-8 rounded-md bg-success/10 flex items-center justify-center">
+                    <CheckCircle2 className="h-4 w-4 text-success" />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-foreground tracking-tight">{run.plan_name}</p>
-                    <p className="text-[10px] text-muted-foreground font-mono">
+                    <p className="text-base font-semibold text-foreground tracking-tight">{run.plan_name}</p>
+                    <p className="text-xs text-muted-foreground font-mono">
                       ${fmt(run.staked_amount)} • {new Date(run.started_at).toLocaleDateString()}
                     </p>
                   </div>
                 </div>
-                <span className="text-sm font-mono font-bold text-success">+${fmt(estProfit)}</span>
+                <span className="text-base font-mono font-bold text-success">+${fmt(estProfit)}</span>
               </div>
             );
           })}
         </div>
       )}
 
-      <p className="text-[9px] text-muted-foreground/60 text-center px-4 pb-4">
+      <p className="text-xs text-muted-foreground/60 text-center px-4 pb-4">
         Trading involves risk. Past performance does not guarantee future returns.
       </p>
 
@@ -750,11 +738,11 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
       <Dialog open={!!confirmPlan} onOpenChange={(open) => { if (!open) setConfirmPlan(null); }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+            <DialogTitle className="flex items-center gap-2 text-lg">
               <AlertTriangle className="h-5 w-5 text-warning" />
               Confirm Deployment
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-sm">
               Please review the details before proceeding.
             </DialogDescription>
           </DialogHeader>
@@ -762,37 +750,37 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
             <div className="space-y-3 py-2">
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-secondary/50 rounded-lg p-3 text-center">
-                  <p className="text-[10px] text-muted-foreground">Plan</p>
-                  <p className="text-sm font-bold text-foreground">{confirmPlan.name}</p>
+                  <p className="text-xs text-muted-foreground">Plan</p>
+                  <p className="text-base font-bold text-foreground">{confirmPlan.name}</p>
                 </div>
                 <div className="bg-secondary/50 rounded-lg p-3 text-center">
-                  <p className="text-[10px] text-muted-foreground">Duration</p>
-                  <p className="text-sm font-bold text-foreground">{selectedDuration.label}</p>
+                  <p className="text-xs text-muted-foreground">Duration</p>
+                  <p className="text-base font-bold text-foreground">{selectedDuration.label}</p>
                 </div>
                 <div className="bg-secondary/50 rounded-lg p-3 text-center">
-                  <p className="text-[10px] text-muted-foreground">Amount</p>
-                  <p className="text-sm font-bold text-primary">${fmt(confirmPlan.minAmount)}</p>
+                  <p className="text-xs text-muted-foreground">Amount</p>
+                  <p className="text-base font-bold text-foreground">${fmt(confirmPlan.minAmount)}</p>
                 </div>
-                <div className="bg-secondary/50 rounded-lg p-3 text-center">
-                  <p className="text-[10px] text-muted-foreground">Package Rate</p>
-                  <p className="text-sm font-bold text-success">{confirmPlan.dailyReturnPct}%</p>
+                <div className="bg-success/10 rounded-lg p-3 text-center">
+                  <p className="text-xs text-muted-foreground">Rate</p>
+                  <p className="text-base font-bold text-success">{confirmPlan.dailyReturnPct}%</p>
                 </div>
               </div>
               <p className="text-xs text-muted-foreground text-center">
-                ${fmt(confirmPlan.minAmount)} USDT will be deducted from your balance.
+                ${fmt(confirmPlan.minAmount)} will be deducted from your balance. Profits are credited at end of session.
               </p>
             </div>
           )}
           <DialogFooter className="flex gap-2 sm:gap-2">
-            <Button variant="outline" onClick={() => setConfirmPlan(null)} className="flex-1">
+            <Button variant="outline" onClick={() => setConfirmPlan(null)} className="flex-1 text-sm">
               Cancel
             </Button>
             <Button
-              className="flex-1 bg-gold hover:bg-gold/90 text-gold-foreground"
+              className="flex-1 bg-gold hover:bg-gold/90 text-gold-foreground font-semibold text-sm"
               onClick={handleConfirmStart}
               disabled={isStarting}
             >
-              {isStarting ? 'Starting…' : 'Confirm & Deploy'}
+              {isStarting ? 'Deploying…' : 'Confirm & Start'}
             </Button>
           </DialogFooter>
         </DialogContent>
