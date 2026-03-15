@@ -28,6 +28,7 @@ interface UserDataContextType {
   withdrawals: Withdrawal[];
   deposits: Deposit[];
   isLoading: boolean;
+  loadedForUser: string | null;
   refetchBalance: () => Promise<void>;
   refetchCryptoBalances: () => Promise<void>;
   refetchWithdrawals: () => Promise<void>;
@@ -40,6 +41,7 @@ const UserDataContext = createContext<UserDataContextType>({
   withdrawals: [],
   deposits: [],
   isLoading: true,
+  loadedForUser: null,
   refetchBalance: async () => {},
   refetchCryptoBalances: async () => {},
   refetchWithdrawals: async () => {},
@@ -202,6 +204,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
       withdrawals,
       deposits,
       isLoading,
+      loadedForUser,
       refetchBalance: fetchBalance,
       refetchCryptoBalances: fetchCryptoBalances,
       refetchWithdrawals: fetchWithdrawals,
