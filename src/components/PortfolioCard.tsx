@@ -7,7 +7,7 @@ import { PortfolioSkeleton } from '@/components/skeletons/PortfolioSkeleton';
 
 export const PortfolioCard = () => {
   const { user, loading: authLoading } = useAuth();
-  const { balance, cryptoBalances, isLoading: dataLoading } = useUserData();
+  const { balance, cryptoBalances, isLoading: dataLoading, loadedForUser } = useUserData();
   const { prices } = useCryptoPrices();
   const [hidden, setHidden] = useState(true);
 
