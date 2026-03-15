@@ -210,122 +210,117 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
   return (
     <div className="fixed inset-0 z-50 bg-background flex flex-col animate-fade-in">
       {/* Top bar */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border/30 bg-card/80 backdrop-blur-sm">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-primary/20 flex items-center justify-center">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border/20 bg-card/90 backdrop-blur-sm">
+        <div className="flex items-center gap-2.5">
+          <div className="w-7 h-7 rounded-md bg-primary/15 flex items-center justify-center">
             <ArrowDownUp className="h-3.5 w-3.5 text-primary" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-foreground">{session.plan_name}</p>
-            <p className="text-[10px] text-muted-foreground">{displayRate}% package rate • ${fmt(session.staked_amount)} invested</p>
+            <p className="text-sm font-semibold text-foreground tracking-tight">{session.plan_name}</p>
+            <p className="text-[10px] text-muted-foreground font-mono">{displayRate}% • ${fmt(session.staked_amount)}</p>
           </div>
         </div>
-        <Badge className={isCompleted ? 'bg-success/15 text-success border-0' : 'bg-primary/15 text-primary border-0 animate-pulse'}>
-          {isCompleted ? 'Complete' : 'Live'}
+        <Badge className={`text-[10px] font-mono tracking-wider ${isCompleted ? 'bg-success/10 text-success border-0' : 'bg-primary/10 text-primary border-0 animate-pulse'}`}>
+          {isCompleted ? 'DONE' : 'LIVE'}
         </Badge>
       </div>
 
-      {/* Main content - stable layout, no jumping */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {/* Result flash / Trading indicator - fixed height container to prevent layout shift */}
-        <div className="h-[76px] relative">
+      {/* Main content */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-3">
+        {/* Result flash / Trading indicator */}
+        <div className="h-[72px] relative">
           {lastResult ? (
-            <div className={`absolute inset-0 rounded-xl p-4 text-center ${
-              lastResult.isWin ? 'bg-success/15 border border-success/30' : 'bg-destructive/15 border border-destructive/30'
+            <div className={`absolute inset-0 rounded-lg p-3 text-center border ${
+              lastResult.isWin ? 'bg-success/8 border-success/20' : 'bg-destructive/8 border-destructive/20'
             }`}>
-              <div className="flex items-center justify-center gap-2 mb-1">
+              <div className="flex items-center justify-center gap-1.5 mb-0.5">
                 {lastResult.isWin ? (
-                  <CheckCircle2 className="h-6 w-6 text-success" />
+                  <CheckCircle2 className="h-5 w-5 text-success" />
                 ) : (
-                  <XCircle className="h-6 w-6 text-destructive" />
+                  <XCircle className="h-5 w-5 text-destructive" />
                 )}
-                <span className={`text-lg font-bold ${lastResult.isWin ? 'text-success' : 'text-destructive'}`}>
+                <span className={`text-xs font-bold font-mono uppercase tracking-wider ${lastResult.isWin ? 'text-success' : 'text-destructive'}`}>
                   {lastResult.isWin ? 'WIN' : 'LOSS'}
                 </span>
               </div>
-              <p className={`text-2xl font-bold font-display tabular-nums ${lastResult.isWin ? 'text-success' : 'text-destructive'}`}>
+              <p className={`text-2xl font-bold font-mono ${lastResult.isWin ? 'text-success' : 'text-destructive'}`}>
                 {lastResult.isWin ? '+' : '-'}${fmt(lastResult.amount)}
               </p>
             </div>
           ) : isTrading && !isCompleted ? (
-            <div className="absolute inset-0 bg-primary/10 border border-primary/20 rounded-xl p-4 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                <Zap className="h-5 w-5 text-primary" />
+            <div className="absolute inset-0 bg-card border border-border/30 rounded-lg p-3 flex items-center gap-3">
+              <div className="w-9 h-9 rounded-md bg-primary/10 flex items-center justify-center">
+                <Zap className="h-4 w-4 text-primary" />
               </div>
               <div className="flex-1">
-                <p className="text-sm font-semibold text-primary">Bot is trading...</p>
-                <p className="text-xs text-muted-foreground">Analyzing market patterns • {tradingCountdown}s</p>
+                <p className="text-xs font-semibold text-foreground tracking-tight">Executing trade…</p>
+                <p className="text-[10px] text-muted-foreground font-mono">{tradingCountdown}s remaining</p>
               </div>
               <div className="flex gap-0.5 items-end">
-                <div className="w-1.5 h-4 bg-primary/40 rounded-full animate-[pulse_0.6s_ease-in-out_infinite]" />
-                <div className="w-1.5 h-6 bg-primary/60 rounded-full animate-[pulse_0.6s_ease-in-out_infinite_0.1s]" />
-                <div className="w-1.5 h-3 bg-primary/30 rounded-full animate-[pulse_0.6s_ease-in-out_infinite_0.2s]" />
-                <div className="w-1.5 h-5 bg-primary/50 rounded-full animate-[pulse_0.6s_ease-in-out_infinite_0.3s]" />
+                <div className="w-1 h-3 bg-primary/30 rounded-full animate-[pulse_0.6s_ease-in-out_infinite]" />
+                <div className="w-1 h-5 bg-primary/50 rounded-full animate-[pulse_0.6s_ease-in-out_infinite_0.1s]" />
+                <div className="w-1 h-2.5 bg-primary/25 rounded-full animate-[pulse_0.6s_ease-in-out_infinite_0.2s]" />
+                <div className="w-1 h-4 bg-primary/40 rounded-full animate-[pulse_0.6s_ease-in-out_infinite_0.3s]" />
               </div>
             </div>
           ) : isCompleted ? (
-            <div className="absolute inset-0 bg-success/10 border border-success/30 rounded-xl p-4 flex items-center justify-center gap-2">
-              <Trophy className="h-6 w-6 text-success" />
-              <span className="text-lg font-bold text-success">Trading Complete!</span>
+            <div className="absolute inset-0 bg-success/5 border border-success/20 rounded-lg p-3 flex items-center justify-center gap-2">
+              <Trophy className="h-5 w-5 text-success" />
+              <span className="text-sm font-bold text-success tracking-tight">Session Complete</span>
             </div>
           ) : (
-            <div className="absolute inset-0 bg-secondary/30 border border-border/20 rounded-xl p-4 flex items-center justify-center">
-              <p className="text-sm text-muted-foreground">Waiting for first trade...</p>
+            <div className="absolute inset-0 bg-card border border-border/20 rounded-lg p-3 flex items-center justify-center">
+              <p className="text-xs text-muted-foreground">Waiting for first trade…</p>
             </div>
           )}
         </div>
 
-        {/* Total profit card */}
-        <Card className="border-border/30">
-          <CardContent className="p-4 space-y-1">
+        {/* Profit card */}
+        <div className="bg-card border border-border/30 rounded-lg p-4 space-y-1.5">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5">
-              <Trophy className="h-4 w-4 text-gold" />
-              <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Settlement Profit</p>
+              <Trophy className="h-3.5 w-3.5 text-gold" />
+              <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-medium">Net Profit</p>
             </div>
-            <p className="text-3xl font-bold font-display tabular-nums text-success">
-              +${fmt(accruedProfit)}
-            </p>
-            <div className="flex items-center gap-3 text-xs text-muted-foreground">
-              <span className="text-success">{winsCount} wins</span>
-              <span className="text-destructive">{lossesCount} losses</span>
-              <span>Net: +${fmt(tradeNet)}</span>
+            <div className="flex items-center gap-2 text-[10px] font-mono">
+              <span className="text-success">{winsCount}W</span>
+              <span className="text-muted-foreground">/</span>
+              <span className="text-destructive">{lossesCount}L</span>
             </div>
-            <p className="text-[10px] text-muted-foreground">
-              Running total of all trade results
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Stats row */}
-        <div className="grid grid-cols-2 gap-2">
-          <div className="bg-secondary/50 rounded-xl p-3 text-center">
-            <p className="text-[10px] text-muted-foreground">Invested</p>
-            <p className="text-sm font-bold text-foreground">${fmt(session.staked_amount)}</p>
           </div>
-          <div className="bg-secondary/50 rounded-xl p-3 text-center">
-            <p className="text-[10px] text-muted-foreground">Current Value</p>
-            <p className="text-sm font-bold text-success">
-              ${fmt(totalReturnToBalance)}
-            </p>
+          <p className="text-3xl font-bold font-mono text-success tracking-tight">
+            +${fmt(accruedProfit)}
+          </p>
+        </div>
+
+        {/* Stats */}
+        <div className="grid grid-cols-2 gap-2">
+          <div className="bg-secondary/40 rounded-lg p-2.5 text-center">
+            <p className="text-[9px] text-muted-foreground uppercase tracking-wider">Invested</p>
+            <p className="text-sm font-mono font-bold text-foreground">${fmt(session.staked_amount)}</p>
+          </div>
+          <div className="bg-secondary/40 rounded-lg p-2.5 text-center">
+            <p className="text-[9px] text-muted-foreground uppercase tracking-wider">Value</p>
+            <p className="text-sm font-mono font-bold text-success">${fmt(totalReturnToBalance)}</p>
           </div>
         </div>
 
         {/* Progress */}
-        <div className="space-y-1.5">
-          <div className="flex justify-between text-xs text-muted-foreground">
-            <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {remainingMinutes}m {remainingSeconds}s left</span>
-            <span>{progressPct.toFixed(1)}%</span>
+        <div className="space-y-1">
+          <div className="flex justify-between text-[10px] text-muted-foreground font-mono">
+            <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {remainingMinutes}:{remainingSeconds.toString().padStart(2, '0')}</span>
+            <span>{progressPct.toFixed(0)}%</span>
           </div>
-          <Progress value={progressPct} className="h-2.5" />
+          <Progress value={progressPct} className="h-1.5" />
         </div>
 
         {/* Trade history */}
         <div className="space-y-1.5">
-          <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Trade History</p>
-          <ScrollArea className="h-[200px] rounded-xl border border-border/30 bg-card/50">
-            <div className="p-2 space-y-1">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-medium">Trades</p>
+          <ScrollArea className="h-[200px] rounded-lg border border-border/20 bg-card/50">
+            <div className="p-1.5 space-y-0.5">
               {trades.length === 0 && !isTrading && (
-                <p className="text-xs text-muted-foreground text-center py-8">Waiting for first trade...</p>
+                <p className="text-xs text-muted-foreground text-center py-8">Waiting…</p>
               )}
               {trades.map((trade, idx) => (
                 <div
