@@ -325,24 +325,19 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
               {trades.map((trade, idx) => (
                 <div
                   key={trade.id}
-                  className={`flex items-center justify-between px-3 py-2 rounded-lg text-xs animate-fade-in ${
-                    trade.isWin ? 'bg-success/8' : 'bg-destructive/8'
+                  className={`flex items-center justify-between px-2.5 py-1.5 rounded text-xs animate-fade-in ${
+                    trade.isWin ? 'bg-success/5' : 'bg-destructive/5'
                   }`}
                 >
                   <div className="flex items-center gap-2">
                     {trade.isWin ? (
-                      <CheckCircle2 className="h-4 w-4 text-success" />
+                      <CheckCircle2 className="h-3.5 w-3.5 text-success" />
                     ) : (
-                      <XCircle className="h-4 w-4 text-destructive" />
+                      <XCircle className="h-3.5 w-3.5 text-destructive" />
                     )}
-                    <span className="text-muted-foreground font-medium">Trade #{idx + 1}</span>
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded font-semibold ${
-                      trade.isWin ? 'bg-success/15 text-success' : 'bg-destructive/15 text-destructive'
-                    }`}>
-                      {trade.isWin ? 'WIN' : 'LOSS'}
-                    </span>
+                    <span className="text-muted-foreground font-mono text-[11px]">#{idx + 1}</span>
                   </div>
-                  <span className={`font-bold tabular-nums ${trade.isWin ? 'text-success' : 'text-destructive'}`}>
+                  <span className={`font-bold font-mono text-[11px] ${trade.isWin ? 'text-success' : 'text-destructive'}`}>
                     {trade.isWin ? '+' : '-'}${fmt(trade.amount)}
                   </span>
                 </div>
