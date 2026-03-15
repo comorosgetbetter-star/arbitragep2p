@@ -621,30 +621,45 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
       )}
 
       {/* Plans */}
-      <div className="space-y-2.5">
-        <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-widest">Packages</h3>
+      <div className="space-y-3">
+        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-widest">Packages</h3>
         {FLYWHEEL_PLANS.map((plan) => {
           const estProfit = plan.minAmount * (plan.dailyReturnPct / 100);
 
           return (
             <div
               key={plan.id}
-              className="bg-card border border-border/30 rounded-xl p-4 transition-all hover:border-gold/30 cursor-pointer"
               onClick={() => { setSelectedPlan(plan.id); setSelectedDuration(DURATION_OPTIONS[0]); }}
+              className="relative bg-card border border-border/40 rounded-2xl p-5 transition-all hover:border-gold/40 hover:shadow-[0_0_20px_hsl(43_96%_56%/0.08)] cursor-pointer group overflow-hidden"
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-md bg-gold/10 flex items-center justify-center">
-                    <ArrowDownUp className="h-4 w-4 text-gold" />
+              {/* Subtle gradient accent */}
+              <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-gold/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-gold/10 flex items-center justify-center border border-gold/20">
+                    <ArrowDownUp className="h-5 w-5 text-gold" />
                   </div>
                   <div>
-                    <p className="font-semibold text-foreground text-base tracking-tight">{plan.name}</p>
-                    <p className="text-xs text-muted-foreground font-mono">{plan.dailyReturnPct}% • Min ${fmt(plan.minAmount, 0)}</p>
+                    <p className="font-bold text-foreground text-lg tracking-tight leading-tight">{plan.name}</p>
+                    <p className="text-sm text-muted-foreground mt-0.5">Min. ${fmt(plan.minAmount, 0)} USDT</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-mono font-bold text-success">+${fmt(estProfit, 0)}</span>
-                  <Badge className="bg-gold/10 text-gold border-0 text-xs font-mono tracking-wider">{plan.badge}</Badge>
+                <Badge className="bg-gold/15 text-gold border border-gold/25 text-xs font-bold tracking-wider px-2.5 py-1">{plan.badge}</Badge>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
+                <div className="bg-secondary/40 rounded-xl p-3 text-center">
+                  <p className="text-xs text-muted-foreground mb-0.5">Win Rate</p>
+                  <p className="text-lg font-bold font-mono text-primary">{plan.dailyReturnPct}%</p>
+                </div>
+                <div className="bg-secondary/40 rounded-xl p-3 text-center">
+                  <p className="text-xs text-muted-foreground mb-0.5">Entry</p>
+                  <p className="text-lg font-bold font-mono text-foreground">${fmt(plan.minAmount, 0)}</p>
+                </div>
+                <div className="bg-success/8 rounded-xl p-3 text-center border border-success/10">
+                  <p className="text-xs text-muted-foreground mb-0.5">Est. Profit</p>
+                  <p className="text-lg font-bold font-mono text-success">+${fmt(estProfit, 0)}</p>
                 </div>
               </div>
             </div>
