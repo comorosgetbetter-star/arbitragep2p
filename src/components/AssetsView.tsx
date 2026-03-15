@@ -255,6 +255,14 @@ export const AssetsView = () => {
     // All symbols: user-owned ones + all standard ones for the "To" picker
     const allSymbols = ['USDT', 'BTC', 'ETH', 'BNB', 'SOL', 'XRP'];
     const cryptoNames: Record<string, string> = { USDT: 'Tether', BTC: 'Bitcoin', ETH: 'Ethereum', BNB: 'BNB', SOL: 'Solana', XRP: 'XRP' };
+    const CRYPTO_LOGOS: Record<string, string> = {
+      USDT: 'https://assets.coingecko.com/coins/images/325/small/Tether.png',
+      BTC: 'https://assets.coingecko.com/coins/images/1/small/bitcoin.png',
+      ETH: 'https://assets.coingecko.com/coins/images/279/small/ethereum.png',
+      BNB: 'https://assets.coingecko.com/coins/images/825/small/bnb-icon2_2x.png',
+      SOL: 'https://assets.coingecko.com/coins/images/4128/small/solana.png',
+      XRP: 'https://assets.coingecko.com/coins/images/44/small/xrp-symbol-white-128.png',
+    };
     const fromBalance = convertFrom === 'USDT' ? balance : (cryptoBalances.find(c => c.symbol === convertFrom)?.amount || 0);
     const fromPrice = convertFrom === 'USDT' ? 1 : (prices.find(p => p.symbol === convertFrom)?.price || 0);
     const toPrice = convertTo === 'USDT' ? 1 : (prices.find(p => p.symbol === convertTo)?.price || 0);
