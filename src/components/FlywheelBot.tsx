@@ -46,10 +46,10 @@ const DURATION_OPTIONS = [
 const FLYWHEEL_PACKAGE_MINUTE_DIVISOR = 10;
 
 const FLYWHEEL_PLANS = [
-  { id: 'turbo-sprint', name: 'Turbo Sprint', dailyReturnPct: 120, minAmount: 100, badge: 'Fast', profitMultiplier: 1 },
-  { id: 'turbo-rush', name: 'Turbo Rush', dailyReturnPct: 80, minAmount: 250, badge: 'Popular', profitMultiplier: 1.5 },
-  { id: 'turbo-wave', name: 'Turbo Wave', dailyReturnPct: 60, minAmount: 500, badge: 'Steady', profitMultiplier: 2.2 },
-  { id: 'turbo-titan', name: 'Turbo Titan', dailyReturnPct: 40, minAmount: 1000, badge: 'Safe', profitMultiplier: 3 },
+  { id: 'turbo-sprint', name: 'Turbo Sprint', dailyReturnPct: 93, minAmount: 100, badge: 'Fast', profitMultiplier: 1 },
+  { id: 'turbo-rush', name: 'Turbo Rush', dailyReturnPct: 95, minAmount: 250, badge: 'Popular', profitMultiplier: 1.5 },
+  { id: 'turbo-wave', name: 'Turbo Wave', dailyReturnPct: 96, minAmount: 500, badge: 'Steady', profitMultiplier: 2.2 },
+  { id: 'turbo-titan', name: 'Turbo Titan', dailyReturnPct: 97, minAmount: 1000, badge: 'Safe', profitMultiplier: 3 },
 ];
 
 const isFlywheelPlan = (planName: string) => planName.toLowerCase().startsWith('turbo');
