@@ -571,41 +571,31 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
       </div>
 
       {/* Hero */}
-      <Card className="border-primary/20 bg-gradient-to-br from-primary/10 via-card to-card">
-        <CardContent className="p-5">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
-              <ArrowDownUp className="h-4 w-4 text-primary" />
-            </div>
-            <h2 className="text-lg font-display font-bold text-foreground">Flywheel</h2>
+      <div className="bg-card border border-border/30 rounded-xl p-4">
+        <div className="flex items-center gap-2.5 mb-2">
+          <div className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center">
+            <ArrowDownUp className="h-4 w-4 text-primary" />
           </div>
-          <p className="text-sm text-muted-foreground mb-3">
-            Automated trading bot. Watch trades execute <span className="text-primary font-semibold">in real-time</span> with win/loss results.
-          </p>
-          <div className="flex items-center gap-4 text-xs text-muted-foreground">
-            <div className="flex items-center gap-1"><Zap className="h-3.5 w-3.5 text-primary" /><span>Live trades</span></div>
-            <div className="flex items-center gap-1"><TrendingUp className="h-3.5 w-3.5 text-success" /><span>70% win rate</span></div>
-            <div className="flex items-center gap-1"><Clock className="h-3.5 w-3.5 text-warning" /><span>Hour cycles</span></div>
-          </div>
-        </CardContent>
-      </Card>
+          <h2 className="text-base font-display font-bold text-foreground tracking-tight">Flywheel</h2>
+        </div>
+        <p className="text-xs text-muted-foreground mb-3 leading-relaxed">
+          Automated cycle trading. Watch trades execute in real-time.
+        </p>
+        <div className="flex items-center gap-4 text-[10px] text-muted-foreground">
+          <div className="flex items-center gap-1"><Zap className="h-3 w-3 text-primary" /><span>Live trades</span></div>
+          <div className="flex items-center gap-1"><TrendingUp className="h-3 w-3 text-success" /><span>~70% win rate</span></div>
+          <div className="flex items-center gap-1"><Clock className="h-3 w-3 text-muted-foreground" /><span>1-10 min</span></div>
+        </div>
+      </div>
 
       {/* Balance */}
-      <Card className="border-border/50">
-        <CardContent className="p-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-              <Wallet className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">USDT Balance</p>
-              <p className="text-xl font-bold font-display text-foreground">
-                ${balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="flex items-center justify-between bg-card border border-border/30 rounded-xl px-4 py-3">
+        <span className="text-xs text-muted-foreground tracking-wide">Balance</span>
+        <span className="text-base font-mono font-semibold text-foreground">
+          ${balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          <span className="text-xs text-muted-foreground ml-1 font-sans font-normal">USDT</span>
+        </span>
+      </div>
 
       {/* Active Sessions - shown as resumable cards */}
       {activeSessions.length > 0 && (
