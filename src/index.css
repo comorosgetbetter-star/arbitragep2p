@@ -116,11 +116,13 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: 'Geist', system-ui, -apple-system, sans-serif;
+    letter-spacing: -0.01em;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+    font-family: 'Outfit', 'Geist', system-ui, sans-serif;
+    letter-spacing: -0.025em;
   }
 }
 
