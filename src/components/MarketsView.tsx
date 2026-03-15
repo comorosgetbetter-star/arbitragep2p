@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { TrendingUp, TrendingDown, Search, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getCryptoLogo } from '@/lib/cryptoLogos';
 
 interface MarketPair {
   symbol: string;
@@ -163,8 +164,8 @@ export const MarketsView = () => {
                 <button onClick={() => toggleFavorite(pair.symbol)} className="flex-shrink-0">
                   <Star className={cn('h-3.5 w-3.5 transition-colors', isFav ? 'fill-warning text-warning' : 'text-muted-foreground/40 group-hover:text-muted-foreground')} />
                 </button>
-                <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm flex-shrink-0">
-                  {pair.icon}
+                <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden">
+                  <img src={getCryptoLogo(pair.base)} alt={pair.base} className="w-8 h-8 rounded-full" />
                 </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5">

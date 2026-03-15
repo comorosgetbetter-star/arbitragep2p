@@ -1,6 +1,7 @@
 import { useCryptoPrices } from '@/hooks/useCryptoPrices';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 import { CryptoGridSkeleton } from '@/components/skeletons/CryptoGridSkeleton';
+import { getCryptoLogo } from '@/lib/cryptoLogos';
 
 export const CryptoGrid = () => {
   const { prices, isLoading } = useCryptoPrices();
@@ -19,7 +20,7 @@ export const CryptoGrid = () => {
             className="rounded-xl bg-card border border-border p-4 hover:border-primary/40 transition-colors"
           >
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-lg">{crypto.icon}</span>
+              <img src={getCryptoLogo(crypto.symbol)} alt={crypto.symbol} className="w-6 h-6 rounded-full" />
               <span className="font-bold text-sm">
                 {crypto.symbol}<span className="text-muted-foreground font-normal">/USDT</span>
               </span>
