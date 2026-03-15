@@ -718,34 +718,32 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
 
       {/* Recent Runs */}
       {recentRuns.length > 0 && (
-        <div className="space-y-3">
-          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Recent Runs</h3>
+        <div className="space-y-2">
+          <h3 className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">History</h3>
           {recentRuns.map((run) => {
             const estProfit = calculateSessionEstimatedProfit(run);
             return (
-              <Card key={run.id} className="border-border/50">
-                <CardContent className="p-3 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-success/15 flex items-center justify-center">
-                      <CheckCircle2 className="h-4 w-4 text-success" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-foreground">{run.plan_name}</p>
-                      <p className="text-[10px] text-muted-foreground">
-                        ${fmt(run.staked_amount)} invested • {new Date(run.started_at).toLocaleDateString()}
-                      </p>
-                    </div>
+              <div key={run.id} className="bg-card border border-border/20 rounded-xl p-3 flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-md bg-success/10 flex items-center justify-center">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-success" />
                   </div>
-                  <span className="text-sm font-bold text-success">+${fmt(estProfit)}</span>
-                </CardContent>
-              </Card>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground tracking-tight">{run.plan_name}</p>
+                    <p className="text-[10px] text-muted-foreground font-mono">
+                      ${fmt(run.staked_amount)} • {new Date(run.started_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+                <span className="text-sm font-mono font-bold text-success">+${fmt(estProfit)}</span>
+              </div>
             );
           })}
         </div>
       )}
 
-      <p className="text-[10px] text-muted-foreground text-center px-4 pb-4">
-        Bot trading involves risk. Returns are estimates based on market conditions. You can stop a bot at any time to collect accrued profits.
+      <p className="text-[9px] text-muted-foreground/60 text-center px-4 pb-4">
+        Trading involves risk. Past performance does not guarantee future returns.
       </p>
 
       {/* Start Confirmation Dialog */}
