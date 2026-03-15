@@ -125,11 +125,17 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
       setWithdrawals([]);
       setDeposits([]);
       setIsLoading(false);
+      setLoadedForUser(null);
       return;
     }
 
+    // Mark loading immediately for this user
     setIsLoading(true);
-    Promise.all([fetchBalance(), fetchCryptoBalances(), fetchWithdrawals(), fetchDeposits()]).finally(() => setIsLoading(false));
+    setLoadedForUser(null);
+    Promise.all([fetchBalance(), fetchCryptoBalances(), fetchWithdrawals(), fetchDeposits()]).finally(() => {
+      setIsLoading(false);
+      setLoadedForUser(user.id);
+    });
 
     const balanceChannel = supabase
       .channel('global-balance')
