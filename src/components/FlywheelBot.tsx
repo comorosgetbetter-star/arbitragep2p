@@ -607,17 +607,16 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
                 <div className="w-7 h-7 rounded-md bg-primary/10 flex items-center justify-center">
                   <ArrowDownUp className="h-3.5 w-3.5 text-primary" />
                   </div>
-                  <div>
-                    <p className="text-sm font-semibold text-foreground">{session.plan_name}</p>
-                    <p className="text-[10px] text-muted-foreground">${fmt(session.staked_amount)} invested</p>
+                <div>
+                    <p className="text-sm font-semibold text-foreground tracking-tight">{session.plan_name}</p>
+                    <p className="text-[10px] text-muted-foreground font-mono">${fmt(session.staked_amount)}</p>
                   </div>
                 </div>
-                <Badge className="bg-primary/15 text-primary border-0 animate-pulse">Running</Badge>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
+                <Badge className="bg-primary/10 text-primary border-0 text-[9px] font-mono tracking-wider animate-pulse">LIVE</Badge>
+              </div>
+            ))}
+          </div>
+        )}
 
       {/* Plans */}
       <div className="space-y-3">
