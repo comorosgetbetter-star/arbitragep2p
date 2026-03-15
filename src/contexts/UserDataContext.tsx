@@ -28,6 +28,7 @@ interface UserDataContextType {
   withdrawals: Withdrawal[];
   deposits: Deposit[];
   isLoading: boolean;
+  loadedForUser: string | null;
   refetchBalance: () => Promise<void>;
   refetchCryptoBalances: () => Promise<void>;
   refetchWithdrawals: () => Promise<void>;
