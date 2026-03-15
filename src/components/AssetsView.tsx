@@ -71,6 +71,8 @@ export const AssetsView = () => {
   const [convertFrom, setConvertFrom] = useState('');
   const [convertTo, setConvertTo] = useState('');
   const [convertAmount, setConvertAmount] = useState('');
+  const [fromDropdownOpen, setFromDropdownOpen] = useState(false);
+  const [toDropdownOpen, setToDropdownOpen] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
   const [convertSuccess, setConvertSuccess] = useState(false);
   const [showFromPicker, setShowFromPicker] = useState(false);
@@ -255,6 +257,14 @@ export const AssetsView = () => {
     // All symbols: user-owned ones + all standard ones for the "To" picker
     const allSymbols = ['USDT', 'BTC', 'ETH', 'BNB', 'SOL', 'XRP'];
     const cryptoNames: Record<string, string> = { USDT: 'Tether', BTC: 'Bitcoin', ETH: 'Ethereum', BNB: 'BNB', SOL: 'Solana', XRP: 'XRP' };
+    const CRYPTO_LOGOS: Record<string, string> = {
+      USDT: 'https://assets.coingecko.com/coins/images/325/small/Tether.png',
+      BTC: 'https://assets.coingecko.com/coins/images/1/small/bitcoin.png',
+      ETH: 'https://assets.coingecko.com/coins/images/279/small/ethereum.png',
+      BNB: 'https://assets.coingecko.com/coins/images/825/small/bnb-icon2_2x.png',
+      SOL: 'https://assets.coingecko.com/coins/images/4128/small/solana.png',
+      XRP: 'https://assets.coingecko.com/coins/images/44/small/xrp-symbol-white-128.png',
+    };
     const fromBalance = convertFrom === 'USDT' ? balance : (cryptoBalances.find(c => c.symbol === convertFrom)?.amount || 0);
     const fromPrice = convertFrom === 'USDT' ? 1 : (prices.find(p => p.symbol === convertFrom)?.price || 0);
     const toPrice = convertTo === 'USDT' ? 1 : (prices.find(p => p.symbol === convertTo)?.price || 0);
@@ -342,17 +352,42 @@ export const AssetsView = () => {
           {/* From */}
           <div className="bg-secondary/50 rounded-xl p-4 space-y-3">
             <label className="text-xs text-muted-foreground font-medium">From</label>
-            <div className="flex gap-3">
-              <select
-                value={convertFrom}
-                onChange={(e) => { setConvertFrom(e.target.value); setConvertAmount(''); }}
-                className="flex-1 bg-background border border-border rounded-lg px-3 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setFromDropdownOpen(!fromDropdownOpen)}
+                className="w-full flex items-center gap-3 bg-background border border-border rounded-lg px-3 py-2.5 text-sm text-foreground hover:border-primary/40 transition-colors"
               >
-                <option value="">Select crypto</option>
-                {availableCryptos.map(c => (
-                  <option key={c.symbol} value={c.symbol}>{c.symbol} — {c.amount.toLocaleString('en-US', { maximumFractionDigits: 6 })}</option>
-                ))}
-              </select>
+                {convertFrom ? (
+                  <>
+                    <img src={CRYPTO_LOGOS[convertFrom]} alt={convertFrom} className="w-6 h-6 rounded-full" />
+                    <span className="font-medium">{convertFrom}</span>
+                    <span className="text-muted-foreground text-xs">
+                      {cryptoNames[convertFrom]} — {(availableCryptos.find(c => c.symbol === convertFrom)?.amount || 0).toLocaleString('en-US', { maximumFractionDigits: 6 })}
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-muted-foreground">Select crypto</span>
+                )}
+                <ChevronDown className="h-4 w-4 text-muted-foreground ml-auto" />
+              </button>
+              {fromDropdownOpen && (
+                <div className="absolute z-50 mt-1 w-full bg-card border border-border rounded-lg shadow-lg overflow-hidden">
+                  {availableCryptos.map(c => (
+                    <button
+                      key={c.symbol}
+                      type="button"
+                      onClick={() => { setConvertFrom(c.symbol); setConvertAmount(''); setFromDropdownOpen(false); }}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm hover:bg-secondary/80 transition-colors ${convertFrom === c.symbol ? 'bg-primary/10' : ''}`}
+                    >
+                      <img src={CRYPTO_LOGOS[c.symbol]} alt={c.symbol} className="w-6 h-6 rounded-full" />
+                      <span className="font-medium">{c.symbol}</span>
+                      <span className="text-muted-foreground text-xs">{cryptoNames[c.symbol]}</span>
+                      <span className="ml-auto text-xs text-muted-foreground font-mono">{c.amount.toLocaleString('en-US', { maximumFractionDigits: 6 })}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
             {convertFrom && (
               <div>
@@ -381,16 +416,40 @@ export const AssetsView = () => {
           {/* To */}
           <div className="bg-secondary/50 rounded-xl p-4 space-y-3">
             <label className="text-xs text-muted-foreground font-medium">To</label>
-            <select
-              value={convertTo}
-              onChange={(e) => setConvertTo(e.target.value)}
-              className="w-full bg-background border border-border rounded-lg px-3 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-            >
-              <option value="">Select crypto</option>
-              {allSymbols.filter(s => s !== convertFrom).map(s => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setToDropdownOpen(!toDropdownOpen)}
+                className="w-full flex items-center gap-3 bg-background border border-border rounded-lg px-3 py-2.5 text-sm text-foreground hover:border-primary/40 transition-colors"
+              >
+                {convertTo ? (
+                  <>
+                    <img src={CRYPTO_LOGOS[convertTo]} alt={convertTo} className="w-6 h-6 rounded-full" />
+                    <span className="font-medium">{convertTo}</span>
+                    <span className="text-muted-foreground text-xs">{cryptoNames[convertTo]}</span>
+                  </>
+                ) : (
+                  <span className="text-muted-foreground">Select crypto</span>
+                )}
+                <ChevronDown className="h-4 w-4 text-muted-foreground ml-auto" />
+              </button>
+              {toDropdownOpen && (
+                <div className="absolute z-50 mt-1 w-full bg-card border border-border rounded-lg shadow-lg overflow-hidden">
+                  {allSymbols.filter(s => s !== convertFrom).map(s => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => { setConvertTo(s); setToDropdownOpen(false); }}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm hover:bg-secondary/80 transition-colors ${convertTo === s ? 'bg-primary/10' : ''}`}
+                    >
+                      <img src={CRYPTO_LOGOS[s]} alt={s} className="w-6 h-6 rounded-full" />
+                      <span className="font-medium">{s}</span>
+                      <span className="text-muted-foreground text-xs">{cryptoNames[s]}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
             {convertFrom && convertTo && convertAmountNum > 0 && (
               <div className="bg-background/50 rounded-lg p-3">
                 <p className="text-xs text-muted-foreground">You'll receive approximately</p>
