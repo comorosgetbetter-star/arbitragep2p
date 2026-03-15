@@ -711,8 +711,7 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
                     Start Trading
                   </Button>
                 )}
-              </CardContent>
-            </Card>
+            </div>
           );
         })}
       </div>
