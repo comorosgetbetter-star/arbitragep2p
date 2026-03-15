@@ -55,6 +55,8 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [deposits, setDeposits] = useState<Deposit[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  // Track which user's data we've loaded to prevent stale renders
+  const [loadedForUser, setLoadedForUser] = useState<string | null>(null);
 
   // Request deduplication: track in-flight promises
   const inflightRef = useRef<Record<string, Promise<void>>>({});
