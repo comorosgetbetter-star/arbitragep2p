@@ -22,6 +22,9 @@ export const PortfolioCard = () => {
     return <PortfolioSkeleton />;
   }
 
+  // Once data is fully loaded, sync hidden state
+  const isHidden = user ? hidden : true;
+
   const totalPortfolioValue = (() => {
     let total = balance;
     cryptoBalances.forEach((cb) => {
