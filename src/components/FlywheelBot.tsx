@@ -630,53 +630,83 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
       <div className="space-y-2.5">
         <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-widest">Packages</h3>
         {FLYWHEEL_PLANS.map((plan) => {
-          const isSelected = selectedPlan === plan.id;
           const estProfit = plan.minAmount * (plan.dailyReturnPct / 100);
 
           return (
             <div
               key={plan.id}
-              className={`bg-card border rounded-xl p-4 transition-all ${isSelected ? 'border-gold/40 ring-1 ring-gold/20' : 'border-border/30'}`}
+              className="bg-card border border-border/30 rounded-xl p-4 transition-all hover:border-gold/30 cursor-pointer"
+              onClick={() => { setSelectedPlan(plan.id); setSelectedDuration(DURATION_OPTIONS[0]); }}
             >
-              <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   <div className="w-9 h-9 rounded-md bg-gold/10 flex items-center justify-center">
                     <ArrowDownUp className="h-4 w-4 text-gold" />
                   </div>
                   <div>
                     <p className="font-semibold text-foreground text-base tracking-tight">{plan.name}</p>
-                    <p className="text-xs text-muted-foreground font-mono">{plan.dailyReturnPct}%</p>
+                    <p className="text-xs text-muted-foreground font-mono">{plan.dailyReturnPct}% • Min ${fmt(plan.minAmount, 0)}</p>
                   </div>
                 </div>
-                <Badge className="bg-gold/10 text-gold border-0 text-xs font-mono tracking-wider">{plan.badge}</Badge>
-              </div>
-
-              <div className="grid grid-cols-3 gap-2 mb-3 text-center">
-                <div className="bg-secondary/30 rounded-md p-2">
-                  <p className="text-xs text-muted-foreground uppercase">Min</p>
-                  <p className="text-sm font-mono font-bold text-foreground">${fmt(plan.minAmount, 0)}</p>
-                </div>
-                <div className="bg-secondary/30 rounded-md p-2">
-                  <p className="text-xs text-muted-foreground uppercase">Rate</p>
-                  <p className="text-sm font-mono font-bold text-primary">{plan.dailyReturnPct}%</p>
-                </div>
-                <div className="bg-secondary/30 rounded-md p-2">
-                  <p className="text-xs text-muted-foreground uppercase">Est.</p>
-                  <p className="text-sm font-mono font-bold text-success">+${fmt(estProfit, 0)}</p>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-mono font-bold text-success">+${fmt(estProfit, 0)}</span>
+                  <Badge className="bg-gold/10 text-gold border-0 text-xs font-mono tracking-wider">{plan.badge}</Badge>
                 </div>
               </div>
+            </div>
+          );
+        })}
+      </div>
 
-              {isSelected ? (
-                <div className="space-y-3">
+      {/* Package Deploy Dialog */}
+      <Dialog open={!!selectedPlan} onOpenChange={(open) => { if (!open) setSelectedPlan(null); }}>
+        <DialogContent className="sm:max-w-md">
+          {(() => {
+            const plan = FLYWHEEL_PLANS.find(p => p.id === selectedPlan);
+            if (!plan) return null;
+            const estProfit = plan.minAmount * (plan.dailyReturnPct / 100);
+
+            return (
+              <>
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2 text-lg">
+                    <div className="w-9 h-9 rounded-md bg-gold/10 flex items-center justify-center">
+                      <ArrowDownUp className="h-4 w-4 text-gold" />
+                    </div>
+                    {plan.name}
+                    <Badge className="bg-gold/10 text-gold border-0 text-xs font-mono tracking-wider ml-auto">{plan.badge}</Badge>
+                  </DialogTitle>
+                  <DialogDescription className="text-sm">
+                    Configure and deploy this trading package.
+                  </DialogDescription>
+                </DialogHeader>
+
+                <div className="space-y-4 py-2">
+                  {/* Stats */}
+                  <div className="grid grid-cols-3 gap-2 text-center">
+                    <div className="bg-secondary/30 rounded-lg p-3">
+                      <p className="text-xs text-muted-foreground uppercase">Min</p>
+                      <p className="text-base font-mono font-bold text-foreground">${fmt(plan.minAmount, 0)}</p>
+                    </div>
+                    <div className="bg-secondary/30 rounded-lg p-3">
+                      <p className="text-xs text-muted-foreground uppercase">Rate</p>
+                      <p className="text-base font-mono font-bold text-primary">{plan.dailyReturnPct}%</p>
+                    </div>
+                    <div className="bg-success/10 rounded-lg p-3">
+                      <p className="text-xs text-muted-foreground uppercase">Est.</p>
+                      <p className="text-base font-mono font-bold text-success">+${fmt(estProfit, 0)}</p>
+                    </div>
+                  </div>
+
                   {/* Duration selector */}
                   <div>
-                    <label className="text-sm text-muted-foreground mb-1.5 block">Duration</label>
-                    <div className="grid grid-cols-4 gap-1.5">
+                    <label className="text-sm font-medium text-muted-foreground mb-2 block">Duration</label>
+                    <div className="grid grid-cols-4 gap-2">
                       {DURATION_OPTIONS.map((opt) => (
                         <button
                           key={opt.minutes}
                           onClick={() => setSelectedDuration(opt)}
-                          className={`py-2.5 px-1 rounded-lg text-sm font-semibold border transition-all ${
+                          className={`py-3 px-1 rounded-lg text-sm font-semibold border transition-all ${
                             selectedDuration.minutes === opt.minutes
                               ? 'bg-gold/20 border-gold/50 text-gold'
                               : 'bg-secondary/50 border-border/30 text-muted-foreground hover:border-border'
@@ -687,42 +717,38 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
                       ))}
                     </div>
                   </div>
+
+                  {/* Amount */}
                   <div>
-                    <label className="text-sm text-muted-foreground mb-1 block">Trading Amount (USDT)</label>
-                    <div className="bg-secondary/50 border border-border/50 rounded-md px-3 py-2.5 text-base font-bold text-foreground">
+                    <label className="text-sm font-medium text-muted-foreground mb-1.5 block">Trading Amount (USDT)</label>
+                    <div className="bg-secondary/50 border border-border/50 rounded-lg px-4 py-3 text-lg font-bold text-foreground font-mono">
                       ${fmt(plan.minAmount)}
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1">This package trades a fixed amount of ${fmt(plan.minAmount)}</p>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      className="flex-1 h-12 font-semibold text-sm border-border/50"
-                      onClick={() => { setSelectedPlan(null); }}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      className="flex-[2] h-12 font-semibold text-sm bg-gold hover:bg-gold/90 text-gold-foreground shadow-[0_0_16px_hsl(43_96%_56%/0.3)]"
-                      onClick={() => handleStart(plan)}
-                      disabled={isStarting || balance < plan.minAmount}
-                    >
-                      {isStarting ? 'Starting…' : `Deploy $${fmt(plan.minAmount)}`}
-                    </Button>
+                    <p className="text-xs text-muted-foreground mt-1.5">Fixed amount for this package. Balance: ${fmt(balance)}</p>
                   </div>
                 </div>
-              ) : (
-                <Button
-                  className="w-full h-12 font-semibold text-sm bg-gold/15 hover:bg-gold/25 text-gold border border-gold/30"
-                  onClick={() => { setSelectedPlan(plan.id); }}
-                >
-                  Start Trading
-                </Button>
-              )}
-            </div>
-          );
-        })}
-      </div>
+
+                <DialogFooter className="flex gap-2 sm:gap-2">
+                  <Button
+                    variant="outline"
+                    className="flex-1 h-12 font-semibold text-sm"
+                    onClick={() => setSelectedPlan(null)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    className="flex-[2] h-12 font-semibold text-sm bg-gold hover:bg-gold/90 text-gold-foreground shadow-[0_0_16px_hsl(43_96%_56%/0.3)]"
+                    onClick={() => handleStart(plan)}
+                    disabled={isStarting || balance < plan.minAmount}
+                  >
+                    {isStarting ? 'Starting…' : `Deploy $${fmt(plan.minAmount)}`}
+                  </Button>
+                </DialogFooter>
+              </>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
 
       {/* Recent Runs */}
       {recentRuns.length > 0 && (
