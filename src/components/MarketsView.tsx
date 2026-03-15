@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { TrendingUp, TrendingDown, Search, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getCryptoLogo } from '@/lib/cryptoLogos';
 
 interface MarketPair {
   symbol: string;
