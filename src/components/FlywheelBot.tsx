@@ -599,14 +599,13 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
 
       {/* Active Sessions - shown as resumable cards */}
       {activeSessions.length > 0 && (
-        <div className="space-y-3">
-          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Active Bots</h3>
+        <div className="space-y-2">
+          <h3 className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">Active</h3>
           {activeSessions.map((session) => (
-            <Card key={session.id} className="border-primary/30 cursor-pointer hover:border-primary/50 transition-all" onClick={() => setViewingSession(session)}>
-              <CardContent className="p-3 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
-                    <ArrowDownUp className="h-4 w-4 text-primary" />
+            <div key={session.id} className="bg-card border border-primary/20 rounded-xl p-3 flex items-center justify-between cursor-pointer hover:border-primary/40 transition-all" onClick={() => setViewingSession(session)}>
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-md bg-primary/10 flex items-center justify-center">
+                  <ArrowDownUp className="h-3.5 w-3.5 text-primary" />
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-foreground">{session.plan_name}</p>
