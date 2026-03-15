@@ -129,12 +129,17 @@
 
 @layer components {
   .glass-card {
-    @apply bg-card/80 backdrop-blur-xl border border-border/50 shadow-lg transition-all duration-300;
+    @apply bg-card/90 backdrop-blur-xl border border-border/40 shadow-lg transition-all duration-200;
     background: var(--gradient-card);
   }
 
   .glass-card:hover {
-    @apply border-border/70;
+    @apply border-border/60;
+  }
+
+  .mono {
+    font-family: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+    font-variant-numeric: tabular-nums;
   }
 
   .glow-effect {
