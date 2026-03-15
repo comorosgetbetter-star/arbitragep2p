@@ -12,6 +12,7 @@ import { useNavigate } from 'react-router-dom';
 import { StakingConfirmModal } from '@/components/StakingConfirmModal';
 import { ActiveStakingCard } from '@/components/ActiveStakingCard';
 import { StakingSkeleton } from '@/components/skeletons/StakingSkeleton';
+import { getCryptoLogo } from '@/lib/cryptoLogos';
 
 interface StakingPlan {
   id: string;
