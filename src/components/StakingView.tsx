@@ -215,7 +215,7 @@ export const StakingView = () => {
               return (
                 <div key={crypto.symbol} className="flex items-center justify-between px-4 py-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center text-lg">{crypto.icon}</div>
+                    <img src={getCryptoLogo(crypto.symbol)} alt={crypto.symbol} className="w-9 h-9 rounded-full" />
                     <div>
                       <p className="text-sm font-semibold text-foreground">{crypto.symbol}<span className="text-muted-foreground font-normal">/USDT</span></p>
                       <p className="text-[11px] text-muted-foreground">{crypto.name}</p>
