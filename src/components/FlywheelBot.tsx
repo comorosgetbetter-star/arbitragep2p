@@ -619,45 +619,44 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
         )}
 
       {/* Plans */}
-      <div className="space-y-3">
-        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Trading Cycles</h3>
+      <div className="space-y-2.5">
+        <h3 className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">Packages</h3>
         {FLYWHEEL_PLANS.map((plan) => {
           const isSelected = selectedPlan === plan.id;
           const estProfit = plan.minAmount * (plan.dailyReturnPct / 100);
 
           return (
-            <Card
+            <div
               key={plan.id}
-              className={`border transition-all ${isSelected ? 'border-gold/50 bg-gold/5 ring-1 ring-gold/30' : 'border-border/50'}`}
+              className={`bg-card border rounded-xl p-3.5 transition-all ${isSelected ? 'border-gold/40 ring-1 ring-gold/20' : 'border-border/30'}`}
             >
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <div className="w-9 h-9 rounded-xl bg-gold/15 flex items-center justify-center">
-                      <ArrowDownUp className="h-4 w-4 text-gold" />
-                    </div>
-                    <div>
-                      <p className="font-semibold text-foreground text-sm">{plan.name}</p>
-                      <p className="text-xs text-muted-foreground">{plan.dailyReturnPct}% package rate</p>
-                    </div>
+              <div className="flex items-center justify-between mb-2.5">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-md bg-gold/10 flex items-center justify-center">
+                    <ArrowDownUp className="h-3.5 w-3.5 text-gold" />
                   </div>
-                  <Badge className="bg-gold/15 text-gold border-0 text-[10px]">{plan.badge}</Badge>
+                  <div>
+                    <p className="font-semibold text-foreground text-sm tracking-tight">{plan.name}</p>
+                    <p className="text-[10px] text-muted-foreground font-mono">{plan.dailyReturnPct}%</p>
+                  </div>
                 </div>
+                <Badge className="bg-gold/10 text-gold border-0 text-[9px] font-mono tracking-wider">{plan.badge}</Badge>
+              </div>
 
-                <div className="grid grid-cols-3 gap-2 mb-3 text-center">
-                  <div className="bg-secondary/50 rounded-lg p-2">
-                    <p className="text-[10px] text-muted-foreground">Min</p>
-                    <p className="text-xs font-bold text-foreground">${fmt(plan.minAmount)}</p>
-                  </div>
-                  <div className="bg-secondary/50 rounded-lg p-2">
-                    <p className="text-[10px] text-muted-foreground">Rate</p>
-                    <p className="text-xs font-bold text-primary">{plan.dailyReturnPct}% package</p>
-                  </div>
-                  <div className="bg-secondary/50 rounded-lg p-2">
-                    <p className="text-[10px] text-muted-foreground">Est. Profit</p>
-                    <p className="text-xs font-bold text-success">+${fmt(estProfit)}</p>
-                  </div>
+              <div className="grid grid-cols-3 gap-1.5 mb-3 text-center">
+                <div className="bg-secondary/30 rounded-md p-1.5">
+                  <p className="text-[9px] text-muted-foreground uppercase">Min</p>
+                  <p className="text-[11px] font-mono font-bold text-foreground">${fmt(plan.minAmount, 0)}</p>
                 </div>
+                <div className="bg-secondary/30 rounded-md p-1.5">
+                  <p className="text-[9px] text-muted-foreground uppercase">Rate</p>
+                  <p className="text-[11px] font-mono font-bold text-primary">{plan.dailyReturnPct}%</p>
+                </div>
+                <div className="bg-secondary/30 rounded-md p-1.5">
+                  <p className="text-[9px] text-muted-foreground uppercase">Est.</p>
+                  <p className="text-[11px] font-mono font-bold text-success">+${fmt(estProfit, 0)}</p>
+                </div>
+              </div>
 
                 {isSelected ? (
                   <div className="space-y-3">
