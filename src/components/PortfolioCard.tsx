@@ -2,14 +2,21 @@ import { Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserData } from '@/contexts/UserDataContext';
 import { useCryptoPrices } from '@/hooks/useCryptoPrices';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PortfolioSkeleton } from '@/components/skeletons/PortfolioSkeleton';
 
 export const PortfolioCard = () => {
   const { user, loading: authLoading } = useAuth();
   const { balance, cryptoBalances, isLoading: dataLoading } = useUserData();
   const { prices } = useCryptoPrices();
-  const [hidden, setHidden] = useState(!user);
+  const [hidden, setHidden] = useState(true);
+
+  // Logged-in users see balance by default; logged-out users see dots
+  useEffect(() => {
+    if (!authLoading) {
+      setHidden(!user);
+    }
+  }, [user, authLoading]);
 
   if (authLoading || (user && dataLoading)) {
     return <PortfolioSkeleton />;
