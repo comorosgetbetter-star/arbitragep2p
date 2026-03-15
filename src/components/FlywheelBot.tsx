@@ -131,8 +131,16 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
   const planConfig = getFlywheelPlanByName(session.plan_name);
   const displayRate = planConfig?.dailyReturnPct ?? session.daily_return_pct;
 
+  // Target profit scales with package size: ~1.5-2% of staked amount
+  const targetProfitRef = useRef(
+    session.staked_amount * (0.015 + Math.random() * 0.005)
+  );
+
   useEffect(() => {
     if (isCompleted || session.status !== 'active') return;
+
+    // Base trade size scales with staked amount
+    const baseTradeSize = session.staked_amount * 0.003; // ~0.3% per trade
 
     const runTradeRound = () => {
       setIsTrading(true);
@@ -149,23 +157,35 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
 
       setTimeout(() => {
         setIsTrading(false);
-        const currentAccrued = calculateSessionAccruedProfit(session, Date.now());
-        const delta = currentAccrued - cumulativeNetRef.current;
 
-        const forceLoss = delta > 0 && Math.random() < 0.25;
+        const currentNet = cumulativeNetRef.current;
+        const elapsed = Math.max(0, Date.now() - new Date(session.started_at).getTime());
+        const total = new Date(session.ends_at).getTime() - new Date(session.started_at).getTime();
+        const progressRatio = Math.min(1, elapsed / total);
+        const expectedAtThisPoint = targetProfitRef.current * progressRatio;
+        const drift = currentNet - expectedAtThisPoint;
 
-        let isWin: boolean;
-        let amount: number;
+        // Base win rate ~55%, adjusted by drift to guide toward target
+        let winProbability = 0.55;
+        if (drift > baseTradeSize * 2) {
+          // Ahead of target → more losses
+          winProbability = 0.35;
+        } else if (drift < -baseTradeSize * 2) {
+          // Behind target → more wins
+          winProbability = 0.75;
+        }
 
-        if (forceLoss && delta > 0.02) {
-          isWin = false;
-          amount = Math.round(delta * (0.1 + Math.random() * 0.2) * 100) / 100;
-          amount = Math.max(0.01, amount);
-          cumulativeNetRef.current -= amount;
-        } else {
-          isWin = true;
-          amount = Math.max(0.01, Math.round(delta * 100) / 100);
+        const isWin = Math.random() < winProbability;
+
+        // Vary trade amounts: 0.5x to 1.8x of base size
+        const varianceMult = 0.5 + Math.random() * 1.3;
+        let amount = Math.round(baseTradeSize * varianceMult * 100) / 100;
+        amount = Math.max(0.01, amount);
+
+        if (isWin) {
           cumulativeNetRef.current += amount;
+        } else {
+          cumulativeNetRef.current -= amount;
         }
 
         roundIdRef.current += 1;
@@ -282,8 +302,8 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
               <span className="text-destructive">{lossesCount}L</span>
             </div>
           </div>
-          <p className="text-3xl font-bold font-mono text-success tracking-tight">
-            +${fmt(accruedProfit)}
+          <p className={`text-3xl font-bold font-mono tracking-tight ${accruedProfit >= 0 ? 'text-success' : 'text-destructive'}`}>
+            {accruedProfit >= 0 ? '+' : '-'}${fmt(Math.abs(accruedProfit))}
           </p>
         </div>
 
