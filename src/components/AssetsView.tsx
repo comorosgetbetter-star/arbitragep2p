@@ -588,6 +588,11 @@ export const AssetsView = () => {
     { icon: Clock, label: 'History', action: () => setSubView('history') },
   ];
 
+  // Show skeleton while auth or user data is still loading
+  if (loading || (user && dataLoading)) {
+    return <AssetsMainSkeleton />;
+  }
+
   return (
     <div className="space-y-5">
       {/* Balance */}
