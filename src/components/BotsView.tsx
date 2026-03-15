@@ -129,54 +129,60 @@ export const BotsView = () => {
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       {/* Balance */}
-      <div className="flex items-center justify-between bg-card rounded-lg px-4 py-3 border border-border/40">
-        <span className="text-sm text-muted-foreground">Available</span>
-        <span className="text-base font-mono font-medium text-foreground tabular-nums">
+      <div className="flex items-center justify-between bg-card rounded-2xl px-5 py-4 border border-border/40">
+        <span className="text-sm text-muted-foreground font-medium">Available Balance</span>
+        <span className="text-lg font-mono font-bold text-foreground tabular-nums">
           {balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          <span className="text-sm text-muted-foreground ml-1 font-sans">USDT</span>
+          <span className="text-sm text-muted-foreground ml-1.5 font-sans font-normal">USDT</span>
         </span>
       </div>
 
-      <div className="flex items-center justify-between px-0.5">
-        <span className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Trading Bots</span>
-        <span className="text-xs text-muted-foreground">{bots.length} available</span>
+      <div className="flex items-center justify-between px-1">
+        <span className="text-sm font-semibold text-muted-foreground uppercase tracking-widest">Trading Bots</span>
+        <span className="text-xs text-muted-foreground font-medium">{bots.length} available</span>
       </div>
 
-      <div className="space-y-1">
+      <div className="space-y-3">
         {bots.map((bot) => (
           <button
             key={bot.id}
             onClick={() => handleBotClick(bot)}
-            className="w-full rounded-lg px-3.5 py-3.5 hover:bg-muted/40 transition-colors text-left group flex items-center gap-3"
+            className="w-full bg-card border border-border/40 rounded-2xl p-5 hover:border-primary/30 hover:shadow-[0_0_20px_hsl(var(--primary)/0.06)] transition-all text-left group relative overflow-hidden"
           >
-            <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0 text-muted-foreground group-hover:text-foreground transition-colors">
-              {bot.icon}
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1.5 mb-0.5">
-                <span className="text-base font-medium text-foreground">{bot.name}</span>
-                {bot.badge && (
-                  <span className={`text-xs px-1.5 py-px rounded font-semibold uppercase tracking-wider ${
-                    bot.badgeVariant === 'hot' 
-                      ? 'bg-destructive/15 text-destructive' 
-                      : 'bg-primary/15 text-primary'
-                  }`}>
-                    {bot.badge}
-                  </span>
-                )}
+            {/* Hover accent */}
+            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            
+            <div className="flex items-start gap-3.5">
+              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 text-primary border border-primary/15 group-hover:bg-primary/15 transition-colors">
+                {bot.icon}
               </div>
-              <p className="text-sm text-muted-foreground leading-snug mb-1.5 line-clamp-1">{bot.description}</p>
-              <div className="flex gap-3">
-                {bot.stats.map((stat) => (
-                  <span key={stat.label} className="text-xs text-muted-foreground">
-                    {stat.label} <span className="font-mono text-foreground/70">{stat.value}</span>
-                  </span>
-                ))}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-lg font-bold text-foreground tracking-tight">{bot.name}</span>
+                  {bot.badge && (
+                    <span className={`text-xs px-2 py-0.5 rounded-md font-bold uppercase tracking-wider border ${
+                      bot.badgeVariant === 'hot' 
+                        ? 'bg-destructive/10 text-destructive border-destructive/20' 
+                        : 'bg-primary/10 text-primary border-primary/20'
+                    }`}>
+                      {bot.badge}
+                    </span>
+                  )}
+                </div>
+                <p className="text-sm text-muted-foreground leading-relaxed mb-3">{bot.description}</p>
+                <div className="flex gap-2">
+                  {bot.stats.map((stat) => (
+                    <div key={stat.label} className="bg-secondary/50 rounded-lg px-3 py-1.5 text-center">
+                      <span className="text-xs text-muted-foreground">{stat.label} </span>
+                      <span className="text-xs font-bold font-mono text-foreground">{stat.value}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
+              <ChevronRight className="h-5 w-5 text-muted-foreground/30 shrink-0 group-hover:text-primary mt-1 transition-colors" />
             </div>
-            <ChevronRight className="h-4 w-4 text-muted-foreground/40 shrink-0 group-hover:text-muted-foreground transition-colors" />
           </button>
         ))}
       </div>
