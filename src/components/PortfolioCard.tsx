@@ -47,8 +47,8 @@ export const PortfolioCard = () => {
         </button>
       </div>
       <div className="flex items-baseline gap-2">
-        <span className="text-[2rem] font-bold font-mono leading-none tracking-tight">
-          {effectiveHidden ? '••••••' : displayBalance}
+        <span className="text-[2rem] font-bold leading-none" style={{ fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em' }}>
+          {effectiveHidden ? '••••••' : `$${displayBalance}`}
         </span>
         <span className="text-sm text-muted-foreground font-medium">USD</span>
       </div>
