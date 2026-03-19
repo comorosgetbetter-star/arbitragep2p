@@ -32,7 +32,9 @@ export const PortfolioCard = () => {
     return total;
   })();
 
-  const displayBalance = user ? totalPortfolioValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00';
+  const displayBalance = user
+    ? new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: true }).format(totalPortfolioValue).replace(/\s/g, '')
+    : '0.00';
 
   const effectiveHidden = user ? hidden : true;
 
