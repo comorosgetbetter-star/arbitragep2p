@@ -97,7 +97,7 @@ export const FAQ = () => {
           {/* Powered By Section */}
           <div className="mt-12 text-center">
             <p className="text-xs text-muted-foreground uppercase tracking-widest mb-6">Powered By</p>
-            <div className="grid grid-cols-3 sm:grid-cols-5 gap-5 items-center justify-items-center opacity-70">
+            <div className="grid grid-cols-5 gap-4 items-center justify-items-center opacity-70">
                {[
                 { name: 'Bitcoin', logo: partnerBitcoin },
                 { name: 'Ethereum', logo: partnerEthereum },
