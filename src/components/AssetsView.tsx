@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Eye, EyeOff, Download, Upload, Clock, ChevronRight, ChevronDown, ChevronUp, SlidersHorizontal, Sparkles, ArrowLeft, Copy, Check, Loader2, Wallet, ArrowDownLeft, ArrowUpRight, XCircle, CheckCircle2, ArrowLeftRight, FileDown, TrendingUp, TrendingDown } from 'lucide-react';
 import { AssetsMainSkeleton } from '@/components/skeletons/AssetsMainSkeleton';
 import { DepositSkeleton } from '@/components/skeletons/DepositSkeleton';
+import { CRYPTO_LOGOS } from '@/lib/cryptoLogos';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useNavigate } from 'react-router-dom';
@@ -147,16 +148,7 @@ export const AssetsView = () => {
     }
   };
 
-  const cryptoLogos: Record<string, string> = {
-    BTC: 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@1a63530be6e374711a8554f31b17e4cb92c25fa5/128/color/btc.png',
-    ETH: 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@1a63530be6e374711a8554f31b17e4cb92c25fa5/128/color/eth.png',
-    USDT: 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@1a63530be6e374711a8554f31b17e4cb92c25fa5/128/color/usdt.png',
-    BNB: 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@1a63530be6e374711a8554f31b17e4cb92c25fa5/128/color/bnb.png',
-    SOL: 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@1a63530be6e374711a8554f31b17e4cb92c25fa5/128/color/sol.png',
-    XRP: 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@1a63530be6e374711a8554f31b17e4cb92c25fa5/128/color/xrp.png',
-    LTC: 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@1a63530be6e374711a8554f31b17e4cb92c25fa5/128/color/ltc.png',
-    DOGE: 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@1a63530be6e374711a8554f31b17e4cb92c25fa5/128/color/doge.png',
-  };
+  const cryptoLogos = CRYPTO_LOGOS;
   const cryptoIcons: Record<string, string> = {
     BTC: '₿', ETH: '⟠', USDT: '₮', BNB: '◆', SOL: '◎', XRP: '✕', LTC: 'Ł', DOGE: 'Ð',
   };
@@ -257,14 +249,7 @@ export const AssetsView = () => {
     // All symbols: user-owned ones + all standard ones for the "To" picker
     const allSymbols = ['USDT', 'BTC', 'ETH', 'BNB', 'SOL', 'XRP'];
     const cryptoNames: Record<string, string> = { USDT: 'Tether', BTC: 'Bitcoin', ETH: 'Ethereum', BNB: 'BNB', SOL: 'Solana', XRP: 'XRP' };
-    const CRYPTO_LOGOS: Record<string, string> = {
-      USDT: 'https://assets.coingecko.com/coins/images/325/small/Tether.png',
-      BTC: 'https://assets.coingecko.com/coins/images/1/small/bitcoin.png',
-      ETH: 'https://assets.coingecko.com/coins/images/279/small/ethereum.png',
-      BNB: 'https://assets.coingecko.com/coins/images/825/small/bnb-icon2_2x.png',
-      SOL: 'https://assets.coingecko.com/coins/images/4128/small/solana.png',
-      XRP: 'https://assets.coingecko.com/coins/images/44/small/xrp-symbol-white-128.png',
-    };
+    const convertLogos = CRYPTO_LOGOS;
     const fromBalance = convertFrom === 'USDT' ? balance : (cryptoBalances.find(c => c.symbol === convertFrom)?.amount || 0);
     const fromPrice = convertFrom === 'USDT' ? 1 : (prices.find(p => p.symbol === convertFrom)?.price || 0);
     const toPrice = convertTo === 'USDT' ? 1 : (prices.find(p => p.symbol === convertTo)?.price || 0);
