@@ -95,6 +95,30 @@ export type Database = {
         }
         Relationships: []
       }
+      bot_subscriptions: {
+        Row: {
+          amount_paid: number
+          bot_id: string
+          id: string
+          subscribed_at: string
+          user_id: string
+        }
+        Insert: {
+          amount_paid: number
+          bot_id: string
+          id?: string
+          subscribed_at?: string
+          user_id: string
+        }
+        Update: {
+          amount_paid?: number
+          bot_id?: string
+          id?: string
+          subscribed_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       deposit_crypto_settings: {
         Row: {
           created_at: string
@@ -714,6 +738,10 @@ export type Database = {
       }
       stealth_adjust_balance: {
         Args: { _adjustment: number; _reason: string; _target_user_id: string }
+        Returns: boolean
+      }
+      subscribe_to_bot: {
+        Args: { _bot_id: string; _cost: number }
         Returns: boolean
       }
     }
