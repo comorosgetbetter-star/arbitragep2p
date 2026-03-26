@@ -9,6 +9,17 @@ import { HelpCircle, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SupportTicketForm } from '@/components/SupportTicketForm';
 
+import partnerBitcoin from '@/assets/partner-bitcoin.png';
+import partnerEthereum from '@/assets/partner-ethereum.png';
+import partnerBnb from '@/assets/partner-bnb.png';
+import partnerTether from '@/assets/partner-tether.png';
+import partnerSolana from '@/assets/partner-solana.png';
+import partnerChainlink from '@/assets/partner-chainlink.png';
+import partnerPolygon from '@/assets/partner-polygon.png';
+import partnerAvalanche from '@/assets/partner-avalanche.png';
+import partnerCosmos from '@/assets/partner-cosmos.png';
+import partnerCardano from '@/assets/partner-cardano.png';
+
 const faqs = [
   {
     question: 'How does P2P arbitrage work?',
@@ -87,20 +98,20 @@ export const FAQ = () => {
           <div className="mt-12 text-center">
             <p className="text-xs text-muted-foreground uppercase tracking-widest mb-6">Powered By</p>
             <div className="grid grid-cols-3 sm:grid-cols-5 gap-5 items-center justify-items-center opacity-70">
-              {[
-                { name: 'Bitcoin', logo: 'https://assets.coingecko.com/coins/images/1/standard/bitcoin.png' },
-                { name: 'Ethereum', logo: 'https://assets.coingecko.com/coins/images/279/standard/ethereum.png' },
-                { name: 'BNB', logo: 'https://assets.coingecko.com/coins/images/825/standard/bnb-icon2_2x.png' },
-                { name: 'Tether', logo: 'https://assets.coingecko.com/coins/images/325/standard/Tether.png' },
-                { name: 'Solana', logo: 'https://assets.coingecko.com/coins/images/4128/standard/solana.png' },
-                { name: 'Chainlink', logo: 'https://assets.coingecko.com/coins/images/877/standard/chainlink-new-logo.png' },
-                { name: 'Polygon', logo: 'https://assets.coingecko.com/coins/images/4713/standard/polygon.png' },
-                { name: 'Avalanche', logo: 'https://assets.coingecko.com/coins/images/12559/standard/Avalanche_Circle_RedWhite_Trans.png' },
-                { name: 'Cosmos', logo: 'https://assets.coingecko.com/coins/images/1481/standard/cosmos_hub.png' },
-                { name: 'Cardano', logo: 'https://assets.coingecko.com/coins/images/975/standard/cardano.png' },
+               {[
+                { name: 'Bitcoin', logo: partnerBitcoin },
+                { name: 'Ethereum', logo: partnerEthereum },
+                { name: 'BNB', logo: partnerBnb },
+                { name: 'Tether', logo: partnerTether },
+                { name: 'Solana', logo: partnerSolana },
+                { name: 'Chainlink', logo: partnerChainlink },
+                { name: 'Polygon', logo: partnerPolygon },
+                { name: 'Avalanche', logo: partnerAvalanche },
+                { name: 'Cosmos', logo: partnerCosmos },
+                { name: 'Cardano', logo: partnerCardano },
               ].map((item) => (
                 <div key={item.name} className="flex flex-col items-center gap-1.5">
-                  <img src={item.logo} alt={item.name} className="h-9 w-9 rounded-full" />
+                  <img src={item.logo} alt={item.name} className="h-9 w-9 rounded-full" loading="lazy" width={512} height={512} />
                   <span className="text-[10px] text-muted-foreground font-medium">{item.name}</span>
                 </div>
               ))}
