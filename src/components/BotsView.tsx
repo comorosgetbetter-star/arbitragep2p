@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronRight, ArrowDownUp, DollarSign, TrendingUp, RefreshCw, Signal, Lock, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { ChevronRight, Lock, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { useUserData } from '@/contexts/UserDataContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { BotTradingView } from '@/components/BotTradingView';
@@ -11,11 +11,17 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
 
+import botFlywheelImg from '@/assets/bot-flywheel.png';
+import botFuturesDcaImg from '@/assets/bot-futures-dca.png';
+import botFuturesGridImg from '@/assets/bot-futures-grid.png';
+import botSpotDcaImg from '@/assets/bot-spot-dca.png';
+import botSignalImg from '@/assets/bot-signal.png';
+
 interface BotItem {
   id: string;
   name: string;
   description: string;
-  icon: React.ReactNode;
+  image: string;
   badge?: string;
   badgeVariant?: 'hot' | 'new' | 'free';
   stats: { label: string; value: string }[];
@@ -27,24 +33,24 @@ const bots: BotItem[] = [
     id: 'flywheel',
     name: 'Flywheel AI',
     description: 'Automated cycle trading with real-time win/loss tracking.',
-    icon: <ArrowDownUp className="h-5 w-5" />,
+    image: botFlywheelImg,
     badge: '10 Free Runs/Day',
     badgeVariant: 'free',
     stats: [
       { label: 'Win Rate', value: '~70%' },
       { label: 'Min', value: '$100' },
-      { label: 'Cycles', value: '1-10m' },
+      { label: 'Risk', value: 'Very Low' },
     ],
   },
   {
     id: 'futures-dca',
     name: 'Futures DCA',
     description: 'Dollar-cost average into positions with staged entries.',
-    icon: <DollarSign className="h-5 w-5" />,
+    image: botFuturesDcaImg,
     subscriptionCost: 300,
     stats: [
       { label: 'Strategy', value: 'DCA' },
-      { label: 'Risk', value: 'Med' },
+      { label: 'Risk', value: 'Very Low' },
       { label: 'Type', value: 'Futures' },
     ],
   },
@@ -52,13 +58,13 @@ const bots: BotItem[] = [
     id: 'futures-grid',
     name: 'Futures Grid',
     description: 'Profit from volatility with automated grid orders.',
-    icon: <TrendingUp className="h-5 w-5" />,
+    image: botFuturesGridImg,
     badge: 'New',
     badgeVariant: 'new',
     subscriptionCost: 500,
     stats: [
       { label: 'Strategy', value: 'Grid' },
-      { label: 'Risk', value: 'High' },
+      { label: 'Risk', value: 'Very Low' },
       { label: 'Type', value: 'Futures' },
     ],
   },
@@ -66,11 +72,11 @@ const bots: BotItem[] = [
     id: 'spot-dca',
     name: 'Spot DCA',
     description: 'Indicator-triggered accumulation for long-term growth.',
-    icon: <RefreshCw className="h-5 w-5" />,
+    image: botSpotDcaImg,
     subscriptionCost: 700,
     stats: [
       { label: 'Strategy', value: 'DCA' },
-      { label: 'Risk', value: 'Low' },
+      { label: 'Risk', value: 'Very Low' },
       { label: 'Type', value: 'Spot' },
     ],
   },
@@ -78,11 +84,11 @@ const bots: BotItem[] = [
     id: 'signal-bot',
     name: 'Signal Bot',
     description: 'Execute trades from low-latency market signals.',
-    icon: <Signal className="h-5 w-5" />,
+    image: botSignalImg,
     subscriptionCost: 1000,
     stats: [
       { label: 'Latency', value: '<50ms' },
-      { label: 'Risk', value: 'Med' },
+      { label: 'Risk', value: 'Very Low' },
       { label: 'Type', value: 'Multi' },
     ],
   },
@@ -100,7 +106,6 @@ export const BotsView = () => {
   const [subscribing, setSubscribing] = useState(false);
   const [lowBalanceBot, setLowBalanceBot] = useState<BotItem | null>(null);
 
-  // Fetch user's bot subscriptions
   useEffect(() => {
     if (!user) {
       setSubscriptions([]);
@@ -152,25 +157,18 @@ export const BotsView = () => {
   }
 
   const handleBotClick = (bot: BotItem) => {
-    // Flywheel is free
     if (bot.id === 'flywheel') {
       setShowFlywheel(true);
       return;
     }
-
-    // If already subscribed, open the bot
     if (subscriptions.includes(bot.id)) {
       setActiveBot(bot);
       return;
     }
-
-    // Check balance
     if (balance < (bot.subscriptionCost || 0)) {
       setLowBalanceBot(bot);
       return;
     }
-
-    // Show confirmation
     setConfirmBot(bot);
   };
 
@@ -190,7 +188,6 @@ export const BotsView = () => {
         description: `You've successfully subscribed to ${confirmBot.name}.`,
       });
       setConfirmBot(null);
-      // Open the bot immediately
       setActiveBot(confirmBot);
     } catch (err: any) {
       toast({
@@ -225,28 +222,37 @@ export const BotsView = () => {
           const isFree = bot.id === 'flywheel';
 
           return (
-            <button
+            <div
               key={bot.id}
-              onClick={() => handleBotClick(bot)}
-              className="w-full bg-card border border-border/40 rounded-2xl p-5 hover:border-primary/30 hover:shadow-[0_0_20px_hsl(var(--primary)/0.06)] transition-all text-left group relative overflow-hidden"
+              className="w-full bg-card border border-border/40 rounded-2xl p-5 hover:border-primary/30 hover:shadow-[0_0_24px_hsl(var(--primary)/0.08)] transition-all text-left group relative overflow-hidden"
             >
-              {/* Hover accent */}
+              {/* Top accent line */}
               <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
               
-              <div className="flex items-start gap-3.5">
-                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 text-primary border border-primary/15 group-hover:bg-primary/15 transition-colors">
-                  {bot.icon}
+              <div className="flex items-start gap-4">
+                {/* Bot icon */}
+                <div className="w-14 h-14 rounded-2xl bg-secondary/60 flex items-center justify-center shrink-0 border border-border/30 overflow-hidden">
+                  <img
+                    src={bot.image}
+                    alt={bot.name}
+                    className="w-10 h-10 object-contain"
+                    loading="lazy"
+                    width={40}
+                    height={40}
+                  />
                 </div>
+
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1 flex-wrap">
-                    <span className="text-lg font-bold text-foreground tracking-tight">{bot.name}</span>
+                  {/* Name + badges */}
+                  <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                    <span className="text-base font-bold text-foreground tracking-tight">{bot.name}</span>
                     {isFree && (
-                      <span className="text-xs px-2 py-0.5 rounded-md font-bold uppercase tracking-wider border bg-emerald-500/10 text-emerald-500 border-emerald-500/20">
-                        10 Free Runs/Day
+                      <span className="text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider bg-emerald-500/15 text-emerald-500 border border-emerald-500/20">
+                        Free
                       </span>
                     )}
                     {!isFree && bot.badge && (
-                      <span className={`text-xs px-2 py-0.5 rounded-md font-bold uppercase tracking-wider border ${
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider border ${
                         bot.badgeVariant === 'hot' 
                           ? 'bg-destructive/10 text-destructive border-destructive/20' 
                           : 'bg-primary/10 text-primary border-primary/20'
@@ -255,30 +261,52 @@ export const BotsView = () => {
                       </span>
                     )}
                     {isSubscribed && (
-                      <span className="text-xs px-2 py-0.5 rounded-md font-bold uppercase tracking-wider border bg-emerald-500/10 text-emerald-500 border-emerald-500/20 flex items-center gap-1">
+                      <span className="text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider bg-emerald-500/15 text-emerald-500 border border-emerald-500/20 flex items-center gap-0.5">
                         <CheckCircle2 className="h-3 w-3" /> Active
                       </span>
                     )}
                   </div>
+
                   <p className="text-sm text-muted-foreground leading-relaxed mb-3">{bot.description}</p>
-                  <div className="flex gap-2 flex-wrap">
+
+                  {/* Stats row */}
+                  <div className="flex gap-2 flex-wrap mb-3">
                     {bot.stats.map((stat) => (
-                      <div key={stat.label} className="bg-secondary/50 rounded-lg px-3 py-1.5 text-center">
-                        <span className="text-xs text-muted-foreground">{stat.label} </span>
-                        <span className="text-xs font-bold font-mono text-foreground">{stat.value}</span>
+                      <div key={stat.label} className="bg-secondary/50 rounded-lg px-2.5 py-1 text-center">
+                        <span className="text-[11px] text-muted-foreground">{stat.label} </span>
+                        <span className="text-[11px] font-bold font-mono text-foreground">{stat.value}</span>
                       </div>
                     ))}
-                    {bot.subscriptionCost && !isSubscribed && (
-                      <div className="bg-primary/10 rounded-lg px-3 py-1.5 text-center border border-primary/20">
-                        <span className="text-xs text-primary font-bold font-mono">${bot.subscriptionCost.toLocaleString()}</span>
-                        <span className="text-xs text-primary/70 ml-1">to unlock</span>
-                      </div>
+                  </div>
+
+                  {/* Action row */}
+                  <div className="flex items-center gap-2">
+                    {isFree ? (
+                      <button
+                        onClick={() => handleBotClick(bot)}
+                        className="px-5 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity"
+                      >
+                        Open
+                      </button>
+                    ) : isSubscribed ? (
+                      <button
+                        onClick={() => handleBotClick(bot)}
+                        className="px-5 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity"
+                      >
+                        Open
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => handleBotClick(bot)}
+                        className="px-5 py-2 rounded-xl bg-primary/10 text-primary text-sm font-semibold border border-primary/20 hover:bg-primary/20 transition-colors flex items-center gap-1.5"
+                      >
+                        Subscribe · ${bot.subscriptionCost?.toLocaleString()}
+                      </button>
                     )}
                   </div>
                 </div>
-                <ChevronRight className="h-5 w-5 text-muted-foreground/30 shrink-0 group-hover:text-primary mt-1 transition-colors" />
               </div>
-            </button>
+            </div>
           );
         })}
       </div>
