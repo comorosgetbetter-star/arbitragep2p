@@ -61,6 +61,8 @@ export const P2POrders = () => {
   const [buyAmount, setBuyAmount] = useState('');
   const [showConflictModal, setShowConflictModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [errorOrderId, setErrorOrderId] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState('');
   const [pendingOrder, setPendingOrder] = useState<{ order: P2POrder; amount: number; usdt: number } | null>(null);
   const [existingSession, setExistingSession] = useState<TradeSession | null>(null);
   const { user, loading: authLoading } = useAuth();
@@ -82,9 +84,12 @@ export const P2POrders = () => {
   const handleBuyNow = (order: P2POrder) => {
     const amount = parseFloat(buyAmount);
     if (!amount || amount < order.min_amount || amount > order.max_amount) {
-      toast.error(`Enter an amount between $${order.min_amount} and $${order.max_amount}`);
+      setErrorOrderId(order.id);
+      setErrorMessage(`Enter amount between $${order.min_amount} – $${order.max_amount}`);
       return;
     }
+    setErrorOrderId(null);
+    setErrorMessage('');
 
     const usdt = getUsdtAmount(amount);
 
@@ -218,32 +223,43 @@ export const P2POrders = () => {
           </div>
 
           {/* Buy Section */}
-          <div className="flex items-center gap-2">
-            <div className="relative flex-1">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
-              <input
-                type="number"
-                placeholder={`${order.min_amount} – ${order.max_amount}`}
-                className="w-full h-10 pl-7 pr-3 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                min={order.min_amount}
-                max={order.max_amount}
-                onChange={(e) => {
-                  setBuyAmount(e.target.value);
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
+                <input
+                  type="number"
+                  placeholder={`${order.min_amount} – ${order.max_amount}`}
+                  className={`w-full h-10 pl-7 pr-3 rounded-lg border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 ${errorOrderId === order.id ? 'border-destructive ring-1 ring-destructive/30' : 'border-border'}`}
+                  min={order.min_amount}
+                  max={order.max_amount}
+                  onChange={(e) => {
+                    setBuyAmount(e.target.value);
+                    setSelectedOrder(order);
+                    if (errorOrderId === order.id) {
+                      setErrorOrderId(null);
+                      setErrorMessage('');
+                    }
+                  }}
+                  onFocus={() => setSelectedOrder(order)}
+                />
+              </div>
+              <Button
+                size="sm"
+                onClick={() => {
                   setSelectedOrder(order);
+                  handleBuyNow(order);
                 }}
-                onFocus={() => setSelectedOrder(order)}
-              />
+                className="shrink-0"
+              >
+                Buy USDT
+              </Button>
             </div>
-            <Button
-              size="sm"
-              onClick={() => {
-                setSelectedOrder(order);
-                handleBuyNow(order);
-              }}
-              className="shrink-0"
-            >
-              Buy USDT
-            </Button>
+            {errorOrderId === order.id && (
+              <p className="text-[11px] text-destructive font-medium pl-1 animate-in fade-in slide-in-from-top-1 duration-200">
+                {errorMessage}
+              </p>
+            )}
           </div>
         </div>
       ))}
