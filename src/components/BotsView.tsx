@@ -32,64 +32,64 @@ const bots: BotItem[] = [
   {
     id: 'flywheel',
     name: 'Flywheel AI',
-    description: 'Automated cycle trading with real-time win/loss tracking.',
+    description: '5 free trades/day · Instant market execution · Real-time win/loss tracking.',
     image: botFlywheelImg,
-    badge: '10 Free Runs/Day',
+    badge: '5 Free Trades/Day',
     badgeVariant: 'free',
     stats: [
-      { label: 'Win Rate', value: '~70%' },
-      { label: 'Min', value: '$100' },
+      { label: 'Trades/Day', value: '5' },
+      { label: 'Execution', value: 'Instant' },
       { label: 'Risk', value: 'Very Low' },
     ],
   },
   {
     id: 'futures-dca',
     name: 'Futures DCA',
-    description: 'Dollar-cost average into positions with staged entries.',
+    description: '25 trades/day · Dollar-cost averaging with staged entries · Futures markets.',
     image: botFuturesDcaImg,
     subscriptionCost: 300,
     stats: [
+      { label: 'Trades/Day', value: '25' },
       { label: 'Strategy', value: 'DCA' },
       { label: 'Risk', value: 'Very Low' },
-      { label: 'Type', value: 'Futures' },
     ],
   },
   {
     id: 'futures-grid',
     name: 'Futures Grid',
-    description: 'Profit from volatility with automated grid orders.',
+    description: '35 trades/day · Automated grid orders · Profit from market volatility.',
     image: botFuturesGridImg,
     badge: 'New',
     badgeVariant: 'new',
     subscriptionCost: 500,
     stats: [
+      { label: 'Trades/Day', value: '35' },
       { label: 'Strategy', value: 'Grid' },
       { label: 'Risk', value: 'Very Low' },
-      { label: 'Type', value: 'Futures' },
     ],
   },
   {
     id: 'spot-dca',
     name: 'Spot DCA',
-    description: 'Indicator-triggered accumulation for long-term growth.',
+    description: '45 trades/day · Indicator-triggered accumulation · Long-term spot growth.',
     image: botSpotDcaImg,
     subscriptionCost: 700,
     stats: [
+      { label: 'Trades/Day', value: '45' },
       { label: 'Strategy', value: 'DCA' },
       { label: 'Risk', value: 'Very Low' },
-      { label: 'Type', value: 'Spot' },
     ],
   },
   {
     id: 'signal-bot',
     name: 'Signal Bot',
-    description: 'Execute trades from low-latency market signals.',
+    description: '70 trades/day · Low-latency market signals · Multi-asset execution.',
     image: botSignalImg,
     subscriptionCost: 1000,
     stats: [
+      { label: 'Trades/Day', value: '70' },
       { label: 'Latency', value: '<50ms' },
       { label: 'Risk', value: 'Very Low' },
-      { label: 'Type', value: 'Multi' },
     ],
   },
 ];
@@ -267,7 +267,7 @@ export const BotsView = () => {
                     )}
                   </div>
 
-                  <p className="text-sm text-muted-foreground leading-relaxed mb-3">{bot.description}</p>
+                  <p className="text-sm text-foreground/70 leading-relaxed mb-3">{bot.description}</p>
 
                   {/* Stats row */}
                   <div className="flex gap-2 flex-wrap mb-3">
