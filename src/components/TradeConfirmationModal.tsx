@@ -72,8 +72,7 @@ export const TradeConfirmationModal = ({
               </div>
               
               <div className="flex flex-col items-center px-4">
-                <ArrowRight className="h-5 w-5 text-primary mb-1" />
-                <span className="text-[10px] text-primary font-semibold">+{profitPercentage}%</span>
+                <ArrowRight className="h-5 w-5 text-primary" />
               </div>
               
               <div className="text-center flex-1">
