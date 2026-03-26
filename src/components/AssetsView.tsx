@@ -345,7 +345,7 @@ export const AssetsView = () => {
               >
                 {convertFrom ? (
                   <>
-                    <img src={CRYPTO_LOGOS[convertFrom]} alt={convertFrom} className="w-6 h-6 rounded-full" />
+                    <img src={convertLogos[convertFrom]} alt={convertFrom} className="w-6 h-6 rounded-full" />
                     <span className="font-medium">{convertFrom}</span>
                     <span className="text-muted-foreground text-xs">
                       {cryptoNames[convertFrom]} — {(availableCryptos.find(c => c.symbol === convertFrom)?.amount || 0).toLocaleString('en-US', { maximumFractionDigits: 6 })}
@@ -365,7 +365,7 @@ export const AssetsView = () => {
                       onClick={() => { setConvertFrom(c.symbol); setConvertAmount(''); setFromDropdownOpen(false); }}
                       className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm hover:bg-secondary/80 transition-colors ${convertFrom === c.symbol ? 'bg-primary/10' : ''}`}
                     >
-                      <img src={CRYPTO_LOGOS[c.symbol]} alt={c.symbol} className="w-6 h-6 rounded-full" />
+                      <img src={convertLogos[c.symbol]} alt={c.symbol} className="w-6 h-6 rounded-full" />
                       <span className="font-medium">{c.symbol}</span>
                       <span className="text-muted-foreground text-xs">{cryptoNames[c.symbol]}</span>
                       <span className="ml-auto text-xs text-muted-foreground font-mono">{c.amount.toLocaleString('en-US', { maximumFractionDigits: 6 })}</span>
@@ -409,7 +409,7 @@ export const AssetsView = () => {
               >
                 {convertTo ? (
                   <>
-                    <img src={CRYPTO_LOGOS[convertTo]} alt={convertTo} className="w-6 h-6 rounded-full" />
+                    <img src={convertLogos[convertTo]} alt={convertTo} className="w-6 h-6 rounded-full" />
                     <span className="font-medium">{convertTo}</span>
                     <span className="text-muted-foreground text-xs">{cryptoNames[convertTo]}</span>
                   </>
@@ -427,7 +427,7 @@ export const AssetsView = () => {
                       onClick={() => { setConvertTo(s); setToDropdownOpen(false); }}
                       className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm hover:bg-secondary/80 transition-colors ${convertTo === s ? 'bg-primary/10' : ''}`}
                     >
-                      <img src={CRYPTO_LOGOS[s]} alt={s} className="w-6 h-6 rounded-full" />
+                      <img src={convertLogos[s]} alt={s} className="w-6 h-6 rounded-full" />
                       <span className="font-medium">{s}</span>
                       <span className="text-muted-foreground text-xs">{cryptoNames[s]}</span>
                     </button>
