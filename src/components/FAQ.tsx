@@ -82,6 +82,22 @@ export const FAQ = () => {
               Contact Support
             </Button>
           </div>
+
+          {/* Powered By Section */}
+          <div className="mt-12 text-center">
+            <p className="text-xs text-muted-foreground uppercase tracking-widest mb-6">Powered By</p>
+            <div className="flex flex-wrap items-center justify-center gap-6 opacity-60">
+              <img src="https://assets.coingecko.com/coins/images/1/small/bitcoin.png" alt="Bitcoin" className="h-8 w-8" title="Bitcoin" />
+              <img src="https://assets.coingecko.com/coins/images/279/small/ethereum.png" alt="Ethereum" className="h-8 w-8" title="Ethereum" />
+              <img src="https://cryptologos.cc/logos/binance-coin-bnb-logo.png?v=040" alt="Binance" className="h-8 w-8" title="Binance" />
+              <img src="https://cryptologos.cc/logos/tether-usdt-logo.png?v=040" alt="Tether" className="h-8 w-8" title="Tether" />
+              <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e8/Coinbase-logo-freelogovectors.net_.png/640px-Coinbase-logo-freelogovectors.net_.png" alt="Coinbase" className="h-6" title="Coinbase" />
+              <img src="https://cryptologos.cc/logos/solana-sol-logo.png?v=040" alt="Solana" className="h-8 w-8" title="Solana" />
+              <img src="https://cryptologos.cc/logos/chainlink-link-logo.png?v=040" alt="Chainlink" className="h-8 w-8" title="Chainlink" />
+              <img src="https://images.seeklogo.com/logo-png/52/1/visa-logo-png_seeklogo-524517.png" alt="Visa" className="h-6" title="Visa" />
+              <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b7/MasterCard_Logo.svg/200px-MasterCard_Logo.svg.png" alt="Mastercard" className="h-7" title="Mastercard" />
+            </div>
+          </div>
         </div>
       </div>
 
