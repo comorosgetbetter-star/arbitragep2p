@@ -261,8 +261,6 @@ export const P2POrders = () => {
               </p>
             )}
           </div>
-            </Button>
-          </div>
         </div>
       ))}
 
