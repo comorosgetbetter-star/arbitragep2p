@@ -9,6 +9,17 @@ import { HelpCircle, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SupportTicketForm } from '@/components/SupportTicketForm';
 
+import partnerBitcoin from '@/assets/partner-bitcoin.png';
+import partnerEthereum from '@/assets/partner-ethereum.png';
+import partnerBnb from '@/assets/partner-bnb.png';
+import partnerTether from '@/assets/partner-tether.png';
+import partnerSolana from '@/assets/partner-solana.png';
+import partnerChainlink from '@/assets/partner-chainlink.png';
+import partnerPolygon from '@/assets/partner-polygon.png';
+import partnerAvalanche from '@/assets/partner-avalanche.png';
+import partnerCosmos from '@/assets/partner-cosmos.png';
+import partnerCardano from '@/assets/partner-cardano.png';
+
 const faqs = [
   {
     question: 'How does P2P arbitrage work?',
