@@ -1,8 +1,10 @@
 import { useCryptoPrices } from '@/hooks/useCryptoPrices';
 import { TrendingUp, TrendingDown } from 'lucide-react';
+import { featuredCryptoSymbols } from '@/lib/cryptoMarkets';
 
 export const LivePriceTicker = () => {
   const { prices, isLoading } = useCryptoPrices();
+  const featuredPrices = prices.filter((crypto) => featuredCryptoSymbols.includes(crypto.symbol));
 
   if (isLoading) {
     return (
@@ -36,7 +38,7 @@ export const LivePriceTicker = () => {
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-          {prices.map((crypto, index) => (
+          {featuredPrices.map((crypto, index) => (
             <div 
               key={crypto.symbol}
               className="glass-card rounded-xl p-4 hover:border-primary/30 transition-all duration-300 group"
