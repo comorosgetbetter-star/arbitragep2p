@@ -650,9 +650,12 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
       {/* Balance */}
       <div className="flex items-center justify-between bg-card border border-border/30 rounded-xl px-4 py-3">
         <span className="text-sm text-muted-foreground tracking-wide">Balance</span>
-        <span className="text-lg font-mono font-semibold text-foreground">
-          ${balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).replace(/\s/g, '')}
-          <span className="text-sm text-muted-foreground ml-1 font-sans font-normal">USDT</span>
+        <span className="text-lg font-semibold text-foreground tracking-normal">
+          ${balance
+            .toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+            .replace(/\s*([,.])\s*/g, '$1')
+            .replace(/\s+/g, '')}
+          <span className="text-sm text-muted-foreground ml-1 font-normal">USDT</span>
         </span>
       </div>
 

@@ -205,9 +205,12 @@ export const BotsView = () => {
       {/* Balance */}
       <div className="flex items-center justify-between bg-card rounded-2xl px-5 py-4 border border-border/40">
         <span className="text-sm text-muted-foreground font-medium">Available Balance</span>
-        <span className="text-lg font-mono font-bold text-foreground tabular-nums">
-          {balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).replace(/\s/g, '')}
-          <span className="text-sm text-muted-foreground ml-1.5 font-sans font-normal">USDT</span>
+        <span className="text-lg font-bold text-foreground tracking-normal">
+          {balance
+            .toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+            .replace(/\s*([,.])\s*/g, '$1')
+            .replace(/\s+/g, '')}
+          <span className="text-sm text-muted-foreground ml-1.5 font-normal">USDT</span>
         </span>
       </div>
 
