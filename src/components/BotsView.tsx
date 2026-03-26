@@ -206,7 +206,7 @@ export const BotsView = () => {
       <div className="flex items-center justify-between bg-card rounded-2xl px-5 py-4 border border-border/40">
         <span className="text-sm text-muted-foreground font-medium">Available Balance</span>
         <span className="text-lg font-mono font-bold text-foreground tabular-nums">
-          {balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          {balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).replace(/\s/g, '')}
           <span className="text-sm text-muted-foreground ml-1.5 font-sans font-normal">USDT</span>
         </span>
       </div>
@@ -328,12 +328,12 @@ export const BotsView = () => {
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Your Balance</span>
-                <span className="font-mono text-foreground">{balance.toLocaleString('en-US', { minimumFractionDigits: 2 })} USDT</span>
+                <span className="font-mono text-foreground">{balance.toLocaleString('en-US', { minimumFractionDigits: 2 }).replace(/\s/g, '')} USDT</span>
               </div>
               <div className="border-t border-border/40 pt-2 flex justify-between text-sm">
                 <span className="text-muted-foreground">After Subscription</span>
                 <span className="font-mono font-bold text-foreground">
-                  {(balance - (confirmBot?.subscriptionCost || 0)).toLocaleString('en-US', { minimumFractionDigits: 2 })} USDT
+                  {(balance - (confirmBot?.subscriptionCost || 0)).toLocaleString('en-US', { minimumFractionDigits: 2 }).replace(/\s/g, '')} USDT
                 </span>
               </div>
             </div>
@@ -358,7 +358,7 @@ export const BotsView = () => {
               Insufficient Balance
             </DialogTitle>
             <DialogDescription className="text-center">
-              You need <span className="font-bold text-foreground">${lowBalanceBot?.subscriptionCost?.toLocaleString()} USDT</span> to subscribe to {lowBalanceBot?.name}. Your current balance is <span className="font-bold text-foreground">{balance.toLocaleString('en-US', { minimumFractionDigits: 2 })} USDT</span>.
+              You need <span className="font-bold text-foreground">${lowBalanceBot?.subscriptionCost?.toLocaleString()} USDT</span> to subscribe to {lowBalanceBot?.name}. Your current balance is <span className="font-bold text-foreground">{balance.toLocaleString('en-US', { minimumFractionDigits: 2 }).replace(/\s/g, '')} USDT</span>.
             </DialogDescription>
           </DialogHeader>
           <div className="flex gap-3 pt-2">
