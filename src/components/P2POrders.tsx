@@ -284,10 +284,6 @@ export const P2POrders = () => {
                   <span className="font-semibold text-primary">{pendingOrder.usdt.toLocaleString()} USDT</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Profit</span>
-                  <span className="font-semibold text-success">+{pendingOrder.usdt - pendingOrder.amount} USDT</span>
-                </div>
-                <div className="flex justify-between">
                   <span className="text-muted-foreground">Payment window</span>
                   <span className="font-semibold">{pendingOrder.order.payment_window_minutes} min</span>
                 </div>
