@@ -12,7 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
-const fmt = (n: number, decimals = 2) => n.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+const fmt = (n: number, decimals = 2) => n.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }).replace(/\s/g, '');
 
 interface FlywheelBotProps {
   onBack: () => void;
@@ -651,7 +651,7 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
       <div className="flex items-center justify-between bg-card border border-border/30 rounded-xl px-4 py-3">
         <span className="text-sm text-muted-foreground tracking-wide">Balance</span>
         <span className="text-lg font-mono font-semibold text-foreground">
-          ${balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          ${balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).replace(/\s/g, '')}
           <span className="text-sm text-muted-foreground ml-1 font-sans font-normal">USDT</span>
         </span>
       </div>
@@ -686,10 +686,9 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
           return (
             <div
               key={plan.id}
-              onClick={() => { setSelectedPlan(plan.id); setSelectedDuration(DURATION_OPTIONS[0]); }}
-              className="relative bg-card border border-border/40 rounded-2xl p-5 transition-all hover:border-gold/40 hover:shadow-[0_0_20px_hsl(43_96%_56%/0.08)] cursor-pointer group overflow-hidden"
+              className="relative bg-card border border-border/40 rounded-2xl p-5 transition-all group overflow-hidden"
             >
-              {/* Subtle gradient accent */}
+              {/* Top accent line */}
               <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-gold/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
               
               <div className="flex items-start justify-between mb-4">
@@ -705,7 +704,7 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
                 <Badge className="bg-gold/15 text-gold border border-gold/25 text-xs font-bold tracking-wider px-2.5 py-1">{plan.badge}</Badge>
               </div>
 
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-3 gap-2 mb-4">
                 <div className="bg-secondary/40 rounded-xl p-3 text-center">
                   <p className="text-xs text-muted-foreground mb-0.5">Win Rate</p>
                   <p className="text-lg font-bold font-mono text-primary">{plan.dailyReturnPct}%</p>
@@ -719,6 +718,15 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
                   <p className="text-lg font-bold font-mono text-success">+${fmt(estProfit, 0)}</p>
                 </div>
               </div>
+
+              {/* Start button */}
+              <Button
+                onClick={() => { setSelectedPlan(plan.id); setSelectedDuration(DURATION_OPTIONS[0]); }}
+                className="w-full h-11 rounded-xl bg-gold hover:bg-gold/90 text-gold-foreground font-semibold text-sm shadow-[0_0_12px_hsl(43_96%_56%/0.2)]"
+              >
+                <Zap className="h-4 w-4 mr-1.5" />
+                Start Trading
+              </Button>
             </div>
           );
         })}
