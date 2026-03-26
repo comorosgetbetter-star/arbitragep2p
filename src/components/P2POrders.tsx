@@ -84,9 +84,12 @@ export const P2POrders = () => {
   const handleBuyNow = (order: P2POrder) => {
     const amount = parseFloat(buyAmount);
     if (!amount || amount < order.min_amount || amount > order.max_amount) {
-      toast.error(`Enter an amount between $${order.min_amount} and $${order.max_amount}`);
+      setErrorOrderId(order.id);
+      setErrorMessage(`Enter amount between $${order.min_amount} – $${order.max_amount}`);
       return;
     }
+    setErrorOrderId(null);
+    setErrorMessage('');
 
     const usdt = getUsdtAmount(amount);
 
