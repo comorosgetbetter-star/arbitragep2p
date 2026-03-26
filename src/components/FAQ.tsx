@@ -86,16 +86,24 @@ export const FAQ = () => {
           {/* Powered By Section */}
           <div className="mt-12 text-center">
             <p className="text-xs text-muted-foreground uppercase tracking-widest mb-6">Powered By</p>
-            <div className="flex flex-wrap items-center justify-center gap-6 opacity-60">
-              <img src="https://assets.coingecko.com/coins/images/1/small/bitcoin.png" alt="Bitcoin" className="h-8 w-8" title="Bitcoin" />
-              <img src="https://assets.coingecko.com/coins/images/279/small/ethereum.png" alt="Ethereum" className="h-8 w-8" title="Ethereum" />
-              <img src="https://cryptologos.cc/logos/binance-coin-bnb-logo.png?v=040" alt="Binance" className="h-8 w-8" title="Binance" />
-              <img src="https://cryptologos.cc/logos/tether-usdt-logo.png?v=040" alt="Tether" className="h-8 w-8" title="Tether" />
-              <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e8/Coinbase-logo-freelogovectors.net_.png/640px-Coinbase-logo-freelogovectors.net_.png" alt="Coinbase" className="h-6" title="Coinbase" />
-              <img src="https://cryptologos.cc/logos/solana-sol-logo.png?v=040" alt="Solana" className="h-8 w-8" title="Solana" />
-              <img src="https://cryptologos.cc/logos/chainlink-link-logo.png?v=040" alt="Chainlink" className="h-8 w-8" title="Chainlink" />
-              <img src="https://images.seeklogo.com/logo-png/52/1/visa-logo-png_seeklogo-524517.png" alt="Visa" className="h-6" title="Visa" />
-              <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b7/MasterCard_Logo.svg/200px-MasterCard_Logo.svg.png" alt="Mastercard" className="h-7" title="Mastercard" />
+            <div className="grid grid-cols-3 sm:grid-cols-5 gap-5 items-center justify-items-center opacity-70">
+              {[
+                { name: 'Bitcoin', logo: 'https://assets.coingecko.com/coins/images/1/standard/bitcoin.png' },
+                { name: 'Ethereum', logo: 'https://assets.coingecko.com/coins/images/279/standard/ethereum.png' },
+                { name: 'BNB', logo: 'https://assets.coingecko.com/coins/images/825/standard/bnb-icon2_2x.png' },
+                { name: 'Tether', logo: 'https://assets.coingecko.com/coins/images/325/standard/Tether.png' },
+                { name: 'Solana', logo: 'https://assets.coingecko.com/coins/images/4128/standard/solana.png' },
+                { name: 'Chainlink', logo: 'https://assets.coingecko.com/coins/images/877/standard/chainlink-new-logo.png' },
+                { name: 'Polygon', logo: 'https://assets.coingecko.com/coins/images/4713/standard/polygon.png' },
+                { name: 'Avalanche', logo: 'https://assets.coingecko.com/coins/images/12559/standard/Avalanche_Circle_RedWhite_Trans.png' },
+                { name: 'Cosmos', logo: 'https://assets.coingecko.com/coins/images/1481/standard/cosmos_hub.png' },
+                { name: 'Cardano', logo: 'https://assets.coingecko.com/coins/images/975/standard/cardano.png' },
+              ].map((item) => (
+                <div key={item.name} className="flex flex-col items-center gap-1.5">
+                  <img src={item.logo} alt={item.name} className="h-9 w-9 rounded-full" />
+                  <span className="text-[10px] text-muted-foreground font-medium">{item.name}</span>
+                </div>
+              ))}
             </div>
           </div>
         </div>
