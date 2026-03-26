@@ -13,6 +13,7 @@ import { StakingConfirmModal } from '@/components/StakingConfirmModal';
 import { ActiveStakingCard } from '@/components/ActiveStakingCard';
 import { StakingSkeleton } from '@/components/skeletons/StakingSkeleton';
 import { getCryptoLogo } from '@/lib/cryptoLogos';
+import { featuredCryptoSymbols } from '@/lib/cryptoMarkets';
 
 interface StakingPlan {
   id: string;
@@ -47,6 +48,7 @@ export const StakingView = () => {
   const { user, loading } = useAuth();
   const { balance, refetchBalance, isLoading: dataLoading } = useUserData();
   const { prices } = useCryptoPrices();
+  const featuredPrices = prices.filter((crypto) => featuredCryptoSymbols.includes(crypto.symbol));
   const { toast } = useToast();
   const navigate = useNavigate();
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
@@ -190,7 +192,7 @@ export const StakingView = () => {
       <div className="space-y-3">
         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Live Markets</h3>
         <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-1 px-1">
-          {prices.map((crypto) => {
+          {featuredPrices.map((crypto) => {
             const isUp = crypto.change24h >= 0;
             return (
               <div key={crypto.symbol} className="flex-shrink-0 bg-card border border-border/50 rounded-xl px-3.5 py-2.5 min-w-[120px]">
@@ -210,7 +212,7 @@ export const StakingView = () => {
         </div>
         <Card className="border-border/50 overflow-hidden">
           <div className="divide-y divide-border/30">
-            {prices.map((crypto) => {
+            {featuredPrices.map((crypto) => {
               const isUp = crypto.change24h >= 0;
               return (
                 <div key={crypto.symbol} className="flex items-center justify-between px-4 py-3">

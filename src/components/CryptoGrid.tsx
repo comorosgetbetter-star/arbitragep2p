@@ -2,9 +2,11 @@ import { useCryptoPrices } from '@/hooks/useCryptoPrices';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 import { CryptoGridSkeleton } from '@/components/skeletons/CryptoGridSkeleton';
 import { getCryptoLogo } from '@/lib/cryptoLogos';
+import { featuredCryptoSymbols } from '@/lib/cryptoMarkets';
 
 export const CryptoGrid = () => {
   const { prices, isLoading } = useCryptoPrices();
+  const featuredPrices = prices.filter((crypto) => featuredCryptoSymbols.includes(crypto.symbol));
 
   if (isLoading) {
     return <CryptoGridSkeleton />;
@@ -12,7 +14,7 @@ export const CryptoGrid = () => {
 
   return (
     <div className="grid grid-cols-2 gap-3">
-      {prices.map((crypto) => {
+      {featuredPrices.map((crypto) => {
         const isUp = crypto.change24h >= 0;
         return (
           <div

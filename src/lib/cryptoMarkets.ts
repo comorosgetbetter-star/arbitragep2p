@@ -10,13 +10,29 @@ export interface CryptoMarketDefinition {
   featured?: boolean;
 }
 
+export interface CryptoPriceSnapshot {
+  symbol: string;
+  name: string;
+  price: number;
+  change24h: number;
+  icon: string;
+}
+
+interface BinanceTicker {
+  symbol: string;
+  lastPrice: string;
+  priceChangePercent: string;
+}
+
+const BINANCE_TICKER_ENDPOINT = 'https://data-api.binance.vision/api/v3/ticker/24hr';
+
 export const cryptoMarketDefinitions: CryptoMarketDefinition[] = [
   { symbol: 'BTC', name: 'Bitcoin', icon: '₿', marketSymbol: 'BTCUSDT', fallbackPrice: 69981.45, fallbackChange24h: -1.21, volume: '1.27B', marketCap: '1.39T', featured: true },
   { symbol: 'ETH', name: 'Ethereum', icon: 'Ξ', marketSymbol: 'ETHUSDT', fallbackPrice: 2120.61, fallbackChange24h: -2.08, volume: '606.9M', marketCap: '255B', featured: true },
-  { symbol: 'USDT', name: 'Tether', icon: '₮', fallbackPrice: 1, fallbackChange24h: 0.01, volume: '--', marketCap: '143B' },
+  { symbol: 'USDT', name: 'Tether', icon: '₮', fallbackPrice: 1, fallbackChange24h: 0.01, volume: '--', marketCap: '143B', featured: true },
   { symbol: 'BNB', name: 'BNB', icon: '⬡', marketSymbol: 'BNBUSDT', fallbackPrice: 634.36, fallbackChange24h: -1.54, volume: '71.1M', marketCap: '90.2B', featured: true },
   { symbol: 'SOL', name: 'Solana', icon: '◎', marketSymbol: 'SOLUSDT', fallbackPrice: 89.08, fallbackChange24h: -3.31, volume: '247.9M', marketCap: '45.4B', featured: true },
-  { symbol: 'XRP', name: 'XRP', icon: '✕', marketSymbol: 'XRPUSDT', fallbackPrice: 1.384, fallbackChange24h: -2.52, volume: '132.9M', marketCap: '80.5B' },
+  { symbol: 'XRP', name: 'XRP', icon: '✕', marketSymbol: 'XRPUSDT', fallbackPrice: 1.384, fallbackChange24h: -2.52, volume: '132.9M', marketCap: '80.5B', featured: true },
   { symbol: 'ADA', name: 'Cardano', icon: '₳', marketSymbol: 'ADAUSDT', fallbackPrice: 0.2609, fallbackChange24h: -3.48, volume: '31.6M', marketCap: '9.2B' },
   { symbol: 'DOGE', name: 'Dogecoin', icon: 'Ð', marketSymbol: 'DOGEUSDT', fallbackPrice: 0.09258, fallbackChange24h: -4.7, volume: '66.2M', marketCap: '13.7B' },
   { symbol: 'AVAX', name: 'Avalanche', icon: '🔺', marketSymbol: 'AVAXUSDT', fallbackPrice: 9.43, fallbackChange24h: -1.98, volume: '16.4M', marketCap: '3.9B' },
@@ -33,3 +49,52 @@ export const cryptoMarketDefinitions: CryptoMarketDefinition[] = [
   { symbol: 'NEAR', name: 'NEAR Protocol', icon: 'Ⓝ', marketSymbol: 'NEARUSDT', fallbackPrice: 1.234, fallbackChange24h: -3.59, volume: '16.6M', marketCap: '1.5B' },
   { symbol: 'SUI', name: 'Sui', icon: '💧', marketSymbol: 'SUIUSDT', fallbackPrice: 0.9398, fallbackChange24h: -2.29, volume: '22.7M', marketCap: '3.0B' },
 ];
+
+export const featuredCryptoSymbols = cryptoMarketDefinitions
+  .filter((definition) => definition.featured)
+  .map((definition) => definition.symbol);
+
+export const buildFallbackPrices = (
+  definitions: CryptoMarketDefinition[] = cryptoMarketDefinitions
+): CryptoPriceSnapshot[] =>
+  definitions.map((definition) => ({
+    symbol: definition.symbol,
+    name: definition.name,
+    price: definition.fallbackPrice,
+    change24h: definition.fallbackChange24h,
+    icon: definition.icon,
+  }));
+
+export const fetchCryptoPriceSnapshots = async (
+  definitions: CryptoMarketDefinition[] = cryptoMarketDefinitions
+): Promise<CryptoPriceSnapshot[]> => {
+  const trackedDefinitions = definitions.filter((definition) => definition.marketSymbol);
+
+  if (trackedDefinitions.length === 0) {
+    return buildFallbackPrices(definitions);
+  }
+
+  const symbols = trackedDefinitions.map((definition) => definition.marketSymbol);
+  const response = await fetch(
+    `${BINANCE_TICKER_ENDPOINT}?symbols=${encodeURIComponent(JSON.stringify(symbols))}`
+  );
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch crypto prices: ${response.status}`);
+  }
+
+  const tickers = (await response.json()) as BinanceTicker[];
+  const tickerMap = new Map(tickers.map((ticker) => [ticker.symbol, ticker]));
+
+  return definitions.map((definition) => {
+    const ticker = definition.marketSymbol ? tickerMap.get(definition.marketSymbol) : null;
+
+    return {
+      symbol: definition.symbol,
+      name: definition.name,
+      price: ticker ? Number.parseFloat(ticker.lastPrice) : definition.fallbackPrice,
+      change24h: ticker ? Number.parseFloat(ticker.priceChangePercent) : definition.fallbackChange24h,
+      icon: definition.icon,
+    };
+  });
+};
