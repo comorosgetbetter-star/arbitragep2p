@@ -61,6 +61,8 @@ export const P2POrders = () => {
   const [buyAmount, setBuyAmount] = useState('');
   const [showConflictModal, setShowConflictModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [errorOrderId, setErrorOrderId] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState('');
   const [pendingOrder, setPendingOrder] = useState<{ order: P2POrder; amount: number; usdt: number } | null>(null);
   const [existingSession, setExistingSession] = useState<TradeSession | null>(null);
   const { user, loading: authLoading } = useAuth();
