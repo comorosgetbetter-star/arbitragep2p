@@ -9,12 +9,12 @@ export interface CryptoPrice {
 }
 
 const initialPrices: CryptoPrice[] = [
-  { symbol: 'BTC', name: 'Bitcoin', price: 67234.52, change24h: 2.34, icon: '₿' },
-  { symbol: 'ETH', name: 'Ethereum', price: 3521.87, change24h: -0.45, icon: 'Ξ' },
+  { symbol: 'BTC', name: 'Bitcoin', price: 87420.15, change24h: 1.82, icon: '₿' },
+  { symbol: 'ETH', name: 'Ethereum', price: 2048.63, change24h: -0.73, icon: 'Ξ' },
   { symbol: 'USDT', name: 'Tether', price: 1.00, change24h: 0.01, icon: '₮' },
-  { symbol: 'BNB', name: 'BNB', price: 612.45, change24h: 1.23, icon: '⬡' },
-  { symbol: 'SOL', name: 'Solana', price: 178.92, change24h: 5.67, icon: '◎' },
-  { symbol: 'XRP', name: 'XRP', price: 0.6234, change24h: -1.89, icon: '✕' },
+  { symbol: 'BNB', name: 'BNB', price: 632.18, change24h: 0.95, icon: '⬡' },
+  { symbol: 'SOL', name: 'Solana', price: 139.47, change24h: 3.21, icon: '◎' },
+  { symbol: 'XRP', name: 'XRP', price: 2.31, change24h: -1.15, icon: '✕' },
 ];
 
 export const useCryptoPrices = () => {
