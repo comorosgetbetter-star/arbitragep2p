@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
-import { Copy, Check, Loader2, Wallet, AlertTriangle } from 'lucide-react';
+import { Copy, Check, Loader2, Wallet, AlertTriangle, ChevronLeft } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { DepositSkeleton } from '@/components/skeletons/DepositSkeleton';
+import { CRYPTO_LOGOS } from '@/lib/cryptoLogos';
 
 interface CryptoOption {
   symbol: string;
@@ -13,15 +15,6 @@ interface CryptoOption {
   deposit_address: string;
   network: string;
 }
-
-const CRYPTO_LOGOS: Record<string, string> = {
-  USDT: 'https://assets.coingecko.com/coins/images/325/small/Tether.png',
-  BTC: 'https://assets.coingecko.com/coins/images/1/small/bitcoin.png',
-  ETH: 'https://assets.coingecko.com/coins/images/279/small/ethereum.png',
-  BNB: 'https://assets.coingecko.com/coins/images/825/small/bnb-icon2_2x.png',
-  SOL: 'https://assets.coingecko.com/coins/images/4128/small/solana.png',
-  XRP: 'https://assets.coingecko.com/coins/images/44/small/xrp-symbol-white-128.png',
-};
 
 const NETWORK_META: Record<string, { name: string; chain: string; fee: string; time: string }> = {
   trc20: { name: 'TRC20', chain: 'Tron Network', fee: '~1 USDT', time: '~3 min' },
@@ -36,7 +29,7 @@ export const DepositCrypto = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [cryptoOptions, setCryptoOptions] = useState<CryptoOption[]>([]);
-  const [selectedCrypto, setSelectedCrypto] = useState<string>('USDT');
+  const [selectedCrypto, setSelectedCrypto] = useState<CryptoOption | null>(null);
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -47,26 +40,21 @@ export const DepositCrypto = () => {
         setLoading(false);
         return;
       }
-
       setLoading(true);
       const { data } = await supabase
         .from('deposit_crypto_settings')
-        .select('symbol, name, deposit_address, network, is_enabled')
+        .select('symbol, name, deposit_address, network')
         .eq('is_enabled', true)
         .order('created_at');
-
-      if (data) {
-        setCryptoOptions(data as CryptoOption[]);
-      }
+      if (data) setCryptoOptions(data as CryptoOption[]);
       setLoading(false);
     };
-
     fetchCryptos();
   }, [user]);
 
-  const currentCrypto = cryptoOptions.find(c => c.symbol === selectedCrypto);
-  const address = currentCrypto?.deposit_address || '';
-  const network = currentCrypto?.network || '';
+  const address = selectedCrypto?.deposit_address || '';
+  const network = selectedCrypto?.network || '';
+  const meta = NETWORK_META[network] || { name: network.toUpperCase(), chain: network, fee: 'Variable', time: '~5 min' };
 
   const handleCopy = () => {
     if (address) {
@@ -76,9 +64,7 @@ export const DepositCrypto = () => {
     }
   };
 
-  if (authLoading) {
-    return <DepositSkeleton />;
-  }
+  if (authLoading || loading) return <DepositSkeleton />;
 
   if (!user) {
     return (
@@ -93,63 +79,72 @@ export const DepositCrypto = () => {
     );
   }
 
-  if (loading) {
-    return <DepositSkeleton />;
+  /* Step 1: Crypto selection list */
+  if (!selectedCrypto) {
+    if (cryptoOptions.length === 0) {
+      return (
+        <div className="text-center py-8">
+          <p className="text-sm text-muted-foreground">No deposit options available. Please contact support.</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-4">
+        <div className="text-center">
+          <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-3">
+            <Wallet className="h-7 w-7 text-primary" />
+          </div>
+          <p className="font-display font-semibold">Deposit Crypto</p>
+          <p className="text-sm text-muted-foreground">Select a cryptocurrency to deposit</p>
+        </div>
+
+        <div className="space-y-2">
+          {cryptoOptions.map((crypto) => (
+            <button
+              key={crypto.symbol}
+              onClick={() => { setSelectedCrypto(crypto); setCopied(false); }}
+              className="w-full flex items-center gap-3 p-3.5 rounded-xl border border-border/50 bg-card hover:border-primary/40 hover:bg-primary/5 transition-all text-left"
+            >
+              <img
+                src={CRYPTO_LOGOS[crypto.symbol] || ''}
+                alt={crypto.symbol}
+                className="w-10 h-10 rounded-full bg-muted"
+              />
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-foreground">{crypto.symbol}</p>
+                <p className="text-xs text-muted-foreground truncate">{crypto.name}</p>
+              </div>
+              <ChevronLeft className="h-4 w-4 text-muted-foreground rotate-180" />
+            </button>
+          ))}
+        </div>
+      </div>
+    );
   }
 
-  const meta = NETWORK_META[network] || {
-    name: network.toUpperCase(),
-    chain: network,
-    fee: 'Variable',
-    time: '~5 min',
-  };
-
+  /* Step 2: Address + QR code */
   return (
     <div className="space-y-4">
-      {/* Crypto Selector */}
-      {cryptoOptions.length > 1 && (
-        <div className="space-y-2">
-          <p className="text-xs text-muted-foreground font-medium">Select Cryptocurrency</p>
-          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-            {cryptoOptions.map((crypto) => (
-              <button
-                key={crypto.symbol}
-                onClick={() => {
-                  setSelectedCrypto(crypto.symbol);
-                  setCopied(false);
-                }}
-                className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition-all shrink-0 ${
-                  selectedCrypto === crypto.symbol
-                    ? 'border-primary bg-primary/10 shadow-sm'
-                    : 'border-border/50 bg-card hover:border-primary/30'
-                }`}
-              >
-                <img
-                  src={CRYPTO_LOGOS[crypto.symbol]}
-                  alt={crypto.symbol}
-                  className="w-6 h-6 rounded-full"
-                />
-                <span className={`text-sm font-medium ${
-                  selectedCrypto === crypto.symbol ? 'text-primary' : 'text-foreground'
-                }`}>
-                  {crypto.symbol}
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
+      {/* Back button */}
+      <button
+        onClick={() => { setSelectedCrypto(null); setCopied(false); }}
+        className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+      >
+        <ChevronLeft className="h-4 w-4" />
+        Back to list
+      </button>
 
       {/* Header */}
       <div className="text-center">
         <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-3">
           <img
-            src={CRYPTO_LOGOS[selectedCrypto]}
-            alt={selectedCrypto}
+            src={CRYPTO_LOGOS[selectedCrypto.symbol] || ''}
+            alt={selectedCrypto.symbol}
             className="w-8 h-8 rounded-full"
           />
         </div>
-        <p className="font-display font-semibold">Deposit {selectedCrypto}</p>
+        <p className="font-display font-semibold">Deposit {selectedCrypto.symbol}</p>
         <p className="text-sm text-muted-foreground">{meta.chain}</p>
       </div>
 
@@ -160,19 +155,37 @@ export const DepositCrypto = () => {
         </Badge>
       </div>
 
-      {/* Address card */}
+      {/* QR Code */}
       {address ? (
-        <div className="rounded-xl bg-card border border-border p-4">
-          <p className="text-xs text-muted-foreground mb-2">Deposit Address</p>
-          <div className="flex items-center gap-2">
-            <code className="flex-1 text-sm font-mono text-foreground break-all leading-relaxed">
-              {address}
-            </code>
-            <Button variant="ghost" size="icon" onClick={handleCopy} className="shrink-0">
-              {copied ? <Check className="h-4 w-4 text-success" /> : <Copy className="h-4 w-4" />}
-            </Button>
+        <>
+          <div className="flex justify-center">
+            <div className="bg-white p-3 rounded-xl shadow-sm">
+              <QRCodeSVG
+                value={address}
+                size={180}
+                level="H"
+                includeMargin={false}
+              />
+            </div>
           </div>
-        </div>
+
+          <p className="text-xs text-center text-muted-foreground">
+            Scan QR code or copy address below
+          </p>
+
+          {/* Address card */}
+          <div className="rounded-xl bg-card border border-border p-4">
+            <p className="text-xs text-muted-foreground mb-2">Deposit Address</p>
+            <div className="flex items-center gap-2">
+              <code className="flex-1 text-sm font-mono text-foreground break-all leading-relaxed">
+                {address}
+              </code>
+              <Button variant="ghost" size="icon" onClick={handleCopy} className="shrink-0">
+                {copied ? <Check className="h-4 w-4 text-success" /> : <Copy className="h-4 w-4" />}
+              </Button>
+            </div>
+          </div>
+        </>
       ) : (
         <div className="text-center py-6">
           <p className="text-sm text-muted-foreground">No deposit address available. Please contact support.</p>
@@ -187,7 +200,7 @@ export const DepositCrypto = () => {
         </div>
         <div className="flex justify-between">
           <span className="text-muted-foreground">Minimum Deposit</span>
-          <span className="font-medium">{selectedCrypto === 'USDT' ? '1 USDT' : `0.0001 ${selectedCrypto}`}</span>
+          <span className="font-medium">{selectedCrypto.symbol === 'USDT' ? '1 USDT' : `0.0001 ${selectedCrypto.symbol}`}</span>
         </div>
         <div className="flex justify-between">
           <span className="text-muted-foreground">Network Fee</span>
@@ -203,7 +216,7 @@ export const DepositCrypto = () => {
       <div className="rounded-xl bg-warning/10 border border-warning/20 p-3 flex items-start gap-2.5">
         <AlertTriangle className="h-4 w-4 text-warning shrink-0 mt-0.5" />
         <p className="text-xs text-warning leading-relaxed">
-          Only send {selectedCrypto} on the {meta.chain}. Sending other tokens or using a different network may result in permanent loss of funds.
+          Only send {selectedCrypto.symbol} on the {meta.chain}. Sending other tokens or using a different network may result in permanent loss of funds.
         </p>
       </div>
     </div>
