@@ -21,8 +21,9 @@ import type { TradeSession } from '@/hooks/useTradeSession';
 import { P2POrdersSkeleton } from '@/components/skeletons/P2POrdersSkeleton';
 
 // Dynamic pricing: each order has its own price_rate (percentage markup/discount)
+// +rate = seller profit (buyer receives less), -rate = buyer bonus (buyer receives more)
 const getUsdtAmount = (usd: number, priceRate: number): number => {
-  const multiplier = 1 + (priceRate / 100);
+  const multiplier = 1 - (priceRate / 100);
   return Math.round(usd * multiplier * 100) / 100;
 };
 
