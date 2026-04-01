@@ -191,11 +191,17 @@ export const P2POrders = () => {
           </div>
 
           {/* Order Details */}
-          <div className="grid grid-cols-3 gap-3 mb-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
             <div>
               <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Amount Range</p>
               <p className="font-display font-bold text-sm whitespace-nowrap">
                 ${order.min_amount.toLocaleString()} – ${order.max_amount.toLocaleString()}
+              </p>
+            </div>
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Rate</p>
+              <p className={`font-display font-bold text-sm ${order.price_rate >= 0 ? 'text-success' : 'text-destructive'}`}>
+                {order.price_rate >= 0 ? '+' : ''}{order.price_rate}%
               </p>
             </div>
             <div>
