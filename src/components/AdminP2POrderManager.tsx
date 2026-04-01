@@ -83,6 +83,7 @@ export const AdminP2POrderManager = () => {
       trades_count: String(order.trades_count),
       avg_trading_time: order.avg_trading_time,
       likes_count: String(order.likes_count),
+      price_rate: String(order.price_rate),
     });
     setIsDialogOpen(true);
   };
