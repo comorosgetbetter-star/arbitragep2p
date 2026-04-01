@@ -282,9 +282,16 @@ export const AdminP2POrderManager = () => {
               <Label className="text-xs">Payment Address (USDT) *</Label>
               <Input placeholder="TRC20/ERC20 address" value={form.payment_address} onChange={e => setField('payment_address', e.target.value)} className="h-9 text-sm" />
             </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Payment Window (minutes)</Label>
-              <Input type="number" placeholder="10" value={form.payment_window_minutes} onChange={e => setField('payment_window_minutes', e.target.value)} className="h-9 text-sm" />
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Payment Window (min)</Label>
+                <Input type="number" placeholder="10" value={form.payment_window_minutes} onChange={e => setField('payment_window_minutes', e.target.value)} className="h-9 text-sm" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Price Rate (%)</Label>
+                <Input type="number" step="0.1" placeholder="10" value={form.price_rate} onChange={e => setField('price_rate', e.target.value)} className="h-9 text-sm" />
+                <p className="text-[10px] text-muted-foreground">e.g. 10 = +10%, -5 = -5%</p>
+              </div>
             </div>
 
             {/* Authenticity Stats */}
