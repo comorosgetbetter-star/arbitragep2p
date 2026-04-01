@@ -80,7 +80,7 @@ export const P2POrders = () => {
     setErrorOrderId(null);
     setErrorMessage('');
 
-    const usdt = getUsdtAmount(amount);
+    const usdt = getUsdtAmount(amount, order.price_rate);
 
     if (authLoading) return;
     if (!user) {
