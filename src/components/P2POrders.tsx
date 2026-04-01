@@ -40,6 +40,7 @@ interface P2POrder {
   likes_count: number;
   is_active: boolean;
   created_at: string;
+  price_rate: number;
 }
 
 export const P2POrders = () => {
