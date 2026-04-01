@@ -223,9 +223,9 @@ export const AdminP2POrderManager = () => {
                   <span className="text-muted-foreground">Range:</span>
                   <p className="font-medium">${order.min_amount}–${order.max_amount}</p>
                 </div>
-                <div>
-                  <span className="text-muted-foreground">Window:</span>
-                  <p className="font-medium">{order.payment_window_minutes} min</p>
+              <div>
+                  <span className="text-muted-foreground">Rate:</span>
+                  <p className={`font-medium ${order.price_rate >= 0 ? 'text-success' : 'text-destructive'}`}>{order.price_rate >= 0 ? '+' : ''}{order.price_rate}%</p>
                 </div>
                 <div>
                   <span className="text-muted-foreground">Address:</span>
