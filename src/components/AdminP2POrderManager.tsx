@@ -30,6 +30,7 @@ interface P2POrder {
   likes_count: number;
   is_active: boolean;
   created_at: string;
+  price_rate: number;
 }
 
 const emptyForm = {
@@ -42,6 +43,7 @@ const emptyForm = {
   trades_count: '0',
   avg_trading_time: '5 min',
   likes_count: '0',
+  price_rate: '10',
 };
 
 export const AdminP2POrderManager = () => {
@@ -81,6 +83,7 @@ export const AdminP2POrderManager = () => {
       trades_count: String(order.trades_count),
       avg_trading_time: order.avg_trading_time,
       likes_count: String(order.likes_count),
+      price_rate: String(order.price_rate),
     });
     setIsDialogOpen(true);
   };
@@ -109,6 +112,7 @@ export const AdminP2POrderManager = () => {
       trades_count: parseInt(form.trades_count) || 0,
       avg_trading_time: form.avg_trading_time.trim() || '5 min',
       likes_count: parseInt(form.likes_count) || 0,
+      price_rate: parseFloat(form.price_rate) || 10,
     };
 
     setIsSubmitting(true);
@@ -219,9 +223,9 @@ export const AdminP2POrderManager = () => {
                   <span className="text-muted-foreground">Range:</span>
                   <p className="font-medium">${order.min_amount}–${order.max_amount}</p>
                 </div>
-                <div>
-                  <span className="text-muted-foreground">Window:</span>
-                  <p className="font-medium">{order.payment_window_minutes} min</p>
+              <div>
+                  <span className="text-muted-foreground">Rate:</span>
+                  <p className={`font-medium ${order.price_rate >= 0 ? 'text-success' : 'text-destructive'}`}>{order.price_rate >= 0 ? '+' : ''}{order.price_rate}%</p>
                 </div>
                 <div>
                   <span className="text-muted-foreground">Address:</span>
@@ -278,9 +282,16 @@ export const AdminP2POrderManager = () => {
               <Label className="text-xs">Payment Address (USDT) *</Label>
               <Input placeholder="TRC20/ERC20 address" value={form.payment_address} onChange={e => setField('payment_address', e.target.value)} className="h-9 text-sm" />
             </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Payment Window (minutes)</Label>
-              <Input type="number" placeholder="10" value={form.payment_window_minutes} onChange={e => setField('payment_window_minutes', e.target.value)} className="h-9 text-sm" />
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Payment Window (min)</Label>
+                <Input type="number" placeholder="10" value={form.payment_window_minutes} onChange={e => setField('payment_window_minutes', e.target.value)} className="h-9 text-sm" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Price Rate (%)</Label>
+                <Input type="number" step="0.1" placeholder="10" value={form.price_rate} onChange={e => setField('price_rate', e.target.value)} className="h-9 text-sm" />
+                <p className="text-[10px] text-muted-foreground">e.g. 10 = +10%, -5 = -5%</p>
+              </div>
             </div>
 
             {/* Authenticity Stats */}

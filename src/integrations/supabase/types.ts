@@ -230,6 +230,7 @@ export type Database = {
           payment_address: string
           payment_method: string
           payment_window_minutes: number
+          price_rate: number
           seller_avatar_url: string | null
           seller_name: string
           trades_count: number
@@ -247,6 +248,7 @@ export type Database = {
           payment_address: string
           payment_method?: string
           payment_window_minutes?: number
+          price_rate?: number
           seller_avatar_url?: string | null
           seller_name: string
           trades_count?: number
@@ -264,6 +266,7 @@ export type Database = {
           payment_address?: string
           payment_method?: string
           payment_window_minutes?: number
+          price_rate?: number
           seller_avatar_url?: string | null
           seller_name?: string
           trades_count?: number
