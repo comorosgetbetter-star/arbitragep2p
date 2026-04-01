@@ -20,22 +20,10 @@ import { Clock, ShieldCheck, ThumbsUp, BarChart3, Timer, Lock } from 'lucide-rea
 import type { TradeSession } from '@/hooks/useTradeSession';
 import { P2POrdersSkeleton } from '@/components/skeletons/P2POrdersSkeleton';
 
-// Same tiered rate table as Express P2P
-const rateTiers = [
-  { min: 0, max: 50, rate: 1.20 },
-  { min: 50, max: 100, rate: 1.20 },
-  { min: 100, max: 150, rate: 1.21 },
-  { min: 150, max: 500, rate: 1.2133 },
-  { min: 500, max: 1000, rate: 1.218 },
-  { min: 1000, max: 5000, rate: 1.219 },
-  { min: 5000, max: 7000, rate: 1.2194 },
-  { min: 7000, max: 10000, rate: 1.22 },
-  { min: 10000, max: Infinity, rate: 1.22 },
-];
-
-const getUsdtAmount = (usd: number): number => {
-  const tier = rateTiers.find(t => usd >= t.min && usd <= t.max) || rateTiers[rateTiers.length - 1];
-  return Math.round(usd * tier.rate);
+// Dynamic pricing: each order has its own price_rate (percentage markup/discount)
+const getUsdtAmount = (usd: number, priceRate: number): number => {
+  const multiplier = 1 + (priceRate / 100);
+  return Math.round(usd * multiplier * 100) / 100;
 };
 
 interface P2POrder {
