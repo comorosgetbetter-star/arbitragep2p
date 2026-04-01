@@ -199,12 +199,6 @@ export const P2POrders = () => {
               </p>
             </div>
             <div>
-              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Rate</p>
-              <p className={`font-display font-bold text-sm ${order.price_rate >= 0 ? 'text-success' : 'text-destructive'}`}>
-                {order.price_rate >= 0 ? '+' : ''}{order.price_rate}%
-              </p>
-            </div>
-            <div>
               <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Payment</p>
               <p className="font-display font-bold text-sm text-primary">{order.payment_method}</p>
             </div>
