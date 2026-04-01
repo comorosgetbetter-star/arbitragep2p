@@ -1,0 +1,1 @@
+ALTER TABLE public.p2p_orders ADD COLUMN price_rate numeric NOT NULL DEFAULT 10;
