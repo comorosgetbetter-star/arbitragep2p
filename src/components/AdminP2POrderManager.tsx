@@ -42,6 +42,7 @@ const emptyForm = {
   trades_count: '0',
   avg_trading_time: '5 min',
   likes_count: '0',
+  price_rate: '10',
 };
 
 export const AdminP2POrderManager = () => {
