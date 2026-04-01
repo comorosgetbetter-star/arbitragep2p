@@ -112,6 +112,7 @@ export const AdminP2POrderManager = () => {
       trades_count: parseInt(form.trades_count) || 0,
       avg_trading_time: form.avg_trading_time.trim() || '5 min',
       likes_count: parseInt(form.likes_count) || 0,
+      price_rate: parseFloat(form.price_rate) || 10,
     };
 
     setIsSubmitting(true);
