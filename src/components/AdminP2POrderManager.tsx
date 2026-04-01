@@ -44,6 +44,7 @@ const emptyForm = {
   avg_trading_time: '5 min',
   likes_count: '0',
   price_rate: '10',
+  price_rate_type: 'markup' as 'markup' | 'discount',
 };
 
 export const AdminP2POrderManager = () => {
