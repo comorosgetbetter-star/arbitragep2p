@@ -291,8 +291,28 @@ export const AdminP2POrderManager = () => {
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">Price Rate (%)</Label>
-                <Input type="number" step="0.1" placeholder="10" value={form.price_rate} onChange={e => setField('price_rate', e.target.value)} className="h-9 text-sm" />
-                <p className="text-[10px] text-muted-foreground">e.g. 10 = +10%, -5 = -5%</p>
+                <div className="flex gap-1.5">
+                  <div className="flex rounded-md border border-border overflow-hidden shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setField('price_rate_type', 'markup')}
+                      className={`px-2.5 py-1.5 text-xs font-medium transition-colors ${form.price_rate_type === 'markup' ? 'bg-success/20 text-success' : 'bg-muted text-muted-foreground'}`}
+                    >
+                      +%
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setField('price_rate_type', 'discount')}
+                      className={`px-2.5 py-1.5 text-xs font-medium transition-colors ${form.price_rate_type === 'discount' ? 'bg-destructive/20 text-destructive' : 'bg-muted text-muted-foreground'}`}
+                    >
+                      -%
+                    </button>
+                  </div>
+                  <Input type="number" inputMode="decimal" min="0" step="0.1" placeholder="10" value={form.price_rate} onChange={e => setField('price_rate', e.target.value)} className="h-9 text-sm" />
+                </div>
+                <p className="text-[10px] text-muted-foreground">
+                  {form.price_rate_type === 'markup' ? 'Markup' : 'Discount'}: {form.price_rate || '0'}%
+                </p>
               </div>
             </div>
 
