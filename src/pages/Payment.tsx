@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
 import { CircularLoader } from '@/components/CircularLoader';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { useTradeSession } from '@/hooks/useTradeSession';
 import { PAYMENT_STATE_PREFIX, TRADE_SESSION_KEY } from '@/lib/tradeSessionStorage';
 
@@ -123,6 +124,7 @@ const isP2POrder = (): boolean => {
 
 const Payment = () => {
   const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
   const [packageData, setPackageData] = useState<PackageData | null>(null);
   const [isP2P, setIsP2P] = useState(false);
   const { session: tradeSession, clearSession, getRemainingTime } = useTradeSession();
@@ -173,10 +175,14 @@ const Payment = () => {
   const [cardPaymentFailed, setCardPaymentFailed] = useState(false);
 
   useEffect(() => {
-    // Check if user is logged in via Supabase auth
     const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
+      if (authLoading) {
+        return;
+      }
+
+      if (!user) {
+        clearSession();
+        localStorage.removeItem('p2pOrderPayment');
         navigate('/login');
         return;
       }
@@ -239,10 +245,8 @@ const Payment = () => {
       }
     };
     
-    // Only run on mount, not on every state change
-    checkAuth();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [navigate]);
+    void checkAuth();
+  }, [authLoading, user, navigate, clearSession, getRemainingTime]);
 
   // Persist payment step state (so Resume restores the exact view and address)
   useEffect(() => {
