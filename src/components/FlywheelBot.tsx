@@ -123,8 +123,9 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
   const remainingSeconds = Math.floor((remainingMs % (1000 * 60)) / 1000);
 
   const tradeNet = trades.reduce((sum, t) => sum + (t.isWin ? t.amount : -t.amount), 0);
-  const accruedProfit = tradeNet;
-  const totalReturnToBalance = session.staked_amount + tradeNet;
+  // Use the DB-matching accrued profit for display so the user sees what they'll actually receive
+  const accruedProfit = calculateSessionAccruedProfit(session, now);
+  const totalReturnToBalance = session.staked_amount + accruedProfit;
   const winsCount = trades.filter((trade) => trade.isWin).length;
   const lossesCount = trades.length - winsCount;
 
