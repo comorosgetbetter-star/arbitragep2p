@@ -12,68 +12,119 @@ const AuthContext = createContext<AuthContextType>({ user: null, loading: true, 
 
 export const useAuth = () => useContext(AuthContext);
 
+const clearLocalAuthState = () => {
+  const keys = Object.keys(localStorage);
+  keys.forEach((key) => {
+    if (key.startsWith('sb-')) {
+      localStorage.removeItem(key);
+    }
+  });
+};
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const initialSessionHandled = useRef(false);
+  const validationInFlight = useRef<Promise<void> | null>(null);
 
   useEffect(() => {
     let isMounted = true;
 
-    // Set up auth state listener FIRST — this is the single source of truth.
-    // The INITIAL_SESSION event fires synchronously with the persisted session.
+    const finishLoading = () => {
+      if (!isMounted) return;
+      initialSessionHandled.current = true;
+      setLoading(false);
+    };
+
+    const applyUser = (nextUser: User | null) => {
+      if (!isMounted) return;
+      setUser(nextUser);
+    };
+
+    const validateSession = (blockUi = false) => {
+      if (validationInFlight.current) return validationInFlight.current;
+
+      const validationTask = (async () => {
+        if (blockUi && isMounted) {
+          setLoading(true);
+        }
+
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+
+          if (!isMounted) return;
+
+          if (!session) {
+            applyUser(null);
+            return;
+          }
+
+          const { data, error } = await supabase.auth.getUser();
+
+          if (!isMounted) return;
+
+          if (error || !data.user) {
+            console.warn('[Auth] Session validation failed, clearing local auth state');
+            clearLocalAuthState();
+            applyUser(null);
+            return;
+          }
+
+          applyUser(data.user);
+        } catch (e) {
+          console.error('[Auth] Session validation error:', e);
+          clearLocalAuthState();
+          applyUser(null);
+        } finally {
+          validationInFlight.current = null;
+          finishLoading();
+        }
+      })();
+
+      validationInFlight.current = validationTask;
+      return validationTask;
+    };
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!isMounted) return;
       console.log('[Auth] event:', event, 'authenticated:', !!session?.user);
-      setUser(session?.user ?? null);
 
-      if (!initialSessionHandled.current) {
-        initialSessionHandled.current = true;
-        setLoading(false);
+      if (event === 'SIGNED_OUT') {
+        applyUser(null);
+        finishLoading();
+        return;
       }
+
+      applyUser(session?.user ?? null);
     });
 
-    // Fallback: if onAuthStateChange doesn't fire within 1.5s (e.g. cold start edge case),
-    // manually check the session so the app never stays stuck in loading.
-    const fallbackTimer = setTimeout(async () => {
-      if (!initialSessionHandled.current && isMounted) {
-        console.log('[Auth] Fallback: checking session manually');
-        try {
-          const { data: { session } } = await supabase.auth.getSession();
-          if (isMounted) {
-            setUser(session?.user ?? null);
-          }
-        } catch (e) {
-          console.error('[Auth] getSession error:', e);
-        }
-        if (isMounted && !initialSessionHandled.current) {
-          initialSessionHandled.current = true;
-          setLoading(false);
-        }
+    const handleAppResume = () => {
+      if (document.visibilityState === 'hidden') {
+        return;
       }
-    }, 1500);
+
+      void validateSession(true);
+    };
+
+    void validateSession();
+    window.addEventListener('focus', handleAppResume);
+    document.addEventListener('visibilitychange', handleAppResume);
 
     return () => {
       isMounted = false;
       subscription.unsubscribe();
-      clearTimeout(fallbackTimer);
+      window.removeEventListener('focus', handleAppResume);
+      document.removeEventListener('visibilitychange', handleAppResume);
     };
   }, []);
 
   const signOut = async () => {
     try {
-      // Use scope: 'local' to ensure sign out works even if network fails
       await supabase.auth.signOut({ scope: 'local' });
     } catch (e) {
       console.error('[Auth] signOut error, forcing local cleanup:', e);
-      // Force clear local storage auth keys as fallback
-      const keys = Object.keys(localStorage);
-      keys.forEach((key) => {
-        if (key.startsWith('sb-')) {
-          localStorage.removeItem(key);
-        }
-      });
     }
+    clearLocalAuthState();
     setUser(null);
   };
 

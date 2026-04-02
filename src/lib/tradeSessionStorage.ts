@@ -17,6 +17,7 @@ export const clearTradeStorage = () => {
   try {
     localStorage.removeItem(TRADE_SESSION_KEY);
     localStorage.removeItem(SELECTED_PACKAGE_KEY);
+    localStorage.removeItem('p2pOrderPayment');
 
     // Remove per-session payment state snapshots.
     for (let i = localStorage.length - 1; i >= 0; i--) {

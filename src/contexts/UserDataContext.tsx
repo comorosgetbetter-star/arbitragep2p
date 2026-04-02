@@ -51,7 +51,7 @@ const UserDataContext = createContext<UserDataContextType>({
 export const useUserData = () => useContext(UserDataContext);
 
 export const UserDataProvider = ({ children }: { children: ReactNode }) => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [balance, setBalance] = useState(0);
   const [cryptoBalances, setCryptoBalances] = useState<CryptoBalance[]>([]);
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
@@ -62,6 +62,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
 
   // Request deduplication: track in-flight promises
   const inflightRef = useRef<Record<string, Promise<void>>>({});
+  const activeUserIdRef = useRef<string | null>(null);
 
   // Deduplicating wrapper: if a fetch for the same key is already in flight, reuse it
   const deduped = useCallback((key: string, fn: () => Promise<void>) => {
@@ -72,56 +73,72 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const fetchBalance = useCallback(async () => {
-    if (!user) return;
+    if (!user || authLoading) return;
+    const currentUserId = user.id;
     return deduped('balance', async () => {
       const { data } = await supabase
         .from('user_balances')
         .select('usdt_balance')
-        .eq('user_id', user.id)
+        .eq('user_id', currentUserId)
         .single();
+      if (activeUserIdRef.current !== currentUserId) return;
       if (data) setBalance(Number(data.usdt_balance));
     });
-  }, [user, deduped]);
+  }, [user, authLoading, deduped]);
 
   const fetchCryptoBalances = useCallback(async () => {
-    if (!user) return;
+    if (!user || authLoading) return;
+    const currentUserId = user.id;
     return deduped('crypto', async () => {
       const { data } = await supabase
         .from('user_crypto_balances')
         .select('symbol, amount')
-        .eq('user_id', user.id);
+        .eq('user_id', currentUserId);
+      if (activeUserIdRef.current !== currentUserId) return;
       if (data) setCryptoBalances(data.map(d => ({ symbol: d.symbol, amount: Number(d.amount) })));
     });
-  }, [user, deduped]);
+  }, [user, authLoading, deduped]);
 
   const fetchWithdrawals = useCallback(async () => {
-    if (!user) return;
+    if (!user || authLoading) return;
+    const currentUserId = user.id;
     return deduped('withdrawals', async () => {
       const { data } = await supabase
         .from('withdrawals')
         .select('id, amount, status, created_at, network')
-        .eq('user_id', user.id)
+        .eq('user_id', currentUserId)
         .order('created_at', { ascending: false })
         .limit(10);
+      if (activeUserIdRef.current !== currentUserId) return;
       if (data) setWithdrawals(data);
     });
-  }, [user, deduped]);
+  }, [user, authLoading, deduped]);
 
   const fetchDeposits = useCallback(async () => {
-    if (!user) return;
+    if (!user || authLoading) return;
+    const currentUserId = user.id;
     return deduped('deposits', async () => {
       const { data } = await supabase
         .from('deposits')
         .select('id, amount, reason, created_at')
-        .eq('user_id', user.id)
+        .eq('user_id', currentUserId)
         .order('created_at', { ascending: false })
         .limit(10);
+      if (activeUserIdRef.current !== currentUserId) return;
       if (data) setDeposits(data);
     });
-  }, [user, deduped]);
+  }, [user, authLoading, deduped]);
 
   useEffect(() => {
+    if (authLoading) {
+      activeUserIdRef.current = null;
+      setIsLoading(true);
+      return;
+    }
+
     if (!user) {
+      activeUserIdRef.current = null;
+      inflightRef.current = {};
       setBalance(0);
       setCryptoBalances([]);
       setWithdrawals([]);
@@ -130,6 +147,8 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
       setLoadedForUser(null);
       return;
     }
+
+    activeUserIdRef.current = user.id;
 
     // Mark loading immediately for this user
     setIsLoading(true);
@@ -195,7 +214,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
       supabase.removeChannel(withdrawalChannel);
       supabase.removeChannel(depositChannel);
     };
-  }, [user, fetchBalance, fetchCryptoBalances, fetchWithdrawals, fetchDeposits]);
+  }, [user, authLoading, fetchBalance, fetchCryptoBalances, fetchWithdrawals, fetchDeposits]);
 
   return (
     <UserDataContext.Provider value={{
