@@ -20,22 +20,12 @@ export const AccountDropdown = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [isAdmin, setIsAdmin] = useState(false);
 
-  if (authLoading) {
-    return (
-      <Button
-        variant="ghost"
-        size="sm"
-        disabled
-        className="flex items-center gap-2 opacity-70"
-      >
-        <Loader2 className="h-4 w-4 animate-spin" />
-        <span className="hidden sm:inline">Checking session</span>
-      </Button>
-    );
-  }
-
   // Check if user is admin — if so, don't show profile on frontend
   useEffect(() => {
+    if (authLoading) {
+      return;
+    }
+
     if (!user) {
       setIsAdmin(false);
       return;
@@ -67,9 +57,13 @@ export const AccountDropdown = () => {
     return () => {
       cancelled = true;
     };
-  }, [user]);
+  }, [user, authLoading]);
 
   useEffect(() => {
+    if (authLoading) {
+      return;
+    }
+
     if (!user) {
       setUnreadCount(0);
       return;
@@ -112,7 +106,21 @@ export const AccountDropdown = () => {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [user]);
+  }, [user, authLoading]);
+
+  if (authLoading) {
+    return (
+      <Button
+        variant="ghost"
+        size="sm"
+        disabled
+        className="flex items-center gap-2 opacity-70"
+      >
+        <Loader2 className="h-4 w-4 animate-spin" />
+        <span className="hidden sm:inline">Checking session</span>
+      </Button>
+    );
+  }
 
   const handleLogout = async () => {
     clearTradeStorage();
