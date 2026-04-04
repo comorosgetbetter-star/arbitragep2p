@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User, LogOut, UserCircle } from 'lucide-react';
+import { User, LogOut, UserCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -15,10 +15,24 @@ import { useAuth } from '@/contexts/AuthContext';
 import { clearTradeStorage, clearPendingTrade } from '@/lib/tradeSessionStorage';
 
 export const AccountDropdown = () => {
-  const { user, signOut } = useAuth();
+  const { user, signOut, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [unreadCount, setUnreadCount] = useState(0);
   const [isAdmin, setIsAdmin] = useState(false);
+
+  if (authLoading) {
+    return (
+      <Button
+        variant="ghost"
+        size="sm"
+        disabled
+        className="flex items-center gap-2 opacity-70"
+      >
+        <Loader2 className="h-4 w-4 animate-spin" />
+        <span className="hidden sm:inline">Checking session</span>
+      </Button>
+    );
+  }
 
   // Check if user is admin — if so, don't show profile on frontend
   useEffect(() => {
