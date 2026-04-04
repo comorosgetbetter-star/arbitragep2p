@@ -2,6 +2,8 @@ import { createContext, useContext, useEffect, useState, useRef, type ReactNode 
 import { supabase } from '@/integrations/supabase/client';
 import type { User } from '@supabase/supabase-js';
 
+const AUTH_RECOVERY_DELAY_MS = 900;
+
 interface AuthContextType {
   user: User | null;
   loading: boolean;
@@ -27,6 +29,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const initialSessionHandled = useRef(false);
   const validationInFlight = useRef<Promise<void> | null>(null);
 
+  const waitForAuthRecovery = () => new Promise((resolve) => setTimeout(resolve, AUTH_RECOVERY_DELAY_MS));
+
   useEffect(() => {
     let isMounted = true;
 
@@ -41,7 +45,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(nextUser);
     };
 
-    const validateSession = (blockUi = false) => {
+    const validateSession = (blockUi = false, allowRetry = false) => {
       if (validationInFlight.current) return validationInFlight.current;
 
       const validationTask = (async () => {
@@ -50,27 +54,44 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
 
         try {
-          const { data: { session } } = await supabase.auth.getSession();
+          let attempt = 0;
 
-          if (!isMounted) return;
+          while (true) {
+            const { data: { session } } = await supabase.auth.getSession();
 
-          if (!session) {
-            applyUser(null);
-            return;
-          }
+            if (!isMounted) return;
 
-          const { data, error } = await supabase.auth.getUser();
+            if (!session) {
+              if (allowRetry && attempt === 0) {
+                attempt += 1;
+                await waitForAuthRecovery();
+                continue;
+              }
 
-          if (!isMounted) return;
+              applyUser(null);
+              return;
+            }
 
-          if (error || !data.user) {
+            const { data, error } = await supabase.auth.getUser();
+
+            if (!isMounted) return;
+
+            if (!error && data.user) {
+              applyUser(data.user);
+              return;
+            }
+
+            if (allowRetry && attempt === 0) {
+              attempt += 1;
+              await waitForAuthRecovery();
+              continue;
+            }
+
             console.warn('[Auth] Session validation failed, clearing local auth state');
             clearLocalAuthState();
             applyUser(null);
             return;
           }
-
-          applyUser(data.user);
         } catch (e) {
           console.error('[Auth] Session validation error:', e);
           clearLocalAuthState();
@@ -90,12 +111,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.log('[Auth] event:', event, 'authenticated:', !!session?.user);
 
       if (event === 'SIGNED_OUT') {
+        clearLocalAuthState();
         applyUser(null);
         finishLoading();
         return;
       }
 
-      applyUser(session?.user ?? null);
+      const shouldBlockUi = !initialSessionHandled.current || event === 'SIGNED_IN';
+      void validateSession(shouldBlockUi, true);
     });
 
     const handleAppResume = () => {
@@ -103,10 +126,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
 
-      void validateSession(true);
+      void validateSession(true, true);
     };
 
-    void validateSession();
+    void validateSession(true, true);
     window.addEventListener('focus', handleAppResume);
     document.addEventListener('visibilitychange', handleAppResume);
 
