@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { clearTradeStorage } from '@/lib/tradeSessionStorage';
 import { z } from 'zod';
 
 const loginSchema = z.object({
@@ -69,6 +70,7 @@ const Login = () => {
       }
 
       if (data.user) {
+        clearTradeStorage();
         toast({
           title: "Welcome back!",
           description: "You have successfully logged in.",
