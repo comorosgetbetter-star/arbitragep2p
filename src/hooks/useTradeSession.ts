@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   TRADE_SESSION_KEY,
@@ -78,16 +78,26 @@ export const useTradeSession = () => {
   const { user, loading } = useAuth();
   // Track previous user to detect sign-out (user goes from non-null to null)
   const [prevUser, setPrevUser] = useState<typeof user>(undefined as any);
+  const initialAuthResolvedRef = useRef(false);
 
   // React to auth changes via shared context instead of independent listeners.
   useEffect(() => {
     // Don't act while auth is still loading — we'd wipe data prematurely.
     if (loading) return;
 
+    const wasResolved = initialAuthResolvedRef.current;
+    initialAuthResolvedRef.current = true;
+
     // Detect sign-out: user was previously set but is now null
     if (!user && prevUser) {
       clearTradeStorage();
       clearPendingTrade();
+      setSession(null);
+    }
+
+    // Cold resume with expired auth: clear stale protected trade state on first resolved unauthenticated load.
+    if (!user && !prevUser && !wasResolved) {
+      clearTradeStorage();
       setSession(null);
     }
 
