@@ -64,7 +64,7 @@ export const TradeSessionBadge = () => {
   };
 
   return (
-    <div className="fixed bottom-4 left-4 z-50 animate-slide-up">
+    <div className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+5.5rem)] left-4 z-50 animate-slide-up md:bottom-4">
       <div className="glass-card rounded-xl p-3 shadow-lg border border-primary/30 backdrop-blur-xl transition-all duration-300 hover:shadow-xl hover:border-primary/50">
         <div className="flex items-center gap-3">
           <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-colors ${
