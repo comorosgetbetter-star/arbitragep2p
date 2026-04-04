@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, useRef, type ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { User } from '@supabase/supabase-js';
+import { clearPendingTrade, clearTradeStorage } from '@/lib/tradeSessionStorage';
 
 const AUTH_RECOVERY_DELAY_MS = 900;
 
@@ -23,6 +24,15 @@ const clearLocalAuthState = () => {
   });
 };
 
+const clearSensitiveClientState = (includePendingTrade = false) => {
+  clearLocalAuthState();
+  clearTradeStorage();
+
+  if (includePendingTrade) {
+    clearPendingTrade();
+  }
+};
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -43,6 +53,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const applyUser = (nextUser: User | null) => {
       if (!isMounted) return;
       setUser(nextUser);
+    };
+
+    const purgeInvalidSession = async () => {
+      try {
+        await supabase.auth.signOut({ scope: 'local' });
+      } catch (error) {
+        console.warn('[Auth] Failed to clear in-memory session cleanly:', error);
+      } finally {
+        clearSensitiveClientState();
+        applyUser(null);
+      }
     };
 
     const validateSession = (blockUi = false, allowRetry = false) => {
@@ -68,6 +89,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 continue;
               }
 
+              clearSensitiveClientState();
               applyUser(null);
               return;
             }
@@ -88,14 +110,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             }
 
             console.warn('[Auth] Session validation failed, clearing local auth state');
-            clearLocalAuthState();
-            applyUser(null);
+            await purgeInvalidSession();
             return;
           }
         } catch (e) {
           console.error('[Auth] Session validation error:', e);
-          clearLocalAuthState();
-          applyUser(null);
+          await purgeInvalidSession();
         } finally {
           validationInFlight.current = null;
           finishLoading();
@@ -111,7 +131,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.log('[Auth] event:', event, 'authenticated:', !!session?.user);
 
       if (event === 'SIGNED_OUT') {
-        clearLocalAuthState();
+        clearSensitiveClientState(true);
         applyUser(null);
         finishLoading();
         return;
@@ -147,7 +167,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } catch (e) {
       console.error('[Auth] signOut error, forcing local cleanup:', e);
     }
-    clearLocalAuthState();
+    clearSensitiveClientState(true);
     setUser(null);
   };
 
