@@ -15,7 +15,7 @@ import { MarketsView } from '@/components/MarketsView';
 import { StakingView } from '@/components/StakingView';
 import { AssetsView } from '@/components/AssetsView';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/contexts/AuthContext';
+import { useMemberAccess } from '@/hooks/useMemberAccess';
 import { Download, Zap, ShoppingBag, ArrowLeft, Bot, Lock } from 'lucide-react';
 import { PortfolioSkeleton } from '@/components/skeletons/PortfolioSkeleton';
 import { TradeSkeleton } from '@/components/skeletons/TradeSkeleton';
@@ -25,6 +25,7 @@ type ExploreTab = 'staking' | 'bots';
 type ActiveSection = 'home' | 'deposit' | 'express' | 'p2p';
 
 const VALID_TABS: BottomNavTab[] = ['home', 'markets', 'trade', 'explore', 'assets'];
+const PROTECTED_TABS: BottomNavTab[] = ['trade', 'explore', 'assets'];
 
 const getTabFromHash = (): BottomNavTab => {
   const hash = window.location.hash.replace('#', '') as BottomNavTab;
@@ -36,7 +37,7 @@ const Index = () => {
   const [activeSection, setActiveSection] = useState<ActiveSection>('home');
   const [exploreTab, setExploreTab] = useState<ExploreTab>('staking');
   const [bottomTab, setBottomTab] = useState<BottomNavTab>(getTabFromHash);
-  const { user, loading } = useAuth();
+  const { loading, canUseMemberFeatures } = useMemberAccess();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -48,22 +49,45 @@ const Index = () => {
   }, [isDark]);
 
   useEffect(() => {
-    if (!loading && !user && activeSection !== 'home') {
+    if (!loading && !canUseMemberFeatures && activeSection !== 'home') {
       setActiveSection('home');
     }
-  }, [loading, user, activeSection]);
+  }, [loading, canUseMemberFeatures, activeSection]);
+
+  useEffect(() => {
+    if (!loading && !canUseMemberFeatures && PROTECTED_TABS.includes(bottomTab)) {
+      setBottomTab('home');
+      window.location.hash = '';
+    }
+  }, [loading, canUseMemberFeatures, bottomTab]);
 
   const toggleTheme = () => setIsDark(!isDark);
 
+  const renderAuthRequired = (title: string, description: string) => (
+    <div className="text-center py-12 rounded-xl border border-border bg-card/50">
+      <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-3">
+        <Lock className="h-6 w-6 text-primary" />
+      </div>
+      <p className="font-semibold mb-1">{title}</p>
+      <p className="text-sm text-muted-foreground mb-4">{description}</p>
+      <Button onClick={() => navigate('/login')}>Sign In</Button>
+    </div>
+  );
+
   const openProtectedSection = (section: Exclude<ActiveSection, 'home'>) => {
     if (loading) return;
-    if (!user) {
+    if (!canUseMemberFeatures) {
       navigate('/login');
       return;
     }
     setActiveSection(activeSection === section ? 'home' : section);
   };
   const handleBottomTab = (tab: BottomNavTab) => {
+    if (PROTECTED_TABS.includes(tab) && !loading && !canUseMemberFeatures) {
+      navigate('/login');
+      return;
+    }
+
     setBottomTab(tab);
     window.location.hash = tab === 'home' ? '' : tab;
     if (tab === 'home') {
@@ -97,6 +121,22 @@ const Index = () => {
     }
 
     if (bottomTab === 'explore') {
+      if (loading) {
+        return (
+          <div className="container mx-auto px-4 max-w-lg">
+            <TradeSkeleton />
+          </div>
+        );
+      }
+
+      if (!canUseMemberFeatures) {
+        return (
+          <div className="container mx-auto px-4 max-w-lg">
+            {renderAuthRequired('Sign in to continue', 'Bots and staking are available only for logged-in users.')}
+          </div>
+        );
+      }
+
       return (
         <div className="container mx-auto px-4 max-w-lg">
           <h2 className="text-lg font-display font-bold mb-4 pt-2">Explore</h2>
@@ -130,6 +170,22 @@ const Index = () => {
     }
 
     if (bottomTab === 'assets') {
+      if (loading) {
+        return (
+          <div className="container mx-auto px-4 max-w-lg">
+            <TradeSkeleton />
+          </div>
+        );
+      }
+
+      if (!canUseMemberFeatures) {
+        return (
+          <div className="container mx-auto px-4 max-w-lg">
+            {renderAuthRequired('Sign in to continue', 'Assets are available only for logged-in users.')}
+          </div>
+        );
+      }
+
       return (
         <div className="container mx-auto px-4 max-w-lg">
           <AssetsView />
@@ -143,15 +199,8 @@ const Index = () => {
           <h2 className="text-lg font-display font-bold mb-4 pt-2">Trade</h2>
           {loading ? (
             <TradeSkeleton />
-          ) : !user ? (
-            <div className="text-center py-12 rounded-xl border border-border bg-card/50">
-              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-3">
-                <Lock className="h-6 w-6 text-primary" />
-              </div>
-              <p className="font-semibold mb-1">Sign in to start trading</p>
-              <p className="text-sm text-muted-foreground mb-4">Express and P2P trades are available only for logged-in users.</p>
-              <Button onClick={() => navigate('/login')}>Sign In</Button>
-            </div>
+          ) : !canUseMemberFeatures ? (
+            renderAuthRequired('Sign in to start trading', 'Express and P2P trades are available only for logged-in users.')
           ) : (
             <ExpressP2P />
           )}
@@ -200,19 +249,13 @@ const Index = () => {
               </button>
             )}
             {activeSection === 'home' && <CryptoGrid />}
-            {activeSection !== 'home' && !user && (
-              <div className="text-center py-12 rounded-xl border border-border bg-card/50">
-                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-3">
-                  <Lock className="h-6 w-6 text-primary" />
-                </div>
-                <p className="font-semibold mb-1">Sign in to continue</p>
-                <p className="text-sm text-muted-foreground mb-4">This action is available only to logged-in users.</p>
-                <Button onClick={() => navigate('/login')}>Sign In</Button>
-              </div>
+            {activeSection !== 'home' && loading && <TradeSkeleton />}
+            {activeSection !== 'home' && !loading && !canUseMemberFeatures && (
+              renderAuthRequired('Sign in to continue', 'This action is available only to logged-in users.')
             )}
-            {activeSection === 'deposit' && user && <DepositCrypto />}
-            {activeSection === 'express' && user && <ExpressP2P />}
-            {activeSection === 'p2p' && user && <P2POrders />}
+            {activeSection === 'deposit' && canUseMemberFeatures && <DepositCrypto />}
+            {activeSection === 'express' && canUseMemberFeatures && <ExpressP2P />}
+            {activeSection === 'p2p' && canUseMemberFeatures && <P2POrders />}
           </div>
         </div>
 
