@@ -13,58 +13,20 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { clearTradeStorage, clearPendingTrade } from '@/lib/tradeSessionStorage';
+import { useMemberAccess } from '@/hooks/useMemberAccess';
 
 export const AccountDropdown = () => {
-  const { user, signOut, loading: authLoading } = useAuth();
+  const { user, signOut } = useAuth();
+  const { loading: accountLoading, canUseMemberFeatures } = useMemberAccess();
   const navigate = useNavigate();
   const [unreadCount, setUnreadCount] = useState(0);
-  const [isAdmin, setIsAdmin] = useState(false);
-
-  // Check if user is admin — if so, don't show profile on frontend
-  useEffect(() => {
-    if (authLoading) {
-      return;
-    }
-
-    if (!user) {
-      setIsAdmin(false);
-      return;
-    }
-
-    let cancelled = false;
-
-    const checkAdmin = async () => {
-      const { data, error } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', user.id)
-        .eq('role', 'admin')
-        .maybeSingle();
-
-      if (cancelled) return;
-
-      if (error) {
-        console.warn('[AccountDropdown] admin role check failed:', error.message);
-        setIsAdmin(false);
-        return;
-      }
-
-      setIsAdmin(!!data);
-    };
-
-    void checkAdmin();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [user, authLoading]);
 
   useEffect(() => {
-    if (authLoading) {
+    if (accountLoading) {
       return;
     }
 
-    if (!user) {
+    if (!user || !canUseMemberFeatures) {
       setUnreadCount(0);
       return;
     }
@@ -106,9 +68,9 @@ export const AccountDropdown = () => {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [user, authLoading]);
+  }, [user, accountLoading, canUseMemberFeatures]);
 
-  if (authLoading) {
+  if (accountLoading) {
     return (
       <Button
         variant="ghost"
@@ -135,7 +97,7 @@ export const AccountDropdown = () => {
     navigate('/profile');
   };
 
-  if (!user || isAdmin) {
+  if (!canUseMemberFeatures) {
     return (
       <Button
         variant="ghost"
