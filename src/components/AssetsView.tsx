@@ -66,6 +66,7 @@ export const AssetsView = () => {
   const [walletAddress, setWalletAddress] = useState('');
   const [selectedNetwork, setSelectedNetwork] = useState('trc20');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [withdrawCrypto, setWithdrawCrypto] = useState('USDT');
   const [historyFilter, setHistoryFilter] = useState<HistoryFilter>('all');
 
   // Convert state
@@ -125,11 +126,21 @@ export const AssetsView = () => {
     }
   }, [subView]);
 
+  // Build list of withdrawable assets (those with a balance)
+  const withdrawableAssets = [
+    ...(balance > 0.001 ? [{ symbol: 'USDT', amount: balance }] : []),
+    ...cryptoBalances.filter(cb => cb.amount > 0.000001),
+  ];
+
+  const withdrawSelectedBalance = withdrawCrypto === 'USDT'
+    ? balance
+    : (cryptoBalances.find(c => c.symbol === withdrawCrypto)?.amount || 0);
+
   const handleSubmitWithdrawal = async () => {
     if (!user || !withdrawAmount || !walletAddress) return;
     const amount = parseFloat(withdrawAmount);
     if (isNaN(amount) || amount <= 0) { toast.error('Enter a valid amount'); return; }
-    if (amount > balance) { toast.error('Insufficient balance'); return; }
+    if (amount > withdrawSelectedBalance) { toast.error('Insufficient balance'); return; }
     setIsSubmitting(true);
     try {
       const { error } = await supabase.from('withdrawals').insert({
@@ -197,22 +208,56 @@ export const AssetsView = () => {
 
   // ── SUB-VIEW: Withdraw ──
   if (subView === 'withdraw') {
+    const cryptoNames: Record<string, string> = { USDT: 'Tether', BTC: 'Bitcoin', ETH: 'Ethereum', BNB: 'BNB', SOL: 'Solana', XRP: 'XRP', LTC: 'Litecoin', DOGE: 'Dogecoin' };
+
     return (
       <div className="space-y-5">
         <button onClick={() => setSubView('main')} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
           <ArrowLeft className="h-4 w-4" /> Back
         </button>
         <div>
-          <h2 className="text-lg font-display font-bold">Withdraw USDT</h2>
-          <p className="text-sm text-muted-foreground">Available: {balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT</p>
+          <h2 className="text-lg font-display font-bold">Withdraw Crypto</h2>
+          <p className="text-sm text-muted-foreground">Select a coin and enter the amount to withdraw</p>
         </div>
         <div className="space-y-4">
+          {/* Coin selector */}
           <div>
-            <label className="text-sm text-muted-foreground block mb-2">Amount</label>
+            <label className="text-sm text-muted-foreground block mb-2">Coin</label>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {withdrawableAssets.map((asset) => (
+                <button
+                  key={asset.symbol}
+                  onClick={() => { setWithdrawCrypto(asset.symbol); setWithdrawAmount(''); }}
+                  className={`flex items-center gap-2 p-3 rounded-lg border text-left transition-all ${
+                    withdrawCrypto === asset.symbol
+                      ? 'border-primary bg-primary/10 text-foreground'
+                      : 'border-border hover:border-border/80 text-muted-foreground'
+                  }`}
+                >
+                  {CRYPTO_LOGOS[asset.symbol] ? (
+                    <img src={CRYPTO_LOGOS[asset.symbol]} alt={asset.symbol} className="w-5 h-5 rounded-full" />
+                  ) : (
+                    <span className="w-5 h-5 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold">{asset.symbol[0]}</span>
+                  )}
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium truncate">{asset.symbol}</p>
+                    <p className="text-xs opacity-60 truncate">{asset.amount.toLocaleString('en-US', { maximumFractionDigits: 6 })}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+            {withdrawableAssets.length === 0 && (
+              <p className="text-sm text-muted-foreground text-center py-4">No assets with a balance to withdraw.</p>
+            )}
+          </div>
+
+          <div>
+            <label className="text-sm text-muted-foreground block mb-2">Amount ({withdrawCrypto})</label>
             <div className="relative">
               <Input type="number" placeholder="0.00" value={withdrawAmount} onChange={(e) => setWithdrawAmount(e.target.value)} className="pr-16" />
-              <button className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-primary font-medium hover:text-primary/80" onClick={() => setWithdrawAmount(balance.toString())}>MAX</button>
+              <button className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-primary font-medium hover:text-primary/80" onClick={() => setWithdrawAmount(withdrawSelectedBalance.toString())}>MAX</button>
             </div>
+            <p className="text-xs text-muted-foreground mt-1">Available: {withdrawSelectedBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 6 })} {withdrawCrypto}</p>
           </div>
           <div>
             <label className="text-sm text-muted-foreground block mb-2">Wallet Address</label>
@@ -229,8 +274,8 @@ export const AssetsView = () => {
               ))}
             </div>
           </div>
-          <Button className="w-full" disabled={!withdrawAmount || !walletAddress || isSubmitting} onClick={handleSubmitWithdrawal}>
-            {isSubmitting ? 'Submitting...' : 'Confirm Withdrawal'}
+          <Button className="w-full" disabled={!withdrawAmount || !walletAddress || isSubmitting || withdrawableAssets.length === 0} onClick={handleSubmitWithdrawal}>
+            {isSubmitting ? 'Submitting...' : `Withdraw ${withdrawCrypto}`}
           </Button>
         </div>
       </div>
