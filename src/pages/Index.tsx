@@ -113,7 +113,7 @@ const Index = () => {
   const renderContent = () => {
     if (bottomTab === 'markets') {
       return (
-        <div className="container mx-auto px-4 max-w-lg">
+        <div className="container mx-auto px-4 max-w-lg md:max-w-2xl lg:max-w-4xl">
           <h2 className="text-lg font-display font-bold mb-4 pt-2">Markets</h2>
           <MarketsView />
         </div>
@@ -123,7 +123,7 @@ const Index = () => {
     if (bottomTab === 'explore') {
       if (loading) {
         return (
-          <div className="container mx-auto px-4 max-w-lg">
+          <div className="container mx-auto px-4 max-w-lg md:max-w-2xl lg:max-w-4xl">
             <TradeSkeleton />
           </div>
         );
@@ -131,14 +131,14 @@ const Index = () => {
 
       if (!canUseMemberFeatures) {
         return (
-          <div className="container mx-auto px-4 max-w-lg">
+          <div className="container mx-auto px-4 max-w-lg md:max-w-2xl lg:max-w-4xl">
             {renderAuthRequired('Sign in to continue', 'Bots and staking are available only for logged-in users.')}
           </div>
         );
       }
 
       return (
-        <div className="container mx-auto px-4 max-w-lg">
+        <div className="container mx-auto px-4 max-w-lg md:max-w-2xl lg:max-w-4xl">
           <h2 className="text-lg font-display font-bold mb-4 pt-2">Explore</h2>
           <div className="flex gap-2 mb-4">
             <Button
@@ -172,7 +172,7 @@ const Index = () => {
     if (bottomTab === 'assets') {
       if (loading) {
         return (
-          <div className="container mx-auto px-4 max-w-lg">
+          <div className="container mx-auto px-4 max-w-lg md:max-w-2xl lg:max-w-4xl">
             <TradeSkeleton />
           </div>
         );
@@ -180,14 +180,14 @@ const Index = () => {
 
       if (!canUseMemberFeatures) {
         return (
-          <div className="container mx-auto px-4 max-w-lg">
+          <div className="container mx-auto px-4 max-w-lg md:max-w-2xl lg:max-w-4xl">
             {renderAuthRequired('Sign in to continue', 'Assets are available only for logged-in users.')}
           </div>
         );
       }
 
       return (
-        <div className="container mx-auto px-4 max-w-lg">
+        <div className="container mx-auto px-4 max-w-lg md:max-w-2xl lg:max-w-4xl">
           <AssetsView />
         </div>
       );
@@ -195,7 +195,7 @@ const Index = () => {
 
     if (bottomTab === 'trade') {
       return (
-        <div className="container mx-auto px-4 max-w-lg">
+        <div className="container mx-auto px-4 max-w-lg md:max-w-2xl lg:max-w-4xl">
           <h2 className="text-lg font-display font-bold mb-4 pt-2">Trade</h2>
           {loading ? (
             <TradeSkeleton />
@@ -211,7 +211,7 @@ const Index = () => {
     // Home tab - original layout
     return (
       <>
-        <div className="container mx-auto px-4 max-w-lg">
+        <div className="container mx-auto px-4 max-w-lg md:max-w-2xl lg:max-w-4xl">
           <PortfolioCard />
 
           <div className="grid grid-cols-3 gap-2">
@@ -259,7 +259,7 @@ const Index = () => {
           </div>
         </div>
 
-        <div className="container mx-auto px-4 max-w-lg">
+        <div className="container mx-auto px-4 max-w-lg md:max-w-2xl lg:max-w-4xl">
           <div id="why-usdt">
             <WhyUsdt />
           </div>
