@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
-type AssetsSubView = 'main' | 'deposit' | 'withdraw' | 'convert' | 'history';
+type AssetsSubView = 'main' | 'deposit' | 'withdraw' | 'withdraw-form' | 'convert' | 'history';
 type HistoryFilter = 'all' | 'deposits' | 'withdrawals';
 
 const NETWORK_META: Record<string, { name: string; chain: string; fee: string; time: string }> = {
@@ -22,11 +22,38 @@ const NETWORK_META: Record<string, { name: string; chain: string; fee: string; t
   bep20: { name: 'BEP20', chain: 'BNB Smart Chain', fee: '~0.5 USDT', time: '~3 min' },
 };
 
-const networks = [
-  { id: 'trc20', name: 'TRC20', chain: 'Tron' },
-  { id: 'erc20', name: 'ERC20', chain: 'Ethereum' },
-  { id: 'bep20', name: 'BEP20', chain: 'BSC' },
-];
+// Networks per crypto – each coin shows only its relevant networks
+const CRYPTO_NETWORKS: Record<string, { id: string; name: string; chain: string }[]> = {
+  USDT: [
+    { id: 'trc20', name: 'TRC20', chain: 'Tron' },
+    { id: 'erc20', name: 'ERC20', chain: 'Ethereum' },
+    { id: 'bep20', name: 'BEP20', chain: 'BSC' },
+  ],
+  BTC: [
+    { id: 'btc', name: 'Bitcoin', chain: 'Bitcoin Network' },
+    { id: 'btc-lightning', name: 'Lightning', chain: 'Lightning Network' },
+  ],
+  ETH: [
+    { id: 'erc20', name: 'ERC20', chain: 'Ethereum' },
+    { id: 'arbitrum', name: 'Arbitrum', chain: 'Arbitrum One' },
+  ],
+  BNB: [
+    { id: 'bep20', name: 'BEP20', chain: 'BSC' },
+    { id: 'bep2', name: 'BEP2', chain: 'Beacon Chain' },
+  ],
+  SOL: [
+    { id: 'solana', name: 'Solana', chain: 'Solana Network' },
+  ],
+  XRP: [
+    { id: 'xrp', name: 'XRP', chain: 'XRP Ledger' },
+  ],
+  LTC: [
+    { id: 'ltc', name: 'Litecoin', chain: 'Litecoin Network' },
+  ],
+  DOGE: [
+    { id: 'doge', name: 'Dogecoin', chain: 'Dogecoin Network' },
+  ],
+};
 
 const getRotatedDepositAddress = async () => {
   const { data: addresses } = await supabase
