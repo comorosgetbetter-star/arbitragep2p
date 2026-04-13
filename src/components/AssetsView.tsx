@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
-type AssetsSubView = 'main' | 'deposit' | 'withdraw' | 'convert' | 'history';
+type AssetsSubView = 'main' | 'deposit' | 'withdraw' | 'withdraw-form' | 'convert' | 'history';
 type HistoryFilter = 'all' | 'deposits' | 'withdrawals';
 
 const NETWORK_META: Record<string, { name: string; chain: string; fee: string; time: string }> = {
@@ -22,11 +22,38 @@ const NETWORK_META: Record<string, { name: string; chain: string; fee: string; t
   bep20: { name: 'BEP20', chain: 'BNB Smart Chain', fee: '~0.5 USDT', time: '~3 min' },
 };
 
-const networks = [
-  { id: 'trc20', name: 'TRC20', chain: 'Tron' },
-  { id: 'erc20', name: 'ERC20', chain: 'Ethereum' },
-  { id: 'bep20', name: 'BEP20', chain: 'BSC' },
-];
+// Networks per crypto – each coin shows only its relevant networks
+const CRYPTO_NETWORKS: Record<string, { id: string; name: string; chain: string }[]> = {
+  USDT: [
+    { id: 'trc20', name: 'TRC20', chain: 'Tron' },
+    { id: 'erc20', name: 'ERC20', chain: 'Ethereum' },
+    { id: 'bep20', name: 'BEP20', chain: 'BSC' },
+  ],
+  BTC: [
+    { id: 'btc', name: 'Bitcoin', chain: 'Bitcoin Network' },
+    { id: 'btc-lightning', name: 'Lightning', chain: 'Lightning Network' },
+  ],
+  ETH: [
+    { id: 'erc20', name: 'ERC20', chain: 'Ethereum' },
+    { id: 'arbitrum', name: 'Arbitrum', chain: 'Arbitrum One' },
+  ],
+  BNB: [
+    { id: 'bep20', name: 'BEP20', chain: 'BSC' },
+    { id: 'bep2', name: 'BEP2', chain: 'Beacon Chain' },
+  ],
+  SOL: [
+    { id: 'solana', name: 'Solana', chain: 'Solana Network' },
+  ],
+  XRP: [
+    { id: 'xrp', name: 'XRP', chain: 'XRP Ledger' },
+  ],
+  LTC: [
+    { id: 'ltc', name: 'Litecoin', chain: 'Litecoin Network' },
+  ],
+  DOGE: [
+    { id: 'doge', name: 'Dogecoin', chain: 'Dogecoin Network' },
+  ],
+};
 
 const getRotatedDepositAddress = async () => {
   const { data: addresses } = await supabase
@@ -206,7 +233,7 @@ export const AssetsView = () => {
     );
   }
 
-  // ── SUB-VIEW: Withdraw ──
+  // ── SUB-VIEW: Withdraw – Step 1: Coin Picker ──
   if (subView === 'withdraw') {
     const cryptoNames: Record<string, string> = { USDT: 'Tether', BTC: 'Bitcoin', ETH: 'Ethereum', BNB: 'BNB', SOL: 'Solana', XRP: 'XRP', LTC: 'Litecoin', DOGE: 'Dogecoin' };
 
@@ -217,56 +244,100 @@ export const AssetsView = () => {
         </button>
         <div>
           <h2 className="text-lg font-display font-bold">Withdraw Crypto</h2>
-          <p className="text-sm text-muted-foreground">Select a coin and enter the amount to withdraw</p>
+          <p className="text-sm text-muted-foreground">Select the coin you want to withdraw</p>
         </div>
-        <div className="space-y-4">
-          {/* Coin selector */}
-          <div>
-            <label className="text-sm text-muted-foreground block mb-2">Coin</label>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              {withdrawableAssets.map((asset) => (
+
+        {withdrawableAssets.length === 0 ? (
+          <div className="text-center py-10">
+            <div className="w-14 h-14 rounded-2xl bg-muted/50 flex items-center justify-center mx-auto mb-3">
+              <Wallet className="h-7 w-7 text-muted-foreground" />
+            </div>
+            <p className="text-sm text-muted-foreground">No assets with a balance to withdraw.</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {withdrawableAssets.map((asset) => {
+              const price = asset.symbol === 'USDT' ? 1 : (stablePrices[asset.symbol] || 0);
+              const usdValue = asset.amount * price;
+              return (
                 <button
                   key={asset.symbol}
-                  onClick={() => { setWithdrawCrypto(asset.symbol); setWithdrawAmount(''); }}
-                  className={`flex items-center gap-2 p-3 rounded-lg border text-left transition-all ${
-                    withdrawCrypto === asset.symbol
-                      ? 'border-primary bg-primary/10 text-foreground'
-                      : 'border-border hover:border-border/80 text-muted-foreground'
-                  }`}
+                  onClick={() => {
+                    setWithdrawCrypto(asset.symbol);
+                    setWithdrawAmount('');
+                    setWalletAddress('');
+                    const nets = CRYPTO_NETWORKS[asset.symbol] || CRYPTO_NETWORKS['USDT'];
+                    setSelectedNetwork(nets[0].id);
+                    setSubView('withdraw-form');
+                  }}
+                  className="w-full flex items-center gap-3 p-4 rounded-xl border border-border/50 bg-secondary/30 hover:bg-secondary/60 hover:border-primary/30 transition-all group"
                 >
-                  {CRYPTO_LOGOS[asset.symbol] ? (
-                    <img src={CRYPTO_LOGOS[asset.symbol]} alt={asset.symbol} className="w-5 h-5 rounded-full" />
-                  ) : (
-                    <span className="w-5 h-5 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold">{asset.symbol[0]}</span>
-                  )}
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium truncate">{asset.symbol}</p>
-                    <p className="text-xs opacity-60 truncate">{asset.amount.toLocaleString('en-US', { maximumFractionDigits: 6 })}</p>
+                  <div className="w-10 h-10 rounded-full overflow-hidden bg-muted flex items-center justify-center flex-shrink-0">
+                    {CRYPTO_LOGOS[asset.symbol] ? (
+                      <img src={CRYPTO_LOGOS[asset.symbol]} alt={asset.symbol} className="w-10 h-10 rounded-full" />
+                    ) : (
+                      <span className="text-sm font-bold">{asset.symbol[0]}</span>
+                    )}
                   </div>
+                  <div className="flex-1 text-left min-w-0">
+                    <p className="text-sm font-semibold text-foreground">{asset.symbol}</p>
+                    <p className="text-xs text-muted-foreground">{cryptoNames[asset.symbol] || asset.symbol}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-semibold text-foreground">{asset.amount.toLocaleString('en-US', { maximumFractionDigits: 6 })}</p>
+                    <p className="text-xs text-muted-foreground">≈ ${usdValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" />
                 </button>
-              ))}
-            </div>
-            {withdrawableAssets.length === 0 && (
-              <p className="text-sm text-muted-foreground text-center py-4">No assets with a balance to withdraw.</p>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ── SUB-VIEW: Withdraw – Step 2: Form ──
+  if (subView === 'withdraw-form') {
+    const activeNetworks = CRYPTO_NETWORKS[withdrawCrypto] || CRYPTO_NETWORKS['USDT'];
+
+    return (
+      <div className="space-y-5">
+        <button onClick={() => setSubView('withdraw')} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
+          <ArrowLeft className="h-4 w-4" /> Back
+        </button>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full overflow-hidden bg-muted flex items-center justify-center flex-shrink-0">
+            {CRYPTO_LOGOS[withdrawCrypto] ? (
+              <img src={CRYPTO_LOGOS[withdrawCrypto]} alt={withdrawCrypto} className="w-10 h-10 rounded-full" />
+            ) : (
+              <span className="text-sm font-bold">{withdrawCrypto[0]}</span>
             )}
           </div>
+          <div>
+            <h2 className="text-lg font-display font-bold">Withdraw {withdrawCrypto}</h2>
+            <p className="text-sm text-muted-foreground">
+              Available: {withdrawSelectedBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 6 })} {withdrawCrypto}
+            </p>
+          </div>
+        </div>
 
+        <div className="space-y-4">
           <div>
             <label className="text-sm text-muted-foreground block mb-2">Amount ({withdrawCrypto})</label>
             <div className="relative">
               <Input type="number" placeholder="0.00" value={withdrawAmount} onChange={(e) => setWithdrawAmount(e.target.value)} className="pr-16" />
               <button className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-primary font-medium hover:text-primary/80" onClick={() => setWithdrawAmount(withdrawSelectedBalance.toString())}>MAX</button>
             </div>
-            <p className="text-xs text-muted-foreground mt-1">Available: {withdrawSelectedBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 6 })} {withdrawCrypto}</p>
           </div>
           <div>
             <label className="text-sm text-muted-foreground block mb-2">Wallet Address</label>
-            <Input type="text" placeholder="Enter your wallet address" value={walletAddress} onChange={(e) => setWalletAddress(e.target.value)} />
+            <Input type="text" placeholder={`Enter your ${withdrawCrypto} wallet address`} value={walletAddress} onChange={(e) => setWalletAddress(e.target.value)} />
           </div>
           <div>
             <label className="text-sm text-muted-foreground block mb-2">Network</label>
-            <div className="grid grid-cols-3 gap-2">
-              {networks.map((network) => (
+            <div className={`grid gap-2 ${activeNetworks.length <= 2 ? 'grid-cols-2' : 'grid-cols-3'}`}>
+              {activeNetworks.map((network) => (
                 <button key={network.id} onClick={() => setSelectedNetwork(network.id)} className={`p-3 rounded-lg border text-center transition-all ${selectedNetwork === network.id ? 'border-primary bg-primary/10 text-primary' : 'border-border hover:border-border/80 text-muted-foreground'}`}>
                   <p className="text-sm font-medium">{network.name}</p>
                   <p className="text-xs opacity-70">{network.chain}</p>
@@ -274,7 +345,7 @@ export const AssetsView = () => {
               ))}
             </div>
           </div>
-          <Button className="w-full" disabled={!withdrawAmount || !walletAddress || isSubmitting || withdrawableAssets.length === 0} onClick={handleSubmitWithdrawal}>
+          <Button className="w-full" disabled={!withdrawAmount || !walletAddress || isSubmitting} onClick={handleSubmitWithdrawal}>
             {isSubmitting ? 'Submitting...' : `Withdraw ${withdrawCrypto}`}
           </Button>
         </div>
