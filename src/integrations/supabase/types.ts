@@ -724,6 +724,10 @@ export type Database = {
         Returns: boolean
       }
       is_email_banned: { Args: { _email: string }; Returns: boolean }
+      normalize_withdrawal_symbol: {
+        Args: { _crypto_symbol: string; _network: string }
+        Returns: string
+      }
       start_flywheel: {
         Args: {
           _amount: number
