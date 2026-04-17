@@ -583,20 +583,20 @@ export const AssetsView = () => {
 
   if (subView === 'history') {
     const allActivities = [
-      ...deposits.map(d => ({ id: d.id, type: 'deposit' as const, amount: d.amount, status: 'approved', created_at: d.created_at, network: '', reason: d.reason })),
-      ...withdrawals.map(w => ({ id: w.id, type: 'withdrawal' as const, amount: w.amount, status: w.status, created_at: w.created_at, network: w.network, reason: null })),
+      ...deposits.map(d => ({ id: d.id, type: 'deposit' as const, amount: d.amount, status: 'approved', created_at: d.created_at, network: '', symbol: 'USDT', reason: d.reason })),
+      ...withdrawals.map(w => ({ id: w.id, type: 'withdrawal' as const, amount: w.amount, status: w.status, created_at: w.created_at, network: w.network, symbol: (w as any).crypto_symbol || 'USDT', reason: null as string | null })),
     ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
     const activities = historyFilter === 'all' ? allActivities : allActivities.filter(a => a.type === (historyFilter === 'deposits' ? 'deposit' : 'withdrawal'));
 
     const exportCSV = () => {
-      const rows = [['Type', 'Amount (USDT)', 'Status', 'Network', 'Reason', 'Date']];
+      const rows = [['Type', 'Amount', 'Status', 'Network', 'Reason', 'Date']];
       activities.forEach(a => {
         rows.push([
           a.type === 'deposit' ? 'Deposit' : 'Withdrawal',
-          `${a.type === 'deposit' ? '+' : '-'}${a.amount.toFixed(2)}`,
+          `${a.type === 'deposit' ? '+' : '-'}${a.amount.toFixed(2)} ${a.symbol}`,
           a.status,
-          a.type === 'withdrawal' ? (a.network || '').toUpperCase() : 'USDT',
+          a.type === 'withdrawal' ? (a.network || '').toUpperCase() : a.symbol,
           a.reason || '',
           new Date(a.created_at).toLocaleString(),
         ]);
