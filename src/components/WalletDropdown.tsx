@@ -229,6 +229,7 @@ export const WalletDropdown = ({ isOpen, onClose, onAddFunds }: WalletDropdownPr
                     status: 'approved',
                     created_at: d.created_at,
                     network: '',
+                    symbol: 'USDT',
                     reason: d.reason,
                   })),
                   ...withdrawals.map(w => ({
@@ -238,7 +239,8 @@ export const WalletDropdown = ({ isOpen, onClose, onAddFunds }: WalletDropdownPr
                     status: w.status,
                     created_at: w.created_at,
                     network: w.network,
-                    reason: null,
+                    symbol: (w as any).crypto_symbol || 'USDT',
+                    reason: null as string | null,
                   })),
                 ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 10);
 
@@ -282,7 +284,9 @@ export const WalletDropdown = ({ isOpen, onClose, onAddFunds }: WalletDropdownPr
                               {item.type === 'deposit' ? 'Deposit' : 'Withdrawal'}
                             </p>
                             <p className="text-xs text-muted-foreground">
-                              {item.type === 'withdrawal' && item.network ? item.network.toUpperCase() : 'USDT'}
+                              {item.type === 'withdrawal'
+                                ? `${item.symbol}${item.network ? ' · ' + item.network.toUpperCase() : ''}`
+                                : item.symbol}
                             </p>
                           </div>
                         </div>
@@ -290,7 +294,7 @@ export const WalletDropdown = ({ isOpen, onClose, onAddFunds }: WalletDropdownPr
                           <p className={`text-sm font-semibold ${
                             item.type === 'deposit' ? 'text-success' : 'text-foreground'
                           }`}>
-                            {item.type === 'deposit' ? '+' : '-'}{item.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT
+                            {item.type === 'deposit' ? '+' : '-'}{item.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 6 })} {item.symbol}
                           </p>
                           {item.type === 'withdrawal' && item.status === 'failed' && !hasOpenTicket ? (
                             <button

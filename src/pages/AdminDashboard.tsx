@@ -86,6 +86,7 @@ interface WithdrawalRequest {
   amount: number;
   wallet_address: string;
   network: string;
+  crypto_symbol?: string;
   status: string;
   created_at: string;
   expires_at: string;
@@ -497,12 +498,25 @@ const AdminDashboard = () => {
 
   const handleApproveWithdrawal = async (withdrawal: WithdrawalRequest) => {
     try {
-      const { error: rpcError } = await supabase.rpc('adjust_user_balance', {
-        _target_user_id: withdrawal.user_id,
-        _adjustment: -withdrawal.amount,
-        _reason: `Withdrawal approved: ${withdrawal.amount} USDT to ${withdrawal.wallet_address} (${withdrawal.network})`,
-      });
-      if (rpcError) throw rpcError;
+      const symbol = (withdrawal.crypto_symbol || 'USDT').toUpperCase();
+      const reason = `Withdrawal approved: ${withdrawal.amount} ${symbol} to ${withdrawal.wallet_address} (${withdrawal.network})`;
+
+      if (symbol === 'USDT') {
+        const { error: rpcError } = await supabase.rpc('adjust_user_balance', {
+          _target_user_id: withdrawal.user_id,
+          _adjustment: -withdrawal.amount,
+          _reason: reason,
+        });
+        if (rpcError) throw rpcError;
+      } else {
+        const { error: rpcError } = await supabase.rpc('adjust_crypto_balance' as any, {
+          _target_user_id: withdrawal.user_id,
+          _symbol: symbol,
+          _crypto_amount: -withdrawal.amount,
+          _reason: reason,
+        });
+        if (rpcError) throw rpcError;
+      }
 
       const { error } = await supabase
         .from('withdrawals')
@@ -510,7 +524,7 @@ const AdminDashboard = () => {
         .eq('id', withdrawal.id);
       if (error) throw error;
 
-      toast.success(`Approved withdrawal of ${withdrawal.amount} USDT`);
+      toast.success(`Approved withdrawal of ${withdrawal.amount} ${symbol}`);
       fetchData();
     } catch (error) {
       console.error('Approval error:', error);
@@ -960,7 +974,7 @@ const AdminDashboard = () => {
                           <p className="text-xs text-muted-foreground truncate">{w.user_email}</p>
                         </div>
                         <div className="text-right shrink-0">
-                          <p className="font-mono text-sm font-bold">{w.amount} USDT</p>
+                          <p className="font-mono text-sm font-bold">{w.amount} {(w.crypto_symbol || 'USDT').toUpperCase()}</p>
                           <Badge variant="secondary" className="text-[10px]">{w.network.toUpperCase()}</Badge>
                         </div>
                       </div>
