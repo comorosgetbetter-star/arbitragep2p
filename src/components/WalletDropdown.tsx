@@ -92,7 +92,8 @@ export const WalletDropdown = ({ isOpen, onClose, onAddFunds }: WalletDropdownPr
         amount,
         wallet_address: walletAddress,
         network: selectedNetwork,
-      });
+        crypto_symbol: 'USDT',
+      } as any);
 
       if (error) throw error;
 

@@ -659,12 +659,16 @@ export const AssetsView = () => {
                   )}
                   <div>
                     <p className="text-sm font-medium">{item.type === 'deposit' ? 'Deposit' : 'Withdrawal'}</p>
-                    <p className="text-xs text-muted-foreground">{item.type === 'withdrawal' && item.network ? item.network.toUpperCase() : 'USDT'}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {item.type === 'withdrawal'
+                        ? `${item.symbol}${item.network ? ' · ' + item.network.toUpperCase() : ''}`
+                        : item.symbol}
+                    </p>
                   </div>
                 </div>
                 <div className="text-right">
                   <p className={`text-sm font-semibold ${item.type === 'deposit' ? 'text-success' : 'text-foreground'}`}>
-                    {item.type === 'deposit' ? '+' : '-'}{item.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT
+                    {item.type === 'deposit' ? '+' : '-'}{item.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 6 })} {item.symbol}
                   </p>
                   <p className={`text-xs ${item.status === 'pending' ? 'text-warning' : item.status === 'failed' || item.status === 'expired' ? 'text-destructive' : 'text-muted-foreground'}`}>
                     {item.status === 'pending' ? 'Processing' : item.status === 'failed' ? 'Failed' : item.status === 'expired' ? 'Expired' : new Date(item.created_at).toLocaleDateString()}
