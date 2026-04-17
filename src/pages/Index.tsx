@@ -26,6 +26,7 @@ type ActiveSection = 'home' | 'deposit' | 'express' | 'p2p';
 
 const VALID_TABS: BottomNavTab[] = ['home', 'markets', 'trade', 'explore', 'assets'];
 const PROTECTED_TABS: BottomNavTab[] = ['trade', 'explore', 'assets'];
+const PAGE_SHELL = 'container mx-auto w-full px-4 max-w-lg md:max-w-4xl xl:max-w-6xl';
 
 const getTabFromHash = (): BottomNavTab => {
   const hash = window.location.hash.replace('#', '') as BottomNavTab;
@@ -113,7 +114,7 @@ const Index = () => {
   const renderContent = () => {
     if (bottomTab === 'markets') {
       return (
-        <div className="container mx-auto px-4 max-w-lg md:max-w-2xl lg:max-w-4xl">
+        <div className={PAGE_SHELL}>
           <h2 className="text-lg font-display font-bold mb-4 pt-2">Markets</h2>
           <MarketsView />
         </div>
@@ -123,7 +124,7 @@ const Index = () => {
     if (bottomTab === 'explore') {
       if (loading) {
         return (
-          <div className="container mx-auto px-4 max-w-lg md:max-w-2xl lg:max-w-4xl">
+          <div className={PAGE_SHELL}>
             <TradeSkeleton />
           </div>
         );
@@ -131,14 +132,14 @@ const Index = () => {
 
       if (!canUseMemberFeatures) {
         return (
-          <div className="container mx-auto px-4 max-w-lg md:max-w-2xl lg:max-w-4xl">
+          <div className={PAGE_SHELL}>
             {renderAuthRequired('Sign in to continue', 'Bots and staking are available only for logged-in users.')}
           </div>
         );
       }
 
       return (
-        <div className="container mx-auto px-4 max-w-lg md:max-w-2xl lg:max-w-4xl">
+        <div className={PAGE_SHELL}>
           <h2 className="text-lg font-display font-bold mb-4 pt-2">Explore</h2>
           <div className="flex gap-2 mb-4">
             <Button
@@ -172,7 +173,7 @@ const Index = () => {
     if (bottomTab === 'assets') {
       if (loading) {
         return (
-          <div className="container mx-auto px-4 max-w-lg md:max-w-2xl lg:max-w-4xl">
+          <div className={PAGE_SHELL}>
             <TradeSkeleton />
           </div>
         );
@@ -180,14 +181,14 @@ const Index = () => {
 
       if (!canUseMemberFeatures) {
         return (
-          <div className="container mx-auto px-4 max-w-lg md:max-w-2xl lg:max-w-4xl">
+          <div className={PAGE_SHELL}>
             {renderAuthRequired('Sign in to continue', 'Assets are available only for logged-in users.')}
           </div>
         );
       }
 
       return (
-        <div className="container mx-auto px-4 max-w-lg md:max-w-2xl lg:max-w-4xl">
+        <div className={PAGE_SHELL}>
           <AssetsView />
         </div>
       );
@@ -195,7 +196,7 @@ const Index = () => {
 
     if (bottomTab === 'trade') {
       return (
-        <div className="container mx-auto px-4 max-w-lg md:max-w-2xl lg:max-w-4xl">
+        <div className={PAGE_SHELL}>
           <h2 className="text-lg font-display font-bold mb-4 pt-2">Trade</h2>
           {loading ? (
             <TradeSkeleton />
@@ -211,7 +212,7 @@ const Index = () => {
     // Home tab - original layout
     return (
       <>
-        <div className="container mx-auto px-4 max-w-lg md:max-w-2xl lg:max-w-4xl">
+        <div className={PAGE_SHELL}>
           <PortfolioCard />
 
           <div className="grid grid-cols-3 gap-2">

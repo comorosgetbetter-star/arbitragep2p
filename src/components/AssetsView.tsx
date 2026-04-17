@@ -684,7 +684,9 @@ export const AssetsView = () => {
 
   // ── P/L Calculation ──
   const totalDeposited = deposits.reduce((sum, d) => sum + d.amount, 0);
-  const totalWithdrawn = withdrawals.filter(w => w.status === 'approved').reduce((sum, w) => sum + w.amount, 0);
+  const totalWithdrawn = withdrawals
+    .filter(w => w.status === 'approved' && (w.crypto_symbol || 'USDT').toUpperCase() === 'USDT')
+    .reduce((sum, w) => sum + w.amount, 0);
   const netPnL = totalPortfolioValue - totalDeposited + totalWithdrawn;
   const pnlPct = totalDeposited > 0 ? (netPnL / totalDeposited) * 100 : 0;
   const isPnlPositive = netPnL >= 0;
@@ -692,7 +694,7 @@ export const AssetsView = () => {
   // ── MAIN VIEW ──
   const actionButtons = [
     { icon: Download, label: 'Deposit', action: () => setSubView('deposit') },
-    { icon: Upload, label: 'Withdraw', action: () => setSubView('withdraw') },
+    { icon: Upload, label: 'Withdraw', action: () => withdrawableAssets.length > 0 ? setSubView('withdraw') : toast.error('No balance available for withdrawal') },
     { icon: ArrowLeftRight, label: 'Convert', action: () => setSubView('convert') },
     { icon: Clock, label: 'History', action: () => setSubView('history') },
   ];

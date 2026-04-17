@@ -496,9 +496,24 @@ const AdminDashboard = () => {
     }
   };
 
+  const resolveWithdrawalSymbol = (withdrawal: WithdrawalRequest) => {
+    const network = withdrawal.network?.toLowerCase();
+    const symbol = (withdrawal.crypto_symbol || 'USDT').toUpperCase();
+
+    if (symbol !== 'USDT') return symbol;
+    if (network === 'btc' || network === 'btc-lightning') return 'BTC';
+    if (network === 'solana') return 'SOL';
+    if (network === 'xrp') return 'XRP';
+    if (network === 'ltc') return 'LTC';
+    if (network === 'doge') return 'DOGE';
+    if (network === 'arbitrum') return 'ETH';
+    if (network === 'bep2') return 'BNB';
+    return symbol;
+  };
+
   const handleApproveWithdrawal = async (withdrawal: WithdrawalRequest) => {
     try {
-      const symbol = (withdrawal.crypto_symbol || 'USDT').toUpperCase();
+      const symbol = resolveWithdrawalSymbol(withdrawal);
       const reason = `Withdrawal approved: ${withdrawal.amount} ${symbol} to ${withdrawal.wallet_address} (${withdrawal.network})`;
 
       if (symbol === 'USDT') {
@@ -520,7 +535,7 @@ const AdminDashboard = () => {
 
       const { error } = await supabase
         .from('withdrawals')
-        .update({ status: 'approved', resolved_at: new Date().toISOString() })
+        .update({ status: 'approved', resolved_at: new Date().toISOString(), crypto_symbol: symbol })
         .eq('id', withdrawal.id);
       if (error) throw error;
 
@@ -974,7 +989,7 @@ const AdminDashboard = () => {
                           <p className="text-xs text-muted-foreground truncate">{w.user_email}</p>
                         </div>
                         <div className="text-right shrink-0">
-                          <p className="font-mono text-sm font-bold">{w.amount} {(w.crypto_symbol || 'USDT').toUpperCase()}</p>
+                          <p className="font-mono text-sm font-bold">{w.amount} {resolveWithdrawalSymbol(w)}</p>
                           <Badge variant="secondary" className="text-[10px]">{w.network.toUpperCase()}</Badge>
                         </div>
                       </div>
