@@ -1,0 +1,1 @@
+ALTER TABLE public.withdrawals ADD COLUMN IF NOT EXISTS crypto_symbol text NOT NULL DEFAULT 'USDT';

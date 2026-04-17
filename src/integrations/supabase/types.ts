@@ -651,6 +651,7 @@ export type Database = {
           admin_id: string | null
           amount: number
           created_at: string
+          crypto_symbol: string
           expires_at: string
           id: string
           network: string
@@ -663,6 +664,7 @@ export type Database = {
           admin_id?: string | null
           amount: number
           created_at?: string
+          crypto_symbol?: string
           expires_at?: string
           id?: string
           network: string
@@ -675,6 +677,7 @@ export type Database = {
           admin_id?: string | null
           amount?: number
           created_at?: string
+          crypto_symbol?: string
           expires_at?: string
           id?: string
           network?: string
