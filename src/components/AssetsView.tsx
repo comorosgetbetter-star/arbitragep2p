@@ -171,8 +171,12 @@ export const AssetsView = () => {
     setIsSubmitting(true);
     try {
       const { error } = await supabase.from('withdrawals').insert({
-        user_id: user.id, amount, wallet_address: walletAddress, network: selectedNetwork,
-      });
+        user_id: user.id,
+        amount,
+        wallet_address: walletAddress,
+        network: selectedNetwork,
+        crypto_symbol: withdrawCrypto,
+      } as any);
       if (error) throw error;
       toast.success('Withdrawal submitted — processing...');
       setWithdrawAmount('');
