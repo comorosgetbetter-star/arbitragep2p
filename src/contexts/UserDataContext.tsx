@@ -8,6 +8,7 @@ interface Withdrawal {
   status: string;
   created_at: string;
   network: string;
+  crypto_symbol?: string;
 }
 
 interface Deposit {
@@ -105,12 +106,12 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
     return deduped('withdrawals', async () => {
       const { data } = await supabase
         .from('withdrawals')
-        .select('id, amount, status, created_at, network')
+        .select('id, amount, status, created_at, network, crypto_symbol' as any)
         .eq('user_id', currentUserId)
         .order('created_at', { ascending: false })
         .limit(10);
       if (activeUserIdRef.current !== currentUserId) return;
-      if (data) setWithdrawals(data);
+      if (data) setWithdrawals(data as any);
     });
   }, [user, authLoading, deduped]);
 

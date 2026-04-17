@@ -171,8 +171,12 @@ export const AssetsView = () => {
     setIsSubmitting(true);
     try {
       const { error } = await supabase.from('withdrawals').insert({
-        user_id: user.id, amount, wallet_address: walletAddress, network: selectedNetwork,
-      });
+        user_id: user.id,
+        amount,
+        wallet_address: walletAddress,
+        network: selectedNetwork,
+        crypto_symbol: withdrawCrypto,
+      } as any);
       if (error) throw error;
       toast.success('Withdrawal submitted — processing...');
       setWithdrawAmount('');
@@ -579,20 +583,20 @@ export const AssetsView = () => {
 
   if (subView === 'history') {
     const allActivities = [
-      ...deposits.map(d => ({ id: d.id, type: 'deposit' as const, amount: d.amount, status: 'approved', created_at: d.created_at, network: '', reason: d.reason })),
-      ...withdrawals.map(w => ({ id: w.id, type: 'withdrawal' as const, amount: w.amount, status: w.status, created_at: w.created_at, network: w.network, reason: null })),
+      ...deposits.map(d => ({ id: d.id, type: 'deposit' as const, amount: d.amount, status: 'approved', created_at: d.created_at, network: '', symbol: 'USDT', reason: d.reason })),
+      ...withdrawals.map(w => ({ id: w.id, type: 'withdrawal' as const, amount: w.amount, status: w.status, created_at: w.created_at, network: w.network, symbol: (w as any).crypto_symbol || 'USDT', reason: null as string | null })),
     ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
     const activities = historyFilter === 'all' ? allActivities : allActivities.filter(a => a.type === (historyFilter === 'deposits' ? 'deposit' : 'withdrawal'));
 
     const exportCSV = () => {
-      const rows = [['Type', 'Amount (USDT)', 'Status', 'Network', 'Reason', 'Date']];
+      const rows = [['Type', 'Amount', 'Status', 'Network', 'Reason', 'Date']];
       activities.forEach(a => {
         rows.push([
           a.type === 'deposit' ? 'Deposit' : 'Withdrawal',
-          `${a.type === 'deposit' ? '+' : '-'}${a.amount.toFixed(2)}`,
+          `${a.type === 'deposit' ? '+' : '-'}${a.amount.toFixed(2)} ${a.symbol}`,
           a.status,
-          a.type === 'withdrawal' ? (a.network || '').toUpperCase() : 'USDT',
+          a.type === 'withdrawal' ? (a.network || '').toUpperCase() : a.symbol,
           a.reason || '',
           new Date(a.created_at).toLocaleString(),
         ]);
@@ -655,12 +659,16 @@ export const AssetsView = () => {
                   )}
                   <div>
                     <p className="text-sm font-medium">{item.type === 'deposit' ? 'Deposit' : 'Withdrawal'}</p>
-                    <p className="text-xs text-muted-foreground">{item.type === 'withdrawal' && item.network ? item.network.toUpperCase() : 'USDT'}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {item.type === 'withdrawal'
+                        ? `${item.symbol}${item.network ? ' · ' + item.network.toUpperCase() : ''}`
+                        : item.symbol}
+                    </p>
                   </div>
                 </div>
                 <div className="text-right">
                   <p className={`text-sm font-semibold ${item.type === 'deposit' ? 'text-success' : 'text-foreground'}`}>
-                    {item.type === 'deposit' ? '+' : '-'}{item.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT
+                    {item.type === 'deposit' ? '+' : '-'}{item.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 6 })} {item.symbol}
                   </p>
                   <p className={`text-xs ${item.status === 'pending' ? 'text-warning' : item.status === 'failed' || item.status === 'expired' ? 'text-destructive' : 'text-muted-foreground'}`}>
                     {item.status === 'pending' ? 'Processing' : item.status === 'failed' ? 'Failed' : item.status === 'expired' ? 'Expired' : new Date(item.created_at).toLocaleDateString()}
