@@ -312,6 +312,7 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
       const actualProfit = calculateSessionAccruedProfit(session, Date.now());
       const { error } = await supabase.rpc('cancel_staking', { _session_id: session.id });
       if (error) throw error;
+      try { localStorage.removeItem(storageKey); } catch {}
       toast({ title: 'Profits collected ✅', description: `$${fmt(actualProfit)} profit returned to your balance.` });
       setCollected(true);
     } catch (err: any) {
@@ -319,7 +320,7 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
     } finally {
       setCancelling(false);
     }
-  }, [session, toast]);
+  }, [session, toast, storageKey]);
 
   return (
     <div className="fixed inset-0 z-50 bg-background flex flex-col animate-fade-in">
