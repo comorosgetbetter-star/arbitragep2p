@@ -94,17 +94,51 @@ const calculateSessionEstimatedProfit = (session: FlywheelSession) => {
 // Full-page Deriv-style active bot view
 const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSession; onCancelled: () => void; onBack: () => void }) => {
   const { toast } = useToast();
+  const storageKey = `flywheel-state-${session.id}`;
+  const initialState = (() => {
+    try {
+      const raw = localStorage.getItem(storageKey);
+      if (raw) return JSON.parse(raw) as { trades: TradeRound[]; cumulativeNet: number; targetVariance: number; roundId: number };
+    } catch {}
+    return null;
+  })();
   const [cancelling, setCancelling] = useState(false);
   const [collected, setCollected] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [now, setNow] = useState(Date.now());
-  const [trades, setTrades] = useState<TradeRound[]>([]);
+  const [trades, setTrades] = useState<TradeRound[]>(initialState?.trades ?? []);
   const [isTrading, setIsTrading] = useState(false);
   const [tradingCountdown, setTradingCountdown] = useState(0);
   const [lastResult, setLastResult] = useState<TradeRound | null>(null);
-  const roundIdRef = useRef(0);
-  const cumulativeNetRef = useRef(0);
+  const roundIdRef = useRef(initialState?.roundId ?? 0);
+  const cumulativeNetRef = useRef(initialState?.cumulativeNet ?? 0);
   const tradesEndRef = useRef<HTMLDivElement>(null);
+  const wakeLockRef = useRef<any>(null);
+
+  // Keep screen awake while bot runs (prevents data loss on screen-off)
+  useEffect(() => {
+    let cancelled = false;
+    const requestWakeLock = async () => {
+      try {
+        // @ts-ignore
+        if ('wakeLock' in navigator && navigator.wakeLock?.request) {
+          // @ts-ignore
+          wakeLockRef.current = await navigator.wakeLock.request('screen');
+        }
+      } catch {}
+    };
+    requestWakeLock();
+    const onVisible = () => {
+      if (document.visibilityState === 'visible' && !wakeLockRef.current && !cancelled) requestWakeLock();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      cancelled = true;
+      document.removeEventListener('visibilitychange', onVisible);
+      try { wakeLockRef.current?.release?.(); } catch {}
+      wakeLockRef.current = null;
+    };
+  }, []);
 
   useEffect(() => {
     const interval = setInterval(() => setNow(Date.now()), 1000);
@@ -135,10 +169,22 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
   // Variance scales with the expected profit for this session (based on staked amount & rate)
   const expectedFullProfit = calculateSessionEstimatedProfit(session);
   const targetVarianceRef = useRef(
-    (Math.random() < 0.5 ? -1 : 1) * expectedFullProfit * (0.1 + Math.random() * 0.05)
+    initialState?.targetVariance ?? (Math.random() < 0.5 ? -1 : 1) * expectedFullProfit * (0.1 + Math.random() * 0.05)
   );
   // Base trade size scales with staked amount (~0.3-0.5% per trade)
   const baseTradeSize = session.staked_amount * 0.004;
+
+  // Persist live state so screen-off / page-kill doesn't lose trades & profits
+  useEffect(() => {
+    try {
+      localStorage.setItem(storageKey, JSON.stringify({
+        trades,
+        cumulativeNet: cumulativeNetRef.current,
+        targetVariance: targetVarianceRef.current,
+        roundId: roundIdRef.current,
+      }));
+    } catch {}
+  }, [trades, storageKey]);
 
   useEffect(() => {
     if (isCompleted || session.status !== 'active') return;
@@ -266,6 +312,7 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
       const actualProfit = calculateSessionAccruedProfit(session, Date.now());
       const { error } = await supabase.rpc('cancel_staking', { _session_id: session.id });
       if (error) throw error;
+      try { localStorage.removeItem(storageKey); } catch {}
       toast({ title: 'Profits collected ✅', description: `$${fmt(actualProfit)} profit returned to your balance.` });
       setCollected(true);
     } catch (err: any) {
@@ -273,7 +320,7 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
     } finally {
       setCancelling(false);
     }
-  }, [session, toast]);
+  }, [session, toast, storageKey]);
 
   return (
     <div className="fixed inset-0 z-50 bg-background flex flex-col animate-fade-in">
