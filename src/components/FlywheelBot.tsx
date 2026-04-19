@@ -94,17 +94,51 @@ const calculateSessionEstimatedProfit = (session: FlywheelSession) => {
 // Full-page Deriv-style active bot view
 const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSession; onCancelled: () => void; onBack: () => void }) => {
   const { toast } = useToast();
+  const storageKey = `flywheel-state-${session.id}`;
+  const initialState = (() => {
+    try {
+      const raw = localStorage.getItem(storageKey);
+      if (raw) return JSON.parse(raw) as { trades: TradeRound[]; cumulativeNet: number; targetVariance: number; roundId: number };
+    } catch {}
+    return null;
+  })();
   const [cancelling, setCancelling] = useState(false);
   const [collected, setCollected] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [now, setNow] = useState(Date.now());
-  const [trades, setTrades] = useState<TradeRound[]>([]);
+  const [trades, setTrades] = useState<TradeRound[]>(initialState?.trades ?? []);
   const [isTrading, setIsTrading] = useState(false);
   const [tradingCountdown, setTradingCountdown] = useState(0);
   const [lastResult, setLastResult] = useState<TradeRound | null>(null);
-  const roundIdRef = useRef(0);
-  const cumulativeNetRef = useRef(0);
+  const roundIdRef = useRef(initialState?.roundId ?? 0);
+  const cumulativeNetRef = useRef(initialState?.cumulativeNet ?? 0);
   const tradesEndRef = useRef<HTMLDivElement>(null);
+  const wakeLockRef = useRef<any>(null);
+
+  // Keep screen awake while bot runs (prevents data loss on screen-off)
+  useEffect(() => {
+    let cancelled = false;
+    const requestWakeLock = async () => {
+      try {
+        // @ts-ignore
+        if ('wakeLock' in navigator && navigator.wakeLock?.request) {
+          // @ts-ignore
+          wakeLockRef.current = await navigator.wakeLock.request('screen');
+        }
+      } catch {}
+    };
+    requestWakeLock();
+    const onVisible = () => {
+      if (document.visibilityState === 'visible' && !wakeLockRef.current && !cancelled) requestWakeLock();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      cancelled = true;
+      document.removeEventListener('visibilitychange', onVisible);
+      try { wakeLockRef.current?.release?.(); } catch {}
+      wakeLockRef.current = null;
+    };
+  }, []);
 
   useEffect(() => {
     const interval = setInterval(() => setNow(Date.now()), 1000);
