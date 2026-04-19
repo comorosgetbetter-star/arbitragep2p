@@ -215,7 +215,7 @@ export const BotsView = () => {
       </div>
 
       <div className="flex items-center justify-between px-1">
-        <span className="text-sm font-semibold text-muted-foreground uppercase tracking-widest">Trading Bots</span>
+        <span className="text-sm font-semibold text-muted-foreground uppercase tracking-widest">Trade AI</span>
         <span className="text-xs text-muted-foreground font-medium">{bots.length} available</span>
       </div>
 
