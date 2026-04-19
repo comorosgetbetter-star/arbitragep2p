@@ -169,10 +169,22 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
   // Variance scales with the expected profit for this session (based on staked amount & rate)
   const expectedFullProfit = calculateSessionEstimatedProfit(session);
   const targetVarianceRef = useRef(
-    (Math.random() < 0.5 ? -1 : 1) * expectedFullProfit * (0.1 + Math.random() * 0.05)
+    initialState?.targetVariance ?? (Math.random() < 0.5 ? -1 : 1) * expectedFullProfit * (0.1 + Math.random() * 0.05)
   );
   // Base trade size scales with staked amount (~0.3-0.5% per trade)
   const baseTradeSize = session.staked_amount * 0.004;
+
+  // Persist live state so screen-off / page-kill doesn't lose trades & profits
+  useEffect(() => {
+    try {
+      localStorage.setItem(storageKey, JSON.stringify({
+        trades,
+        cumulativeNet: cumulativeNetRef.current,
+        targetVariance: targetVarianceRef.current,
+        roundId: roundIdRef.current,
+      }));
+    } catch {}
+  }, [trades, storageKey]);
 
   useEffect(() => {
     if (isCompleted || session.status !== 'active') return;
