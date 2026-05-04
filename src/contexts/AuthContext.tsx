@@ -141,12 +141,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       void validateSession(shouldBlockUi, true);
     });
 
+    let lastResumeAt = 0;
     const handleAppResume = () => {
       if (document.visibilityState === 'hidden') {
         return;
       }
-
-      void validateSession(true, true);
+      // Throttle to once per 60s and never block the UI — Supabase will
+      // auto-refresh the token in the background.
+      const now = Date.now();
+      if (now - lastResumeAt < 60_000) return;
+      lastResumeAt = now;
+      void validateSession(false, true);
     };
 
     void validateSession(true, true);
