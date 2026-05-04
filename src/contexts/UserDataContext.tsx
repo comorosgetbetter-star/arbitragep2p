@@ -198,7 +198,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
       .subscribe();
 
     const depositChannel = supabase
-      .channel('global-deposits')
+      .channel(`user-deposits-${user.id}`)
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
