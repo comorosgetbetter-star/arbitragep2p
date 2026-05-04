@@ -71,6 +71,7 @@ const Login = () => {
 
       if (data.user) {
         clearTradeStorage();
+        await supabase.auth.getSession();
         toast({
           title: "Welcome back!",
           description: "You have successfully logged in.",
