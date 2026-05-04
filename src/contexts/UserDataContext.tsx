@@ -76,7 +76,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
   const fetchBalance = useCallback(async () => {
     if (!user || authLoading) return;
     const currentUserId = user.id;
-    return deduped('balance', async () => {
+    return deduped(`balance-${currentUserId}`, async () => {
       const { data } = await supabase
         .from('user_balances')
         .select('usdt_balance')
@@ -90,7 +90,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
   const fetchCryptoBalances = useCallback(async () => {
     if (!user || authLoading) return;
     const currentUserId = user.id;
-    return deduped('crypto', async () => {
+    return deduped(`crypto-${currentUserId}`, async () => {
       const { data } = await supabase
         .from('user_crypto_balances')
         .select('symbol, amount')
@@ -103,7 +103,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
   const fetchWithdrawals = useCallback(async () => {
     if (!user || authLoading) return;
     const currentUserId = user.id;
-    return deduped('withdrawals', async () => {
+    return deduped(`withdrawals-${currentUserId}`, async () => {
       const { data } = await supabase
         .from('withdrawals')
         .select('id, amount, status, created_at, network, crypto_symbol' as any)
@@ -118,7 +118,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
   const fetchDeposits = useCallback(async () => {
     if (!user || authLoading) return;
     const currentUserId = user.id;
-    return deduped('deposits', async () => {
+    return deduped(`deposits-${currentUserId}`, async () => {
       const { data } = await supabase
         .from('deposits')
         .select('id, amount, reason, created_at')
