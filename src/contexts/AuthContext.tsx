@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { User } from '@supabase/supabase-js';
 import { clearPendingTrade, clearTradeStorage } from '@/lib/tradeSessionStorage';
@@ -34,6 +34,7 @@ const clearSensitiveClientState = (includePendingTrade = false) => {
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const authEventVersion = useRef(0);
 
   useEffect(() => {
     let isMounted = true;
@@ -45,10 +46,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const initializeSession = async () => {
+      const startedAtVersion = authEventVersion.current;
       try {
         const { data: { session } } = await supabase.auth.getSession();
+        if (startedAtVersion !== authEventVersion.current) return;
         applyUser(session?.user ?? null);
       } catch (error) {
+        if (startedAtVersion !== authEventVersion.current) return;
         console.error('[Auth] Failed to restore session:', error);
         applyUser(null);
       }
@@ -56,6 +60,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!isMounted) return;
+      authEventVersion.current += 1;
       console.log('[Auth] event:', event, 'authenticated:', !!session?.user);
 
       if (event === 'SIGNED_OUT') {
