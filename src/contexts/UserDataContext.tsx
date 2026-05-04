@@ -160,7 +160,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
     });
 
     const balanceChannel = supabase
-      .channel('global-balance')
+      .channel(`user-balance-${user.id}`)
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
