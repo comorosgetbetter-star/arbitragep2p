@@ -600,7 +600,7 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
     fetchSessions();
     if (!user) return;
     const channel = supabase
-      .channel('flywheel-sessions')
+      .channel(`flywheel-sessions-${user.id}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'staking_sessions', filter: `user_id=eq.${user.id}` }, () => {
         fetchSessions();
       })

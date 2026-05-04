@@ -72,7 +72,7 @@ export const StakingView = () => {
     fetchSessions();
     if (!user) return;
     const channel = supabase
-      .channel('staking-sessions')
+      .channel(`staking-sessions-${user.id}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'staking_sessions', filter: `user_id=eq.${user.id}` }, () => {
         fetchSessions();
       })
