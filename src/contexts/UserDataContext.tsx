@@ -174,7 +174,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
       .subscribe();
 
     const cryptoChannel = supabase
-      .channel('global-crypto-balances')
+      .channel(`user-crypto-${user.id}`)
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
