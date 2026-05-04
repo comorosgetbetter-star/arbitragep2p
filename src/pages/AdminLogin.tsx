@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Shield, Eye, EyeOff, Lock } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { adminSupabase } from '@/lib/adminSupabase';
 import { toast } from 'sonner';
 
 const AdminLogin = () => {
@@ -21,7 +21,7 @@ const AdminLogin = () => {
 
     try {
       // Sign in with Supabase auth
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      const { data: authData, error: authError } = await adminSupabase.auth.signInWithPassword({
         email,
         password,
       });
@@ -33,7 +33,7 @@ const AdminLogin = () => {
       }
 
       // Check if user has admin role
-      const { data: roleData, error: roleError } = await supabase
+      const { data: roleData, error: roleError } = await adminSupabase
         .from('user_roles')
         .select('role')
         .eq('user_id', authData.user.id)
@@ -42,14 +42,14 @@ const AdminLogin = () => {
 
       if (roleError || !roleData) {
         // Not an admin, sign out
-        await supabase.auth.signOut();
+        await adminSupabase.auth.signOut();
         toast.error('Access denied. Admin privileges required.');
         setIsLoading(false);
         return;
       }
 
       // Log admin login (non-blocking)
-      supabase.from('admin_audit_logs').insert({
+      adminSupabase.from('admin_audit_logs').insert({
         admin_id: authData.user.id,
         action: 'ADMIN_LOGIN',
         details: { timestamp: new Date().toISOString() },

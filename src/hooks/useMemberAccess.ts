@@ -6,6 +6,7 @@ export const useMemberAccess = () => {
   const { user, loading: authLoading } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
   const [roleLoading, setRoleLoading] = useState(false);
+  const [checkedUserId, setCheckedUserId] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -16,10 +17,12 @@ export const useMemberAccess = () => {
       if (!user) {
         setIsAdmin(false);
         setRoleLoading(false);
+        setCheckedUserId(null);
         return;
       }
 
       setRoleLoading(true);
+      setCheckedUserId(null);
 
       const { data, error } = await supabase
         .from('user_roles')
@@ -37,6 +40,7 @@ export const useMemberAccess = () => {
         setIsAdmin(!!data);
       }
 
+      setCheckedUserId(user.id);
       setRoleLoading(false);
     };
 
@@ -47,7 +51,7 @@ export const useMemberAccess = () => {
     };
   }, [user, authLoading]);
 
-  const loading = authLoading || (!!user && roleLoading);
+  const loading = authLoading || (!!user && (roleLoading || checkedUserId !== user.id));
 
   return {
     user,

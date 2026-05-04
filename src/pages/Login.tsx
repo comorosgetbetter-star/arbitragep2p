@@ -38,9 +38,13 @@ const Login = () => {
     e.preventDefault();
     setIsSubmitting(true);
     setErrors({});
+    const submittedForm = new FormData(e.currentTarget as HTMLFormElement);
     
     try {
-      const validatedData = loginSchema.parse(formData);
+      const validatedData = loginSchema.parse({
+        email: String(submittedForm.get('email') || formData.email),
+        password: String(submittedForm.get('password') || formData.password),
+      });
       
       const { data, error } = await supabase.auth.signInWithPassword({
         email: validatedData.email,
@@ -71,6 +75,7 @@ const Login = () => {
 
       if (data.user) {
         clearTradeStorage();
+        await supabase.auth.getSession();
         toast({
           title: "Welcome back!",
           description: "You have successfully logged in.",
@@ -135,6 +140,7 @@ const Login = () => {
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="email"
+                  name="email"
                   type="email"
                   placeholder="john@example.com"
                   value={formData.email}
@@ -152,6 +158,7 @@ const Login = () => {
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="password"
+                  name="password"
                   type={showPassword ? 'text' : 'password'}
                   placeholder="••••••••"
                   value={formData.password}

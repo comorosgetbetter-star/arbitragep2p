@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { adminSupabase } from '@/lib/adminSupabase';
 import { toast } from 'sonner';
 import { Plus, Trash2, ToggleLeft, ToggleRight, Pencil } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -55,7 +55,7 @@ export const AdminP2POrderManager = () => {
   const [form, setForm] = useState(emptyForm);
 
   const fetchOrders = async () => {
-    const { data } = await supabase
+    const { data } = await adminSupabase
       .from('p2p_orders')
       .select('*')
       .order('created_at', { ascending: false });
@@ -120,14 +120,14 @@ export const AdminP2POrderManager = () => {
     setIsSubmitting(true);
     try {
       if (editingOrder) {
-        const { error } = await supabase
+        const { error } = await adminSupabase
           .from('p2p_orders')
           .update(payload)
           .eq('id', editingOrder.id);
         if (error) throw error;
         toast.success('Order updated');
       } else {
-        const { error } = await supabase.from('p2p_orders').insert(payload);
+        const { error } = await adminSupabase.from('p2p_orders').insert(payload);
         if (error) throw error;
         toast.success('Order created');
       }
@@ -144,7 +144,7 @@ export const AdminP2POrderManager = () => {
   };
 
   const toggleActive = async (order: P2POrder) => {
-    const { error } = await supabase
+    const { error } = await adminSupabase
       .from('p2p_orders')
       .update({ is_active: !order.is_active })
       .eq('id', order.id);
@@ -156,7 +156,7 @@ export const AdminP2POrderManager = () => {
   };
 
   const deleteOrder = async (id: string) => {
-    const { error } = await supabase.from('p2p_orders').delete().eq('id', id);
+    const { error } = await adminSupabase.from('p2p_orders').delete().eq('id', id);
     if (error) toast.error('Failed to delete');
     else {
       toast.success('Order deleted');

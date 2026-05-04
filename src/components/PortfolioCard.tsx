@@ -4,6 +4,7 @@ import { useUserData } from '@/contexts/UserDataContext';
 import { useCryptoPrices } from '@/hooks/useCryptoPrices';
 import { useState, useEffect } from 'react';
 import { PortfolioSkeleton } from '@/components/skeletons/PortfolioSkeleton';
+import { calculatePortfolioValue, formatUsd } from '@/lib/portfolioValue';
 
 export const PortfolioCard = () => {
   const { user, loading: authLoading } = useAuth();
@@ -23,17 +24,10 @@ export const PortfolioCard = () => {
   }
 
 
-  const totalPortfolioValue = (() => {
-    let total = balance;
-    cryptoBalances.forEach((cb) => {
-      const p = prices.find(pr => pr.symbol === cb.symbol);
-      if (p) total += cb.amount * p.price;
-    });
-    return total;
-  })();
+  const totalPortfolioValue = calculatePortfolioValue(balance, cryptoBalances, prices);
 
   const displayBalance = user
-    ? new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: true }).format(totalPortfolioValue).replace(/\s/g, '')
+    ? formatUsd(totalPortfolioValue)
     : '0.00';
 
   const effectiveHidden = user ? hidden : true;

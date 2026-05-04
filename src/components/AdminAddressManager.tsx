@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { supabase } from '@/integrations/supabase/client';
+import { adminSupabase } from '@/lib/adminSupabase';
 import { toast } from 'sonner';
 
 interface UsdtAddress {
@@ -40,15 +40,15 @@ export const AdminAddressManager = () => {
 
   useEffect(() => {
     fetchAddresses();
-    const channel = supabase
+    const channel = adminSupabase
       .channel('admin-addresses')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'usdt_addresses' }, () => fetchAddresses())
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    return () => { adminSupabase.removeChannel(channel); };
   }, []);
 
   const fetchAddresses = async () => {
-    const { data } = await supabase
+    const { data } = await adminSupabase
       .from('usdt_addresses')
       .select('*')
       .order('address_type')
@@ -61,7 +61,7 @@ export const AdminAddressManager = () => {
     setIsAdding(true);
     try {
       const maxOrder = addresses.filter(a => a.address_type === newType).length;
-      const { error } = await supabase.from('usdt_addresses').insert({
+      const { error } = await adminSupabase.from('usdt_addresses').insert({
         address: newAddress.trim(),
         network: newNetwork,
         address_type: newType,
@@ -79,7 +79,7 @@ export const AdminAddressManager = () => {
 
   const handleDelete = async (id: string) => {
     try {
-      const { error } = await supabase.from('usdt_addresses').delete().eq('id', id);
+      const { error } = await adminSupabase.from('usdt_addresses').delete().eq('id', id);
       if (error) throw error;
       toast.success('Address removed');
     } catch {

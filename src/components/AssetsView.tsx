@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { calculatePortfolioValue, formatUsd } from '@/lib/portfolioValue';
 
 type AssetsSubView = 'main' | 'deposit' | 'withdraw' | 'withdraw-form' | 'convert' | 'history';
 type HistoryFilter = 'all' | 'deposits' | 'withdrawals';
@@ -107,39 +108,11 @@ export const AssetsView = () => {
   const [showFromPicker, setShowFromPicker] = useState(false);
   const [showToPicker, setShowToPicker] = useState(false);
 
-  // Compute total portfolio value (USDT balance + all crypto holdings at current prices)
-  // Use a stable price snapshot to avoid jumps from simulated price ticks
-  const [stablePrices, setStablePrices] = useState<Record<string, number>>({});
-  useEffect(() => {
-    // Update stable prices only every 30 seconds to prevent visual jumps
-    const updateStable = () => {
-      const map: Record<string, number> = {};
-      prices.forEach(p => { map[p.symbol] = p.price; });
-      setStablePrices(map);
-    };
-    updateStable();
-    const interval = setInterval(updateStable, 30000);
-    return () => clearInterval(interval);
-  }, []);
-  // Also update when crypto balances actually change (conversion, deposit, etc.)
-  useEffect(() => {
-    const map: Record<string, number> = {};
-    prices.forEach(p => { map[p.symbol] = p.price; });
-    setStablePrices(map);
-  }, [balance, cryptoBalances]);
-
-  const totalPortfolioValue = (() => {
-    let total = balance; // USDT balance
-    cryptoBalances.forEach((cb) => {
-      const price = stablePrices[cb.symbol] || prices.find(pr => pr.symbol === cb.symbol)?.price || 0;
-      total += cb.amount * price;
-    });
-    return total;
-  })();
+  const totalPortfolioValue = calculatePortfolioValue(balance, cryptoBalances, prices);
 
   const displayBalance = hidden
     ? '****'
-    : totalPortfolioValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    : formatUsd(totalPortfolioValue);
 
   const recentDeposits = deposits.filter((d) => {
     const age = Date.now() - new Date(d.created_at).getTime();
@@ -261,7 +234,7 @@ export const AssetsView = () => {
         ) : (
           <div className="space-y-2">
             {withdrawableAssets.map((asset) => {
-              const price = asset.symbol === 'USDT' ? 1 : (stablePrices[asset.symbol] || 0);
+              const price = asset.symbol === 'USDT' ? 1 : (prices.find(p => p.symbol === asset.symbol)?.price || 0);
               const usdValue = asset.amount * price;
               return (
                 <button

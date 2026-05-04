@@ -1,9 +1,7 @@
-import { createContext, useContext, useEffect, useState, useRef, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { User } from '@supabase/supabase-js';
 import { clearPendingTrade, clearTradeStorage } from '@/lib/tradeSessionStorage';
-
-const AUTH_RECOVERY_DELAY_MS = 900;
 
 interface AuthContextType {
   user: User | null;
@@ -36,133 +34,49 @@ const clearSensitiveClientState = (includePendingTrade = false) => {
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const initialSessionHandled = useRef(false);
-  const validationInFlight = useRef<Promise<void> | null>(null);
-
-  const waitForAuthRecovery = () => new Promise((resolve) => setTimeout(resolve, AUTH_RECOVERY_DELAY_MS));
+  const authEventVersion = useRef(0);
 
   useEffect(() => {
     let isMounted = true;
 
-    const finishLoading = () => {
-      if (!isMounted) return;
-      initialSessionHandled.current = true;
-      setLoading(false);
-    };
-
     const applyUser = (nextUser: User | null) => {
       if (!isMounted) return;
       setUser(nextUser);
+      setLoading(false);
     };
 
-    const purgeInvalidSession = async () => {
+    const initializeSession = async () => {
+      const startedAtVersion = authEventVersion.current;
       try {
-        await supabase.auth.signOut({ scope: 'local' });
+        const { data: { session } } = await supabase.auth.getSession();
+        if (startedAtVersion !== authEventVersion.current) return;
+        applyUser(session?.user ?? null);
       } catch (error) {
-        console.warn('[Auth] Failed to clear in-memory session cleanly:', error);
-      } finally {
-        clearSensitiveClientState();
+        if (startedAtVersion !== authEventVersion.current) return;
+        console.error('[Auth] Failed to restore session:', error);
         applyUser(null);
       }
-    };
-
-    const validateSession = (blockUi = false, allowRetry = false) => {
-      if (validationInFlight.current) return validationInFlight.current;
-
-      const validationTask = (async () => {
-        if (blockUi && isMounted) {
-          setLoading(true);
-        }
-
-        try {
-          let attempt = 0;
-
-          while (true) {
-            const { data: { session } } = await supabase.auth.getSession();
-
-            if (!isMounted) return;
-
-            if (!session) {
-              if (allowRetry && attempt === 0) {
-                attempt += 1;
-                await waitForAuthRecovery();
-                continue;
-              }
-
-              clearSensitiveClientState();
-              applyUser(null);
-              return;
-            }
-
-            const { data, error } = await supabase.auth.getUser();
-
-            if (!isMounted) return;
-
-            if (!error && data.user) {
-              applyUser(data.user);
-              return;
-            }
-
-            if (allowRetry && attempt === 0) {
-              attempt += 1;
-              await waitForAuthRecovery();
-              continue;
-            }
-
-            console.warn('[Auth] Session validation failed, clearing local auth state');
-            await purgeInvalidSession();
-            return;
-          }
-        } catch (e) {
-          console.error('[Auth] Session validation error:', e);
-          await purgeInvalidSession();
-        } finally {
-          validationInFlight.current = null;
-          finishLoading();
-        }
-      })();
-
-      validationInFlight.current = validationTask;
-      return validationTask;
     };
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!isMounted) return;
+      if (event !== 'INITIAL_SESSION') {
+        authEventVersion.current += 1;
+      }
       console.log('[Auth] event:', event, 'authenticated:', !!session?.user);
 
       if (event === 'SIGNED_OUT') {
         clearSensitiveClientState(true);
-        applyUser(null);
-        finishLoading();
-        return;
       }
 
-      const shouldBlockUi = !initialSessionHandled.current || event === 'SIGNED_IN';
-      void validateSession(shouldBlockUi, true);
+      applyUser(session?.user ?? null);
     });
 
-    let lastResumeAt = 0;
-    const handleAppResume = () => {
-      if (document.visibilityState === 'hidden') {
-        return;
-      }
-      // Throttle to once per 60s and never block the UI — Supabase will
-      // auto-refresh the token in the background.
-      const now = Date.now();
-      if (now - lastResumeAt < 60_000) return;
-      lastResumeAt = now;
-      void validateSession(false, true);
-    };
-
-    void validateSession(true, true);
-    window.addEventListener('focus', handleAppResume);
-    document.addEventListener('visibilitychange', handleAppResume);
+    void initializeSession();
 
     return () => {
       isMounted = false;
       subscription.unsubscribe();
-      window.removeEventListener('focus', handleAppResume);
-      document.removeEventListener('visibilitychange', handleAppResume);
     };
   }, []);
 

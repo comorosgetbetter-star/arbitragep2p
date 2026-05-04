@@ -54,7 +54,7 @@ export const AccountDropdown = () => {
     fetchUnread();
 
     const channel = supabase
-      .channel('account-ticket-notify')
+      .channel(`account-ticket-notify-${user.id}`)
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',

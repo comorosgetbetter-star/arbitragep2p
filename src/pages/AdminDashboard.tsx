@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
+import { adminSupabase } from '@/lib/adminSupabase';
 import { toast } from 'sonner';
 import { useCryptoPrices } from '@/hooks/useCryptoPrices';
 import { 
@@ -156,7 +156,7 @@ const AdminDashboard = () => {
 
   // Subscribe to withdrawal changes in realtime
   useEffect(() => {
-    const channel = supabase
+    const channel = adminSupabase
       .channel('admin-withdrawals')
       .on('postgres_changes', {
         event: '*',
@@ -167,12 +167,12 @@ const AdminDashboard = () => {
       })
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    return () => { adminSupabase.removeChannel(channel); };
   }, [members]);
 
   // Subscribe to ticket changes in realtime
   useEffect(() => {
-    const channel = supabase
+    const channel = adminSupabase
       .channel('admin-tickets')
       .on('postgres_changes', {
         event: '*',
@@ -192,18 +192,18 @@ const AdminDashboard = () => {
       })
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    return () => { adminSupabase.removeChannel(channel); };
   }, [members, selectedTicket]);
 
   const checkAdminAccess = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { session } } = await adminSupabase.auth.getSession();
     
     if (!session) {
       navigate('/alpha02');
       return;
     }
 
-    const { data: roleData } = await supabase
+    const { data: roleData } = await adminSupabase
       .from('user_roles')
       .select('role')
       .eq('user_id', session.user.id)
@@ -220,7 +220,7 @@ const AdminDashboard = () => {
   };
 
   const fetchWithdrawals = async () => {
-    const { data } = await supabase
+    const { data } = await adminSupabase
       .from('withdrawals')
       .select('*')
       .order('created_at', { ascending: false })
@@ -240,7 +240,7 @@ const AdminDashboard = () => {
   };
 
   const fetchTickets = async () => {
-    const { data } = await supabase
+    const { data } = await adminSupabase
       .from('support_tickets')
       .select('*')
       .order('updated_at', { ascending: false })
@@ -248,7 +248,7 @@ const AdminDashboard = () => {
 
     if (data) {
       const ticketIds = data.map(t => t.id);
-      const { data: messages } = await supabase
+      const { data: messages } = await adminSupabase
         .from('ticket_messages')
         .select('*')
         .in('ticket_id', ticketIds)
@@ -269,7 +269,7 @@ const AdminDashboard = () => {
   };
 
   const fetchTicketMessages = async (ticketId: string) => {
-    const { data } = await supabase
+    const { data } = await adminSupabase
       .from('ticket_messages')
       .select('*')
       .eq('ticket_id', ticketId)
@@ -281,22 +281,22 @@ const AdminDashboard = () => {
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      const { data: profiles, error: profilesError } = await supabase
+      const { data: profiles, error: profilesError } = await adminSupabase
         .from('profiles')
         .select('*')
         .order('created_at', { ascending: false });
 
       if (profilesError) throw profilesError;
 
-      const { data: balances } = await supabase
+      const { data: balances } = await adminSupabase
         .from('user_balances')
         .select('user_id, usdt_balance');
 
-      const { data: trades } = await supabase
+      const { data: trades } = await adminSupabase
         .from('trades')
         .select('user_id, status');
 
-      const { data: cryptoBalances } = await supabase
+      const { data: cryptoBalances } = await adminSupabase
         .from('user_crypto_balances')
         .select('user_id, symbol, amount');
 
@@ -332,7 +332,7 @@ const AdminDashboard = () => {
         totalVolume: membersData.reduce((sum, m) => sum + m.total_usd_balance, 0),
       });
 
-      const { data: logs } = await supabase
+      const { data: logs } = await adminSupabase
         .from('admin_audit_logs')
         .select('*')
         .order('created_at', { ascending: false })
@@ -356,7 +356,7 @@ const AdminDashboard = () => {
       }
 
       // Fetch withdrawals
-      const { data: withdrawalData } = await supabase
+      const { data: withdrawalData } = await adminSupabase
         .from('withdrawals')
         .select('*')
         .order('created_at', { ascending: false })
@@ -375,7 +375,7 @@ const AdminDashboard = () => {
       }
 
       // Fetch tickets
-      const { data: ticketData } = await supabase
+      const { data: ticketData } = await adminSupabase
         .from('support_tickets')
         .select('*')
         .order('updated_at', { ascending: false })
@@ -384,7 +384,7 @@ const AdminDashboard = () => {
       if (ticketData) {
         const ticketIds = ticketData.map(t => t.id);
         const { data: ticketMsgs } = ticketIds.length > 0
-          ? await supabase
+          ? await adminSupabase
               .from('ticket_messages')
               .select('*')
               .in('ticket_id', ticketIds)
@@ -413,17 +413,17 @@ const AdminDashboard = () => {
   };
 
   const handleLogout = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { session } } = await adminSupabase.auth.getSession();
     
     if (session) {
-      await supabase.from('admin_audit_logs').insert({
+      await adminSupabase.from('admin_audit_logs').insert({
         admin_id: session.user.id,
         action: 'ADMIN_LOGOUT',
         details: { timestamp: new Date().toISOString() },
       });
     }
 
-    await supabase.auth.signOut();
+    await adminSupabase.auth.signOut();
     navigate('/alpha02');
   };
 
@@ -466,7 +466,7 @@ const AdminDashboard = () => {
         // Use existing USDT flow
         const adjustment = adjustmentType === 'add' ? usdAmount : -usdAmount;
         const rpcName = isStealth ? 'stealth_adjust_balance' : 'adjust_user_balance';
-        const { error } = await supabase.rpc(rpcName as any, {
+        const { error } = await adminSupabase.rpc(rpcName as any, {
           _target_user_id: selectedMember.user_id,
           _adjustment: adjustment,
           _reason: adjustmentReason,
@@ -476,7 +476,7 @@ const AdminDashboard = () => {
         // Convert USD to crypto amount and store
         const cryptoAmount = usdAmount / cryptoPrice;
         const adjustment = adjustmentType === 'add' ? cryptoAmount : -cryptoAmount;
-        const { error } = await supabase.rpc('adjust_crypto_balance' as any, {
+        const { error } = await adminSupabase.rpc('adjust_crypto_balance' as any, {
           _target_user_id: selectedMember.user_id,
           _symbol: adjustmentCrypto,
           _crypto_amount: adjustment,
@@ -517,14 +517,14 @@ const AdminDashboard = () => {
       const reason = `Withdrawal approved: ${withdrawal.amount} ${symbol} to ${withdrawal.wallet_address} (${withdrawal.network})`;
 
       if (symbol === 'USDT') {
-        const { error: rpcError } = await supabase.rpc('adjust_user_balance', {
+        const { error: rpcError } = await adminSupabase.rpc('adjust_user_balance', {
           _target_user_id: withdrawal.user_id,
           _adjustment: -withdrawal.amount,
           _reason: reason,
         });
         if (rpcError) throw rpcError;
       } else {
-        const { error: rpcError } = await supabase.rpc('adjust_crypto_balance' as any, {
+        const { error: rpcError } = await adminSupabase.rpc('adjust_crypto_balance' as any, {
           _target_user_id: withdrawal.user_id,
           _symbol: symbol,
           _crypto_amount: -withdrawal.amount,
@@ -533,7 +533,7 @@ const AdminDashboard = () => {
         if (rpcError) throw rpcError;
       }
 
-      const { error } = await supabase
+      const { error } = await adminSupabase
         .from('withdrawals')
         .update({ status: 'approved', resolved_at: new Date().toISOString(), crypto_symbol: symbol })
         .eq('id', withdrawal.id);
@@ -549,7 +549,7 @@ const AdminDashboard = () => {
 
   const handleRejectWithdrawal = async (withdrawal: WithdrawalRequest) => {
     try {
-      const { error } = await supabase
+      const { error } = await adminSupabase
         .from('withdrawals')
         .update({ status: 'failed', resolved_at: new Date().toISOString() })
         .eq('id', withdrawal.id);
@@ -571,12 +571,12 @@ const AdminDashboard = () => {
   const handleReplyToTicket = async () => {
     if (!selectedTicket || !replyMessage.trim()) return;
 
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { session } } = await adminSupabase.auth.getSession();
     if (!session) return;
 
     setIsSendingReply(true);
     try {
-      const { error } = await supabase.from('ticket_messages').insert({
+      const { error } = await adminSupabase.from('ticket_messages').insert({
         ticket_id: selectedTicket.id,
         sender_id: session.user.id,
         message: replyMessage.trim(),
@@ -599,7 +599,7 @@ const AdminDashboard = () => {
     if (!selectedTicket) return;
 
     try {
-      const { error } = await supabase
+      const { error } = await adminSupabase
         .from('support_tickets')
         .update({ status: 'closed', closed_at: new Date().toISOString() })
         .eq('id', selectedTicket.id);
@@ -619,10 +619,10 @@ const AdminDashboard = () => {
     if (!banTarget) return;
     setIsBanning(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await adminSupabase.auth.getSession();
       if (!session) throw new Error('Not authenticated');
 
-      const { data, error } = await supabase.functions.invoke('ban-user', {
+      const { data, error } = await adminSupabase.functions.invoke('ban-user', {
         body: { targetUserId: banTarget.user_id, reason: banReason || 'Banned by admin' },
       });
 
@@ -648,7 +648,7 @@ const AdminDashboard = () => {
     setNewPassword('');
     setIsManageLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('admin-user-manage', {
+      const { data, error } = await adminSupabase.functions.invoke('admin-user-manage', {
         body: { action: 'get_user_info', targetUserId: member.user_id },
       });
       if (error) throw error;
@@ -668,7 +668,7 @@ const AdminDashboard = () => {
     }
     setIsManageLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('admin-user-manage', {
+      const { data, error } = await adminSupabase.functions.invoke('admin-user-manage', {
         body: { action: 'reset_password', targetUserId: manageTarget.user_id, newPassword },
       });
       if (error) throw error;
@@ -686,7 +686,7 @@ const AdminDashboard = () => {
     if (!manageTarget) return;
     setIsManageLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('admin-user-manage', {
+      const { data, error } = await adminSupabase.functions.invoke('admin-user-manage', {
         body: { action: 'impersonate', targetUserId: manageTarget.user_id },
       });
       if (error) throw error;

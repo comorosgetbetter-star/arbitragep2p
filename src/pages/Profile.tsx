@@ -61,7 +61,7 @@ const Profile = () => {
 
     // Realtime for new messages
     const channel = supabase
-      .channel('profile-ticket-messages')
+      .channel(`profile-ticket-messages-${user.id}`)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'ticket_messages' }, (payload) => {
         const newMsg = payload.new as TicketMessage & { ticket_id: string };
         if (selectedTicket && newMsg.ticket_id === selectedTicket.id) {
