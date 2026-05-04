@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { adminSupabase } from '@/lib/adminSupabase';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -46,7 +46,7 @@ export const AdminKYCManager = ({ members }: AdminKYCManagerProps) => {
   }, [members]);
 
   const fetchSubmissions = async () => {
-    const { data } = await supabase
+    const { data } = await adminSupabase
       .from('kyc_submissions')
       .select('*')
       .order('created_at', { ascending: false });
@@ -69,8 +69,8 @@ export const AdminKYCManager = ({ members }: AdminKYCManagerProps) => {
     setSelected(sub);
     // Get signed URLs for the documents
     const [docRes, selfieRes] = await Promise.all([
-      supabase.storage.from('kyc-documents').createSignedUrl(sub.document_url, 300),
-      supabase.storage.from('kyc-documents').createSignedUrl(sub.selfie_url, 300),
+      adminSupabase.storage.from('kyc-documents').createSignedUrl(sub.document_url, 300),
+      adminSupabase.storage.from('kyc-documents').createSignedUrl(sub.selfie_url, 300),
     ]);
     setDocUrl(docRes.data?.signedUrl || null);
     setSelfieUrl(selfieRes.data?.signedUrl || null);
@@ -80,7 +80,7 @@ export const AdminKYCManager = ({ members }: AdminKYCManagerProps) => {
     if (!selected) return;
     setProcessing(true);
     try {
-      const { error } = await supabase
+      const { error } = await adminSupabase
         .from('kyc_submissions')
         .update({
           status: 'approved',
@@ -103,7 +103,7 @@ export const AdminKYCManager = ({ members }: AdminKYCManagerProps) => {
     if (!selected) return;
     setProcessing(true);
     try {
-      const { error } = await supabase
+      const { error } = await adminSupabase
         .from('kyc_submissions')
         .update({
           status: 'declined',

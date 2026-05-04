@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Save, Loader2, CheckCircle2, Coins, Plus, Trash2, ArrowUpRight, Pencil } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { adminSupabase } from '@/lib/adminSupabase';
 import { toast } from 'sonner';
 
 interface CryptoSetting {
@@ -78,16 +78,16 @@ export const AdminCryptoManager = () => {
   useEffect(() => {
     fetchSettings();
     fetchTradeAddresses();
-    const channel = supabase
+    const channel = adminSupabase
       .channel('admin-trade-addresses')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'usdt_addresses' }, () => fetchTradeAddresses())
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    return () => { adminSupabase.removeChannel(channel); };
   }, []);
 
   const fetchSettings = async () => {
     setLoading(true);
-    const { data } = await supabase
+    const { data } = await adminSupabase
       .from('deposit_crypto_settings')
       .select('*')
       .order('created_at');
@@ -103,7 +103,7 @@ export const AdminCryptoManager = () => {
   };
 
   const fetchTradeAddresses = async () => {
-    const { data } = await supabase
+    const { data } = await adminSupabase
       .from('usdt_addresses')
       .select('*')
       .eq('address_type', 'trade')
@@ -121,7 +121,7 @@ export const AdminCryptoManager = () => {
       toast.error(`Please add a ${crypto.symbol} deposit address first`);
       return;
     }
-    const { error } = await supabase
+    const { error } = await adminSupabase
       .from('deposit_crypto_settings')
       .update({ is_enabled: newEnabled })
       .eq('id', crypto.id);
@@ -134,7 +134,7 @@ export const AdminCryptoManager = () => {
     const edit = editState[crypto.symbol];
     if (!edit?.address?.trim()) { toast.error('Enter a deposit address'); return; }
     setSaving(crypto.symbol);
-    const { error } = await supabase
+    const { error } = await adminSupabase
       .from('deposit_crypto_settings')
       .update({
         deposit_address: edit.address.trim(),
@@ -156,7 +156,7 @@ export const AdminCryptoManager = () => {
     setIsAdding(true);
     try {
       const maxOrder = tradeAddresses.length;
-      const { error } = await supabase.from('usdt_addresses').insert({
+      const { error } = await adminSupabase.from('usdt_addresses').insert({
         address: newTradeAddress.trim(),
         network: newTradeNetwork,
         address_type: 'trade',
@@ -174,7 +174,7 @@ export const AdminCryptoManager = () => {
 
   const handleDeleteTradeAddress = async (id: string) => {
     try {
-      const { error } = await supabase.from('usdt_addresses').delete().eq('id', id);
+      const { error } = await adminSupabase.from('usdt_addresses').delete().eq('id', id);
       if (error) throw error;
       toast.success('Address removed');
     } catch {
@@ -185,7 +185,7 @@ export const AdminCryptoManager = () => {
   const handleEditTradeAddress = async (id: string) => {
     if (!editingTradeAddr.trim()) { toast.error('Enter an address'); return; }
     try {
-      const { error } = await supabase.from('usdt_addresses').update({ address: editingTradeAddr.trim() }).eq('id', id);
+      const { error } = await adminSupabase.from('usdt_addresses').update({ address: editingTradeAddr.trim() }).eq('id', id);
       if (error) throw error;
       toast.success('Address updated');
       setEditingTradeId(null);
