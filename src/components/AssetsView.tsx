@@ -234,7 +234,7 @@ export const AssetsView = () => {
         ) : (
           <div className="space-y-2">
             {withdrawableAssets.map((asset) => {
-              const price = asset.symbol === 'USDT' ? 1 : (stablePrices[asset.symbol] || 0);
+              const price = asset.symbol === 'USDT' ? 1 : (prices.find(p => p.symbol === asset.symbol)?.price || 0);
               const usdValue = asset.amount * price;
               return (
                 <button
