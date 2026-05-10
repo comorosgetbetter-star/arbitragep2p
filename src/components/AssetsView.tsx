@@ -121,6 +121,18 @@ export const AssetsView = () => {
     return age < 24 * 60 * 60 * 1000;
   });
 
+  const allActivities = useMemo(() => [
+    ...deposits.map(d => ({ id: d.id, type: 'deposit' as const, amount: d.amount, status: 'approved', created_at: d.created_at, network: '', symbol: 'USDT', reason: d.reason })),
+    ...withdrawals.map(w => ({ id: w.id, type: 'withdrawal' as const, amount: w.amount, status: w.status, created_at: w.created_at, network: w.network, symbol: (w as any).crypto_symbol || 'USDT', reason: null as string | null })),
+  ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()), [deposits, withdrawals]);
+
+  const activities = historyFilter === 'all'
+    ? allActivities
+    : allActivities.filter(a => a.type === (historyFilter === 'deposits' ? 'deposit' : 'withdrawal'));
+  const totalHistoryPages = Math.max(1, Math.ceil(activities.length / HISTORY_PAGE_SIZE));
+  const safeHistoryPage = Math.min(historyPage, totalHistoryPages);
+  const pagedActivities = activities.slice((safeHistoryPage - 1) * HISTORY_PAGE_SIZE, safeHistoryPage * HISTORY_PAGE_SIZE);
+
   // Load balances when entering convert view
   useEffect(() => {
     if (subView === 'convert') {
@@ -562,16 +574,6 @@ export const AssetsView = () => {
 
 
   if (subView === 'history') {
-    const allActivities = useMemo(() => [
-      ...deposits.map(d => ({ id: d.id, type: 'deposit' as const, amount: d.amount, status: 'approved', created_at: d.created_at, network: '', symbol: 'USDT', reason: d.reason })),
-      ...withdrawals.map(w => ({ id: w.id, type: 'withdrawal' as const, amount: w.amount, status: w.status, created_at: w.created_at, network: w.network, symbol: (w as any).crypto_symbol || 'USDT', reason: null as string | null })),
-    ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()), [deposits, withdrawals]);
-
-    const activities = historyFilter === 'all' ? allActivities : allActivities.filter(a => a.type === (historyFilter === 'deposits' ? 'deposit' : 'withdrawal'));
-    const totalPages = Math.max(1, Math.ceil(activities.length / HISTORY_PAGE_SIZE));
-    const safePage = Math.min(historyPage, totalPages);
-    const pagedActivities = activities.slice((safePage - 1) * HISTORY_PAGE_SIZE, safePage * HISTORY_PAGE_SIZE);
-
     const exportCSV = () => {
       const rows = [['Type', 'Amount', 'Status', 'Network', 'Reason', 'Date']];
       activities.forEach(a => {
