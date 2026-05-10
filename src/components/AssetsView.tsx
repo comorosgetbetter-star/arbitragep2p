@@ -160,6 +160,35 @@ export const AssetsView = () => {
     setHistoryPage(1);
   }, [historyFilter]);
 
+  useEffect(() => {
+    if (!user || subView !== 'history') return;
+
+    const fetchHistoryPage = async () => {
+      setHistoryLoading(true);
+      const from = (historyPage - 1) * HISTORY_PAGE_SIZE;
+      const to = from + HISTORY_PAGE_SIZE - 1;
+      let query = supabase
+        .from('transaction_history' as any)
+        .select('id, type, amount, status, created_at, network, symbol, reason', { count: 'exact' })
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .range(from, to);
+
+      if (historyFilter !== 'all') {
+        query = query.eq('type', historyFilter === 'deposits' ? 'deposit' : 'withdrawal');
+      }
+
+      const { data, count, error } = await query;
+      if (!error && data) {
+        setHistoryItems((data as any[]).map((item) => ({ ...item, amount: Number(item.amount) })) as ActivityItem[]);
+        setHistoryTotal(count || 0);
+      }
+      setHistoryLoading(false);
+    };
+
+    fetchHistoryPage();
+  }, [user, subView, historyFilter, historyPage, deposits.length, withdrawals.length]);
+
   // Build list of withdrawable assets (those with a balance)
   const withdrawableAssets = [
     ...(balance > 0.001 ? [{ symbol: 'USDT', amount: balance }] : []),
