@@ -690,7 +690,20 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      transaction_history: {
+        Row: {
+          amount: number | null
+          created_at: string | null
+          id: string | null
+          network: string | null
+          reason: string | null
+          status: string | null
+          symbol: string | null
+          type: string | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       adjust_crypto_balance: {
