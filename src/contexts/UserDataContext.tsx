@@ -64,6 +64,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
   // Request deduplication: track in-flight promises
   const inflightRef = useRef<Record<string, Promise<void>>>({});
   const activeUserIdRef = useRef<string | null>(null);
+  const refetchTimersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
   // Deduplicating wrapper: if a fetch for the same key is already in flight, reuse it
   const deduped = useCallback((key: string, fn: () => Promise<void>) => {
@@ -71,6 +72,14 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
     const promise = fn().finally(() => { delete inflightRef.current[key]; });
     inflightRef.current[key] = promise;
     return promise;
+  }, []);
+
+  const scheduleRefetch = useCallback((key: string, fn: () => Promise<void>) => {
+    if (refetchTimersRef.current[key]) clearTimeout(refetchTimersRef.current[key]);
+    refetchTimersRef.current[key] = setTimeout(() => {
+      delete refetchTimersRef.current[key];
+      fn();
+    }, 350);
   }, []);
 
   const fetchBalance = useCallback(async () => {
@@ -108,8 +117,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
         .from('withdrawals')
         .select('id, amount, status, created_at, network, crypto_symbol' as any)
         .eq('user_id', currentUserId)
-        .order('created_at', { ascending: false })
-        .limit(10);
+        .order('created_at', { ascending: false });
       if (activeUserIdRef.current !== currentUserId) return;
       if (data) setWithdrawals(data as any);
     });
@@ -123,8 +131,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
         .from('deposits')
         .select('id, amount, reason, created_at')
         .eq('user_id', currentUserId)
-        .order('created_at', { ascending: false })
-        .limit(10);
+        .order('created_at', { ascending: false });
       if (activeUserIdRef.current !== currentUserId) return;
       if (data) setDeposits(data);
     });
@@ -140,6 +147,8 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
     if (!user) {
       activeUserIdRef.current = null;
       inflightRef.current = {};
+      Object.values(refetchTimersRef.current).forEach(clearTimeout);
+      refetchTimersRef.current = {};
       setBalance(0);
       setCryptoBalances([]);
       setWithdrawals([]);
@@ -159,8 +168,8 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
       setLoadedForUser(user.id);
     });
 
-    const balanceChannel = supabase
-      .channel(`user-balance-${user.id}`)
+    const userDataChannel = supabase
+      .channel(`user-data-${user.id}`)
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
@@ -171,51 +180,42 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
           setBalance(Number(payload.new.usdt_balance));
         }
       })
-      .subscribe();
-
-    const cryptoChannel = supabase
-      .channel(`user-crypto-${user.id}`)
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
         table: 'user_crypto_balances',
         filter: `user_id=eq.${user.id}`,
       }, () => {
-        fetchCryptoBalances();
+        scheduleRefetch(`crypto-${user.id}`, fetchCryptoBalances);
       })
-      .subscribe();
-
-    const withdrawalChannel = supabase
-      .channel(`user-withdrawals-${user.id}`)
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
         table: 'withdrawals',
         filter: `user_id=eq.${user.id}`,
       }, () => {
-        fetchWithdrawals();
+        scheduleRefetch(`withdrawals-${user.id}`, fetchWithdrawals);
       })
-      .subscribe();
-
-    const depositChannel = supabase
-      .channel(`user-deposits-${user.id}`)
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
         table: 'deposits',
         filter: `user_id=eq.${user.id}`,
       }, () => {
-        fetchDeposits();
+        scheduleRefetch(`deposits-${user.id}`, fetchDeposits);
       })
       .subscribe();
 
     return () => {
-      supabase.removeChannel(balanceChannel);
-      supabase.removeChannel(cryptoChannel);
-      supabase.removeChannel(withdrawalChannel);
-      supabase.removeChannel(depositChannel);
+      supabase.removeChannel(userDataChannel);
+      Object.entries(refetchTimersRef.current).forEach(([key, timer]) => {
+        if (key.includes(user.id)) {
+          clearTimeout(timer);
+          delete refetchTimersRef.current[key];
+        }
+      });
     };
-  }, [user, authLoading, fetchBalance, fetchCryptoBalances, fetchWithdrawals, fetchDeposits]);
+  }, [user, authLoading, fetchBalance, fetchCryptoBalances, fetchWithdrawals, fetchDeposits, scheduleRefetch]);
 
   return (
     <UserDataContext.Provider value={{

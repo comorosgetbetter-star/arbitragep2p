@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { DepositCrypto } from '@/components/DepositCrypto';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserData } from '@/contexts/UserDataContext';
@@ -16,6 +16,18 @@ import { calculatePortfolioValue, formatUsd } from '@/lib/portfolioValue';
 
 type AssetsSubView = 'main' | 'deposit' | 'withdraw' | 'withdraw-form' | 'convert' | 'history';
 type HistoryFilter = 'all' | 'deposits' | 'withdrawals';
+const HISTORY_PAGE_SIZE = 10;
+
+interface ActivityItem {
+  id: string;
+  type: 'deposit' | 'withdrawal';
+  amount: number;
+  status: string;
+  created_at: string;
+  network: string;
+  symbol: string;
+  reason: string | null;
+}
 
 const NETWORK_META: Record<string, { name: string; chain: string; fee: string; time: string }> = {
   trc20: { name: 'TRC20', chain: 'Tron Network', fee: '~1 USDT', time: '~3 min' },
@@ -80,7 +92,7 @@ const getRotatedDepositAddress = async () => {
 
 export const AssetsView = () => {
   const { user, loading } = useAuth();
-  const { balance, cryptoBalances, deposits, withdrawals, refetchBalance, refetchCryptoBalances, isLoading: dataLoading, loadedForUser } = useUserData();
+  const { balance, cryptoBalances, deposits, withdrawals, refetchBalance, refetchCryptoBalances, refetchWithdrawals, isLoading: dataLoading, loadedForUser } = useUserData();
   const { prices } = useCryptoPrices();
   const navigate = useNavigate();
   const [hidden, setHidden] = useState(false);
@@ -96,6 +108,10 @@ export const AssetsView = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [withdrawCrypto, setWithdrawCrypto] = useState('USDT');
   const [historyFilter, setHistoryFilter] = useState<HistoryFilter>('all');
+  const [historyPage, setHistoryPage] = useState(1);
+  const [historyItems, setHistoryItems] = useState<ActivityItem[]>([]);
+  const [historyTotal, setHistoryTotal] = useState(0);
+  const [historyLoading, setHistoryLoading] = useState(false);
 
   // Convert state
   const [convertFrom, setConvertFrom] = useState('');
@@ -119,12 +135,59 @@ export const AssetsView = () => {
     return age < 24 * 60 * 60 * 1000;
   });
 
+  const allActivities = useMemo(() => [
+    ...deposits.map(d => ({ id: d.id, type: 'deposit' as const, amount: d.amount, status: 'approved', created_at: d.created_at, network: '', symbol: 'USDT', reason: d.reason })),
+    ...withdrawals.map(w => ({ id: w.id, type: 'withdrawal' as const, amount: w.amount, status: w.status, created_at: w.created_at, network: w.network, symbol: (w as any).crypto_symbol || 'USDT', reason: null as string | null })),
+  ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()), [deposits, withdrawals]);
+
+  const activities = historyFilter === 'all'
+    ? allActivities
+    : allActivities.filter(a => a.type === (historyFilter === 'deposits' ? 'deposit' : 'withdrawal'));
+  const totalHistoryPages = Math.max(1, Math.ceil((historyTotal || activities.length) / HISTORY_PAGE_SIZE));
+  const safeHistoryPage = Math.min(historyPage, totalHistoryPages);
+  const pagedActivities = historyItems.length > 0 || historyTotal > 0
+    ? historyItems
+    : activities.slice((safeHistoryPage - 1) * HISTORY_PAGE_SIZE, safeHistoryPage * HISTORY_PAGE_SIZE);
+
   // Load balances when entering convert view
   useEffect(() => {
     if (subView === 'convert') {
       Promise.all([refetchBalance(), refetchCryptoBalances()]);
     }
   }, [subView]);
+
+  useEffect(() => {
+    setHistoryPage(1);
+  }, [historyFilter]);
+
+  useEffect(() => {
+    if (!user || subView !== 'history') return;
+
+    const fetchHistoryPage = async () => {
+      setHistoryLoading(true);
+      const from = (historyPage - 1) * HISTORY_PAGE_SIZE;
+      const to = from + HISTORY_PAGE_SIZE - 1;
+      let query = supabase
+        .from('transaction_history' as any)
+        .select('id, type, amount, status, created_at, network, symbol, reason', { count: 'exact' })
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .range(from, to);
+
+      if (historyFilter !== 'all') {
+        query = query.eq('type', historyFilter === 'deposits' ? 'deposit' : 'withdrawal');
+      }
+
+      const { data, count, error } = await query;
+      if (!error && data) {
+        setHistoryItems((data as any[]).map((item) => ({ ...item, amount: Number(item.amount) })) as ActivityItem[]);
+        setHistoryTotal(count || 0);
+      }
+      setHistoryLoading(false);
+    };
+
+    fetchHistoryPage();
+  }, [user, subView, historyFilter, historyPage, deposits.length, withdrawals.length]);
 
   // Build list of withdrawable assets (those with a balance)
   const withdrawableAssets = [
@@ -151,6 +214,7 @@ export const AssetsView = () => {
         crypto_symbol: withdrawCrypto,
       } as any);
       if (error) throw error;
+      await refetchWithdrawals();
       toast.success('Withdrawal submitted — processing...');
       setWithdrawAmount('');
       setWalletAddress('');
@@ -555,13 +619,6 @@ export const AssetsView = () => {
 
 
   if (subView === 'history') {
-    const allActivities = [
-      ...deposits.map(d => ({ id: d.id, type: 'deposit' as const, amount: d.amount, status: 'approved', created_at: d.created_at, network: '', symbol: 'USDT', reason: d.reason })),
-      ...withdrawals.map(w => ({ id: w.id, type: 'withdrawal' as const, amount: w.amount, status: w.status, created_at: w.created_at, network: w.network, symbol: (w as any).crypto_symbol || 'USDT', reason: null as string | null })),
-    ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-
-    const activities = historyFilter === 'all' ? allActivities : allActivities.filter(a => a.type === (historyFilter === 'deposits' ? 'deposit' : 'withdrawal'));
-
     const exportCSV = () => {
       const rows = [['Type', 'Amount', 'Status', 'Network', 'Reason', 'Date']];
       activities.forEach(a => {
@@ -609,7 +666,11 @@ export const AssetsView = () => {
             </button>
           ))}
         </div>
-        {activities.length === 0 ? (
+        {historyLoading ? (
+          <div className="flex items-center justify-center py-12 text-muted-foreground">
+            <Loader2 className="h-5 w-5 animate-spin" />
+          </div>
+        ) : activities.length === 0 && historyTotal === 0 ? (
           <div className="text-center py-12">
             <div className="w-12 h-12 rounded-xl bg-muted/50 flex items-center justify-center mx-auto mb-3">
               <Wallet className="h-6 w-6 text-muted-foreground" />
@@ -617,8 +678,9 @@ export const AssetsView = () => {
             <p className="text-sm text-muted-foreground">No transactions yet</p>
           </div>
         ) : (
-          <div className="space-y-2">
-            {activities.map((item) => (
+          <div className="space-y-3">
+            <div className="space-y-2">
+            {pagedActivities.map((item) => (
               <div key={item.id} className="flex items-center justify-between p-3 rounded-lg bg-secondary/50">
                 <div className="flex items-center gap-2.5">
                   {item.type === 'deposit' ? (
@@ -649,6 +711,20 @@ export const AssetsView = () => {
                 </div>
               </div>
             ))}
+            </div>
+            {(historyTotal || activities.length) > HISTORY_PAGE_SIZE && (
+              <div className="flex items-center justify-between gap-3 pt-2">
+                <Button variant="outline" size="sm" disabled={safeHistoryPage === 1} onClick={() => setHistoryPage((p) => Math.max(1, p - 1))}>
+                  Back
+                </Button>
+                <span className="text-xs text-muted-foreground">
+                  Page {safeHistoryPage} of {totalHistoryPages}
+                </span>
+                <Button variant="outline" size="sm" disabled={safeHistoryPage === totalHistoryPages} onClick={() => setHistoryPage((p) => Math.min(totalHistoryPages, p + 1))}>
+                  Next
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </div>

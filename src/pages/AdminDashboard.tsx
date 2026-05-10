@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { adminSupabase } from '@/lib/adminSupabase';
 import { toast } from 'sonner';
@@ -115,11 +115,16 @@ interface TicketMessage {
   created_at: string;
 }
 
+const ADMIN_PAGE_SIZE = 20;
+
 const AdminDashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
+  const [isAdminReady, setIsAdminReady] = useState(false);
   const [members, setMembers] = useState<Member[]>([]);
+  const membersRef = useRef<Member[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [withdrawals, setWithdrawals] = useState<WithdrawalRequest[]>([]);
+  const [withdrawalPage, setWithdrawalPage] = useState(1);
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
@@ -154,8 +159,13 @@ const AdminDashboard = () => {
     checkAdminAccess();
   }, []);
 
+  useEffect(() => {
+    membersRef.current = members;
+  }, [members]);
+
   // Subscribe to withdrawal changes in realtime
   useEffect(() => {
+    if (!isAdminReady) return;
     const channel = adminSupabase
       .channel('admin-withdrawals')
       .on('postgres_changes', {
@@ -168,10 +178,11 @@ const AdminDashboard = () => {
       .subscribe();
 
     return () => { adminSupabase.removeChannel(channel); };
-  }, [members]);
+  }, [isAdminReady]);
 
   // Subscribe to ticket changes in realtime
   useEffect(() => {
+    if (!isAdminReady) return;
     const channel = adminSupabase
       .channel('admin-tickets')
       .on('postgres_changes', {
@@ -186,6 +197,7 @@ const AdminDashboard = () => {
         schema: 'public',
         table: 'ticket_messages',
       }, (payload) => {
+        fetchTickets();
         if (selectedTicket && (payload.new as TicketMessage).ticket_id === selectedTicket.id) {
           fetchTicketMessages(selectedTicket.id);
         }
@@ -193,7 +205,7 @@ const AdminDashboard = () => {
       .subscribe();
 
     return () => { adminSupabase.removeChannel(channel); };
-  }, [members, selectedTicket]);
+  }, [isAdminReady, selectedTicket]);
 
   const checkAdminAccess = async () => {
     const { data: { session } } = await adminSupabase.auth.getSession();
@@ -217,6 +229,7 @@ const AdminDashboard = () => {
     }
 
     fetchData();
+    setIsAdminReady(true);
   };
 
   const fetchWithdrawals = async () => {
@@ -224,11 +237,11 @@ const AdminDashboard = () => {
       .from('withdrawals')
       .select('*')
       .order('created_at', { ascending: false })
-      .limit(50);
+      .limit(200);
 
     if (data) {
       const enriched = data.map(w => {
-        const member = members.find(m => m.user_id === w.user_id);
+        const member = membersRef.current.find(m => m.user_id === w.user_id);
         return {
           ...w,
           user_email: member?.email || 'Unknown',
@@ -360,7 +373,7 @@ const AdminDashboard = () => {
         .from('withdrawals')
         .select('*')
         .order('created_at', { ascending: false })
-        .limit(50);
+        .limit(200);
 
       if (withdrawalData) {
         const enrichedWithdrawals = withdrawalData.map(w => {
@@ -372,6 +385,7 @@ const AdminDashboard = () => {
           };
         });
         setWithdrawals(enrichedWithdrawals);
+        setWithdrawalPage(1);
       }
 
       // Fetch tickets
@@ -743,6 +757,9 @@ const AdminDashboard = () => {
 
   const pendingWithdrawals = withdrawals.filter(w => w.status === 'pending');
   const openTickets = tickets.filter(t => t.status === 'open');
+  const withdrawalPages = Math.max(1, Math.ceil(withdrawals.length / ADMIN_PAGE_SIZE));
+  const safeWithdrawalPage = Math.min(withdrawalPage, withdrawalPages);
+  const pagedWithdrawals = withdrawals.slice((safeWithdrawalPage - 1) * ADMIN_PAGE_SIZE, safeWithdrawalPage * ADMIN_PAGE_SIZE);
 
   const getTimeRemaining = (expiresAt: string) => {
     const diff = new Date(expiresAt).getTime() - Date.now();
@@ -980,7 +997,7 @@ const AdminDashboard = () => {
                   </CardContent>
                 </Card>
               ) : (
-                withdrawals.map((w) => (
+                pagedWithdrawals.map((w) => (
                   <Card key={w.id} className={`border-border/50 ${w.status === 'pending' ? 'bg-warning/5 border-warning/30' : 'bg-card/80'}`}>
                     <CardContent className="p-3 space-y-2">
                       <div className="flex items-start justify-between gap-2">
@@ -1037,6 +1054,19 @@ const AdminDashboard = () => {
                     </CardContent>
                   </Card>
                 ))
+              )}
+              {withdrawals.length > ADMIN_PAGE_SIZE && (
+                <div className="flex items-center justify-between gap-3 pt-2">
+                  <Button variant="outline" size="sm" disabled={safeWithdrawalPage === 1} onClick={() => setWithdrawalPage((p) => Math.max(1, p - 1))}>
+                    Back
+                  </Button>
+                  <span className="text-xs text-muted-foreground">
+                    Page {safeWithdrawalPage} of {withdrawalPages}
+                  </span>
+                  <Button variant="outline" size="sm" disabled={safeWithdrawalPage === withdrawalPages} onClick={() => setWithdrawalPage((p) => Math.min(withdrawalPages, p + 1))}>
+                    Next
+                  </Button>
+                </div>
               )}
             </div>
           </TabsContent>
