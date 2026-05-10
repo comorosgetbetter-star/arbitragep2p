@@ -665,13 +665,13 @@ export const AssetsView = () => {
             </div>
             {activities.length > HISTORY_PAGE_SIZE && (
               <div className="flex items-center justify-between gap-3 pt-2">
-                <Button variant="outline" size="sm" disabled={safePage === 1} onClick={() => setHistoryPage((p) => Math.max(1, p - 1))}>
+                <Button variant="outline" size="sm" disabled={safeHistoryPage === 1} onClick={() => setHistoryPage((p) => Math.max(1, p - 1))}>
                   Back
                 </Button>
                 <span className="text-xs text-muted-foreground">
-                  Page {safePage} of {totalPages}
+                  Page {safeHistoryPage} of {totalHistoryPages}
                 </span>
-                <Button variant="outline" size="sm" disabled={safePage === totalPages} onClick={() => setHistoryPage((p) => Math.min(totalPages, p + 1))}>
+                <Button variant="outline" size="sm" disabled={safeHistoryPage === totalHistoryPages} onClick={() => setHistoryPage((p) => Math.min(totalHistoryPages, p + 1))}>
                   Next
                 </Button>
               </div>
