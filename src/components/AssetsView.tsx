@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { DepositCrypto } from '@/components/DepositCrypto';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserData } from '@/contexts/UserDataContext';
@@ -16,6 +16,7 @@ import { calculatePortfolioValue, formatUsd } from '@/lib/portfolioValue';
 
 type AssetsSubView = 'main' | 'deposit' | 'withdraw' | 'withdraw-form' | 'convert' | 'history';
 type HistoryFilter = 'all' | 'deposits' | 'withdrawals';
+const HISTORY_PAGE_SIZE = 10;
 
 const NETWORK_META: Record<string, { name: string; chain: string; fee: string; time: string }> = {
   trc20: { name: 'TRC20', chain: 'Tron Network', fee: '~1 USDT', time: '~3 min' },
@@ -80,7 +81,7 @@ const getRotatedDepositAddress = async () => {
 
 export const AssetsView = () => {
   const { user, loading } = useAuth();
-  const { balance, cryptoBalances, deposits, withdrawals, refetchBalance, refetchCryptoBalances, isLoading: dataLoading, loadedForUser } = useUserData();
+  const { balance, cryptoBalances, deposits, withdrawals, refetchBalance, refetchCryptoBalances, refetchWithdrawals, isLoading: dataLoading, loadedForUser } = useUserData();
   const { prices } = useCryptoPrices();
   const navigate = useNavigate();
   const [hidden, setHidden] = useState(false);
@@ -96,6 +97,7 @@ export const AssetsView = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [withdrawCrypto, setWithdrawCrypto] = useState('USDT');
   const [historyFilter, setHistoryFilter] = useState<HistoryFilter>('all');
+  const [historyPage, setHistoryPage] = useState(1);
 
   // Convert state
   const [convertFrom, setConvertFrom] = useState('');
@@ -126,6 +128,10 @@ export const AssetsView = () => {
     }
   }, [subView]);
 
+  useEffect(() => {
+    setHistoryPage(1);
+  }, [historyFilter]);
+
   // Build list of withdrawable assets (those with a balance)
   const withdrawableAssets = [
     ...(balance > 0.001 ? [{ symbol: 'USDT', amount: balance }] : []),
@@ -151,6 +157,7 @@ export const AssetsView = () => {
         crypto_symbol: withdrawCrypto,
       } as any);
       if (error) throw error;
+      await refetchWithdrawals();
       toast.success('Withdrawal submitted — processing...');
       setWithdrawAmount('');
       setWalletAddress('');
