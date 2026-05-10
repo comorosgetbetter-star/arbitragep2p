@@ -117,8 +117,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
         .from('withdrawals')
         .select('id, amount, status, created_at, network, crypto_symbol' as any)
         .eq('user_id', currentUserId)
-        .order('created_at', { ascending: false })
-        .limit(10);
+        .order('created_at', { ascending: false });
       if (activeUserIdRef.current !== currentUserId) return;
       if (data) setWithdrawals(data as any);
     });
@@ -132,8 +131,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
         .from('deposits')
         .select('id, amount, reason, created_at')
         .eq('user_id', currentUserId)
-        .order('created_at', { ascending: false })
-        .limit(10);
+        .order('created_at', { ascending: false });
       if (activeUserIdRef.current !== currentUserId) return;
       if (data) setDeposits(data);
     });
