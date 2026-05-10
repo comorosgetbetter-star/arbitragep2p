@@ -666,7 +666,11 @@ export const AssetsView = () => {
             </button>
           ))}
         </div>
-        {activities.length === 0 ? (
+        {historyLoading ? (
+          <div className="flex items-center justify-center py-12 text-muted-foreground">
+            <Loader2 className="h-5 w-5 animate-spin" />
+          </div>
+        ) : activities.length === 0 && historyTotal === 0 ? (
           <div className="text-center py-12">
             <div className="w-12 h-12 rounded-xl bg-muted/50 flex items-center justify-center mx-auto mb-3">
               <Wallet className="h-6 w-6 text-muted-foreground" />
@@ -708,7 +712,7 @@ export const AssetsView = () => {
               </div>
             ))}
             </div>
-            {activities.length > HISTORY_PAGE_SIZE && (
+            {(historyTotal || activities.length) > HISTORY_PAGE_SIZE && (
               <div className="flex items-center justify-between gap-3 pt-2">
                 <Button variant="outline" size="sm" disabled={safeHistoryPage === 1} onClick={() => setHistoryPage((p) => Math.max(1, p - 1))}>
                   Back
