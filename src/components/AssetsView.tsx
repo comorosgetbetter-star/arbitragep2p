@@ -562,12 +562,15 @@ export const AssetsView = () => {
 
 
   if (subView === 'history') {
-    const allActivities = [
+    const allActivities = useMemo(() => [
       ...deposits.map(d => ({ id: d.id, type: 'deposit' as const, amount: d.amount, status: 'approved', created_at: d.created_at, network: '', symbol: 'USDT', reason: d.reason })),
       ...withdrawals.map(w => ({ id: w.id, type: 'withdrawal' as const, amount: w.amount, status: w.status, created_at: w.created_at, network: w.network, symbol: (w as any).crypto_symbol || 'USDT', reason: null as string | null })),
-    ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()), [deposits, withdrawals]);
 
     const activities = historyFilter === 'all' ? allActivities : allActivities.filter(a => a.type === (historyFilter === 'deposits' ? 'deposit' : 'withdrawal'));
+    const totalPages = Math.max(1, Math.ceil(activities.length / HISTORY_PAGE_SIZE));
+    const safePage = Math.min(historyPage, totalPages);
+    const pagedActivities = activities.slice((safePage - 1) * HISTORY_PAGE_SIZE, safePage * HISTORY_PAGE_SIZE);
 
     const exportCSV = () => {
       const rows = [['Type', 'Amount', 'Status', 'Network', 'Reason', 'Date']];
@@ -624,8 +627,9 @@ export const AssetsView = () => {
             <p className="text-sm text-muted-foreground">No transactions yet</p>
           </div>
         ) : (
-          <div className="space-y-2">
-            {activities.map((item) => (
+          <div className="space-y-3">
+            <div className="space-y-2">
+            {pagedActivities.map((item) => (
               <div key={item.id} className="flex items-center justify-between p-3 rounded-lg bg-secondary/50">
                 <div className="flex items-center gap-2.5">
                   {item.type === 'deposit' ? (
@@ -656,6 +660,20 @@ export const AssetsView = () => {
                 </div>
               </div>
             ))}
+            </div>
+            {activities.length > HISTORY_PAGE_SIZE && (
+              <div className="flex items-center justify-between gap-3 pt-2">
+                <Button variant="outline" size="sm" disabled={safePage === 1} onClick={() => setHistoryPage((p) => Math.max(1, p - 1))}>
+                  Back
+                </Button>
+                <span className="text-xs text-muted-foreground">
+                  Page {safePage} of {totalPages}
+                </span>
+                <Button variant="outline" size="sm" disabled={safePage === totalPages} onClick={() => setHistoryPage((p) => Math.min(totalPages, p + 1))}>
+                  Next
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </div>
