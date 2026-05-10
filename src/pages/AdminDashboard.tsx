@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { adminSupabase } from '@/lib/adminSupabase';
 import { toast } from 'sonner';
@@ -115,11 +115,16 @@ interface TicketMessage {
   created_at: string;
 }
 
+const ADMIN_PAGE_SIZE = 20;
+
 const AdminDashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
+  const [isAdminReady, setIsAdminReady] = useState(false);
   const [members, setMembers] = useState<Member[]>([]);
+  const membersRef = useRef<Member[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [withdrawals, setWithdrawals] = useState<WithdrawalRequest[]>([]);
+  const [withdrawalPage, setWithdrawalPage] = useState(1);
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
