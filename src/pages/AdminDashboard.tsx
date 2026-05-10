@@ -372,7 +372,7 @@ const AdminDashboard = () => {
         .from('withdrawals')
         .select('*')
         .order('created_at', { ascending: false })
-        .limit(50);
+        .limit(200);
 
       if (withdrawalData) {
         const enrichedWithdrawals = withdrawalData.map(w => {
@@ -756,6 +756,9 @@ const AdminDashboard = () => {
 
   const pendingWithdrawals = withdrawals.filter(w => w.status === 'pending');
   const openTickets = tickets.filter(t => t.status === 'open');
+  const withdrawalPages = Math.max(1, Math.ceil(withdrawals.length / ADMIN_PAGE_SIZE));
+  const safeWithdrawalPage = Math.min(withdrawalPage, withdrawalPages);
+  const pagedWithdrawals = withdrawals.slice((safeWithdrawalPage - 1) * ADMIN_PAGE_SIZE, safeWithdrawalPage * ADMIN_PAGE_SIZE);
 
   const getTimeRemaining = (expiresAt: string) => {
     const diff = new Date(expiresAt).getTime() - Date.now();
