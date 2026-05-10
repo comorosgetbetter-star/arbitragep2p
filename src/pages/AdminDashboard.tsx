@@ -197,6 +197,7 @@ const AdminDashboard = () => {
         schema: 'public',
         table: 'ticket_messages',
       }, (payload) => {
+        fetchTickets();
         if (selectedTicket && (payload.new as TicketMessage).ticket_id === selectedTicket.id) {
           fetchTicketMessages(selectedTicket.id);
         }
