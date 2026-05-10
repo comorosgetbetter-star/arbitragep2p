@@ -236,11 +236,11 @@ const AdminDashboard = () => {
       .from('withdrawals')
       .select('*')
       .order('created_at', { ascending: false })
-      .limit(50);
+      .limit(200);
 
     if (data) {
       const enriched = data.map(w => {
-        const member = members.find(m => m.user_id === w.user_id);
+        const member = membersRef.current.find(m => m.user_id === w.user_id);
         return {
           ...w,
           user_email: member?.email || 'Unknown',
@@ -384,6 +384,7 @@ const AdminDashboard = () => {
           };
         });
         setWithdrawals(enrichedWithdrawals);
+        setWithdrawalPage(1);
       }
 
       // Fetch tickets
