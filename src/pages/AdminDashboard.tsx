@@ -997,7 +997,7 @@ const AdminDashboard = () => {
                   </CardContent>
                 </Card>
               ) : (
-                withdrawals.map((w) => (
+                pagedWithdrawals.map((w) => (
                   <Card key={w.id} className={`border-border/50 ${w.status === 'pending' ? 'bg-warning/5 border-warning/30' : 'bg-card/80'}`}>
                     <CardContent className="p-3 space-y-2">
                       <div className="flex items-start justify-between gap-2">
@@ -1054,6 +1054,19 @@ const AdminDashboard = () => {
                     </CardContent>
                   </Card>
                 ))
+              )}
+              {withdrawals.length > ADMIN_PAGE_SIZE && (
+                <div className="flex items-center justify-between gap-3 pt-2">
+                  <Button variant="outline" size="sm" disabled={safeWithdrawalPage === 1} onClick={() => setWithdrawalPage((p) => Math.max(1, p - 1))}>
+                    Back
+                  </Button>
+                  <span className="text-xs text-muted-foreground">
+                    Page {safeWithdrawalPage} of {withdrawalPages}
+                  </span>
+                  <Button variant="outline" size="sm" disabled={safeWithdrawalPage === withdrawalPages} onClick={() => setWithdrawalPage((p) => Math.min(withdrawalPages, p + 1))}>
+                    Next
+                  </Button>
+                </div>
               )}
             </div>
           </TabsContent>
