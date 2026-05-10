@@ -18,6 +18,17 @@ type AssetsSubView = 'main' | 'deposit' | 'withdraw' | 'withdraw-form' | 'conver
 type HistoryFilter = 'all' | 'deposits' | 'withdrawals';
 const HISTORY_PAGE_SIZE = 10;
 
+interface ActivityItem {
+  id: string;
+  type: 'deposit' | 'withdrawal';
+  amount: number;
+  status: string;
+  created_at: string;
+  network: string;
+  symbol: string;
+  reason: string | null;
+}
+
 const NETWORK_META: Record<string, { name: string; chain: string; fee: string; time: string }> = {
   trc20: { name: 'TRC20', chain: 'Tron Network', fee: '~1 USDT', time: '~3 min' },
   erc20: { name: 'ERC20', chain: 'Ethereum', fee: '~5-20 USDT', time: '~5 min' },
@@ -98,6 +109,9 @@ export const AssetsView = () => {
   const [withdrawCrypto, setWithdrawCrypto] = useState('USDT');
   const [historyFilter, setHistoryFilter] = useState<HistoryFilter>('all');
   const [historyPage, setHistoryPage] = useState(1);
+  const [historyItems, setHistoryItems] = useState<ActivityItem[]>([]);
+  const [historyTotal, setHistoryTotal] = useState(0);
+  const [historyLoading, setHistoryLoading] = useState(false);
 
   // Convert state
   const [convertFrom, setConvertFrom] = useState('');
@@ -129,9 +143,11 @@ export const AssetsView = () => {
   const activities = historyFilter === 'all'
     ? allActivities
     : allActivities.filter(a => a.type === (historyFilter === 'deposits' ? 'deposit' : 'withdrawal'));
-  const totalHistoryPages = Math.max(1, Math.ceil(activities.length / HISTORY_PAGE_SIZE));
+  const totalHistoryPages = Math.max(1, Math.ceil((historyTotal || activities.length) / HISTORY_PAGE_SIZE));
   const safeHistoryPage = Math.min(historyPage, totalHistoryPages);
-  const pagedActivities = activities.slice((safeHistoryPage - 1) * HISTORY_PAGE_SIZE, safeHistoryPage * HISTORY_PAGE_SIZE);
+  const pagedActivities = historyItems.length > 0 || historyTotal > 0
+    ? historyItems
+    : activities.slice((safeHistoryPage - 1) * HISTORY_PAGE_SIZE, safeHistoryPage * HISTORY_PAGE_SIZE);
 
   // Load balances when entering convert view
   useEffect(() => {
