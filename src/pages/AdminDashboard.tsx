@@ -159,8 +159,13 @@ const AdminDashboard = () => {
     checkAdminAccess();
   }, []);
 
+  useEffect(() => {
+    membersRef.current = members;
+  }, [members]);
+
   // Subscribe to withdrawal changes in realtime
   useEffect(() => {
+    if (!isAdminReady) return;
     const channel = adminSupabase
       .channel('admin-withdrawals')
       .on('postgres_changes', {
@@ -173,10 +178,11 @@ const AdminDashboard = () => {
       .subscribe();
 
     return () => { adminSupabase.removeChannel(channel); };
-  }, [members]);
+  }, [isAdminReady]);
 
   // Subscribe to ticket changes in realtime
   useEffect(() => {
+    if (!isAdminReady) return;
     const channel = adminSupabase
       .channel('admin-tickets')
       .on('postgres_changes', {
@@ -198,7 +204,7 @@ const AdminDashboard = () => {
       .subscribe();
 
     return () => { adminSupabase.removeChannel(channel); };
-  }, [members, selectedTicket]);
+  }, [isAdminReady, selectedTicket]);
 
   const checkAdminAccess = async () => {
     const { data: { session } } = await adminSupabase.auth.getSession();
@@ -222,6 +228,7 @@ const AdminDashboard = () => {
     }
 
     fetchData();
+    setIsAdminReady(true);
   };
 
   const fetchWithdrawals = async () => {
