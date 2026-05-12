@@ -128,7 +128,7 @@ export const AssetsView = () => {
 
   const displayBalance = hidden
     ? '****'
-    : formatUsd(totalPortfolioValue);
+    : `$${formatUsd(totalPortfolioValue)}`;
 
   const recentDeposits = deposits.filter((d) => {
     const age = Date.now() - new Date(d.created_at).getTime();

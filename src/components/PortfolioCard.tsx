@@ -9,7 +9,7 @@ import { calculatePortfolioValue, formatUsd } from '@/lib/portfolioValue';
 export const PortfolioCard = () => {
   const { user, loading: authLoading } = useAuth();
   const { balance, cryptoBalances, isLoading: dataLoading, loadedForUser } = useUserData();
-  const { prices } = useCryptoPrices();
+  const { prices, isLoading: pricesLoading } = useCryptoPrices();
   const [hidden, setHidden] = useState(true);
 
   // Logged-in users see balance by default; logged-out users see dots
@@ -19,7 +19,7 @@ export const PortfolioCard = () => {
     }
   }, [user, authLoading]);
 
-  if (authLoading || (user && (dataLoading || loadedForUser !== user.id))) {
+  if (authLoading || (user && (dataLoading || loadedForUser !== user.id || pricesLoading))) {
     return <PortfolioSkeleton />;
   }
 
