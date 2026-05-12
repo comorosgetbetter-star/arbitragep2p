@@ -785,7 +785,7 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
 
               {/* Start button */}
               <Button
-                onClick={() => { setSelectedPlan(plan.id); setSelectedDuration(DURATION_OPTIONS[0]); }}
+                onClick={() => { setSelectedPlan(plan.id); setSelectedDuration(DURATION_OPTIONS[0]); setSelectedPair(TRADING_PAIRS[0].value); setDialogStep('configure'); }}
                 className="w-full h-11 rounded-xl bg-gold hover:bg-gold/90 text-gold-foreground font-semibold text-sm shadow-[0_0_12px_hsl(43_96%_56%/0.2)]"
               >
                 <Zap className="h-4 w-4 mr-1.5" />
