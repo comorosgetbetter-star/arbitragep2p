@@ -401,6 +401,22 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
               <Trophy className="h-5 w-5 text-success" />
               <span className="text-base font-bold text-success tracking-tight">Session Complete</span>
             </div>
+          ) : searchingEntries ? (
+            <div className="absolute inset-0 bg-card border border-primary/20 rounded-lg p-3 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-md bg-primary/10 flex items-center justify-center">
+                <TrendingUp className="h-5 w-5 text-primary animate-pulse" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-foreground tracking-tight">Looking for entries…</p>
+                <p className="text-xs text-muted-foreground font-mono">Scanning market signals</p>
+              </div>
+              <div className="flex gap-0.5 items-end">
+                <div className="w-1 h-3 bg-primary/30 rounded-full animate-[pulse_0.8s_ease-in-out_infinite]" />
+                <div className="w-1 h-5 bg-primary/50 rounded-full animate-[pulse_0.8s_ease-in-out_infinite_0.15s]" />
+                <div className="w-1 h-2.5 bg-primary/25 rounded-full animate-[pulse_0.8s_ease-in-out_infinite_0.3s]" />
+                <div className="w-1 h-4 bg-primary/40 rounded-full animate-[pulse_0.8s_ease-in-out_infinite_0.45s]" />
+              </div>
+            </div>
           ) : (
             <div className="absolute inset-0 bg-card border border-border/20 rounded-lg p-3 flex items-center justify-center">
               <p className="text-sm text-muted-foreground">Waiting for first trade…</p>
