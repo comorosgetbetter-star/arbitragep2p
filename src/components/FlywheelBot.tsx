@@ -797,13 +797,94 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
       </div>
 
       {/* Package Deploy Dialog */}
-      <Dialog open={!!selectedPlan} onOpenChange={(open) => { if (!open) setSelectedPlan(null); }}>
+      <Dialog open={!!selectedPlan} onOpenChange={(open) => { if (!open) { setSelectedPlan(null); setDialogStep('configure'); } }}>
         <DialogContent className="sm:max-w-md">
           {(() => {
             const plan = FLYWHEEL_PLANS.find(p => p.id === selectedPlan);
             if (!plan) return null;
             const estProfit = plan.minAmount * (plan.dailyReturnPct / 100);
 
+            if (dialogStep === 'configure') {
+              return (
+                <>
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2 text-lg">
+                      <div className="w-9 h-9 rounded-md bg-gold/10 flex items-center justify-center">
+                        <ArrowDownUp className="h-4 w-4 text-gold" />
+                      </div>
+                      {plan.name}
+                      <Badge className="bg-gold/10 text-gold border-0 text-xs font-mono tracking-wider ml-auto">{plan.badge}</Badge>
+                    </DialogTitle>
+                    <DialogDescription className="text-sm">
+                      Configure and deploy this trading package.
+                    </DialogDescription>
+                  </DialogHeader>
+
+                  <div className="space-y-4 py-2">
+                    <div className="grid grid-cols-3 gap-2 text-center">
+                      <div className="bg-secondary/30 rounded-lg p-3">
+                        <p className="text-xs text-muted-foreground uppercase">Min</p>
+                        <p className="text-base font-mono font-bold text-foreground">${fmt(plan.minAmount, 0)}</p>
+                      </div>
+                      <div className="bg-secondary/30 rounded-lg p-3">
+                        <p className="text-xs text-muted-foreground uppercase">Rate</p>
+                        <p className="text-base font-mono font-bold text-primary">{plan.dailyReturnPct}%</p>
+                      </div>
+                      <div className="bg-success/10 rounded-lg p-3">
+                        <p className="text-xs text-muted-foreground uppercase">Est.</p>
+                        <p className="text-base font-mono font-bold text-success">+${fmt(estProfit, 0)}</p>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground mb-2 block">Duration</label>
+                      <div className="grid grid-cols-4 gap-2">
+                        {DURATION_OPTIONS.map((opt) => (
+                          <button
+                            key={opt.minutes}
+                            onClick={() => setSelectedDuration(opt)}
+                            className={`py-3 px-1 rounded-lg text-sm font-semibold border transition-all ${
+                              selectedDuration.minutes === opt.minutes
+                                ? 'bg-gold/20 border-gold/50 text-gold'
+                                : 'bg-secondary/50 border-border/30 text-muted-foreground hover:border-border'
+                            }`}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground mb-1.5 block">Trading Amount (USDT)</label>
+                      <div className="bg-secondary/50 border border-border/50 rounded-lg px-4 py-3 text-lg font-bold text-foreground font-mono">
+                        ${fmt(plan.minAmount)}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1.5">Fixed amount for this package. Balance: ${fmt(balance)}</p>
+                    </div>
+                  </div>
+
+                  <DialogFooter className="flex gap-2 sm:gap-2">
+                    <Button
+                      variant="outline"
+                      className="flex-1 h-12 font-semibold text-sm"
+                      onClick={() => setSelectedPlan(null)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      className="flex-[2] h-12 font-semibold text-sm bg-gold hover:bg-gold/90 text-gold-foreground shadow-[0_0_16px_hsl(43_96%_56%/0.3)]"
+                      onClick={() => handleContinue(plan)}
+                      disabled={balance < plan.minAmount}
+                    >
+                      Continue
+                    </Button>
+                  </DialogFooter>
+                </>
+              );
+            }
+
+            // Pair selection step
             return (
               <>
                 <DialogHeader>
@@ -811,75 +892,57 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
                     <div className="w-9 h-9 rounded-md bg-gold/10 flex items-center justify-center">
                       <ArrowDownUp className="h-4 w-4 text-gold" />
                     </div>
-                    {plan.name}
-                    <Badge className="bg-gold/10 text-gold border-0 text-xs font-mono tracking-wider ml-auto">{plan.badge}</Badge>
+                    Choose Trading Pair
                   </DialogTitle>
                   <DialogDescription className="text-sm">
-                    Configure and deploy this trading package.
+                    Select a market for {plan.name} • {selectedDuration.label} • ${fmt(plan.minAmount, 0)}
                   </DialogDescription>
                 </DialogHeader>
 
-                <div className="space-y-4 py-2">
-                  {/* Stats */}
-                  <div className="grid grid-cols-3 gap-2 text-center">
-                    <div className="bg-secondary/30 rounded-lg p-3">
-                      <p className="text-xs text-muted-foreground uppercase">Min</p>
-                      <p className="text-base font-mono font-bold text-foreground">${fmt(plan.minAmount, 0)}</p>
-                    </div>
-                    <div className="bg-secondary/30 rounded-lg p-3">
-                      <p className="text-xs text-muted-foreground uppercase">Rate</p>
-                      <p className="text-base font-mono font-bold text-primary">{plan.dailyReturnPct}%</p>
-                    </div>
-                    <div className="bg-success/10 rounded-lg p-3">
-                      <p className="text-xs text-muted-foreground uppercase">Est.</p>
-                      <p className="text-base font-mono font-bold text-success">+${fmt(estProfit, 0)}</p>
-                    </div>
-                  </div>
-
-                  {/* Duration selector */}
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground mb-2 block">Duration</label>
-                    <div className="grid grid-cols-4 gap-2">
-                      {DURATION_OPTIONS.map((opt) => (
-                        <button
-                          key={opt.minutes}
-                          onClick={() => setSelectedDuration(opt)}
-                          className={`py-3 px-1 rounded-lg text-sm font-semibold border transition-all ${
-                            selectedDuration.minutes === opt.minutes
-                              ? 'bg-gold/20 border-gold/50 text-gold'
-                              : 'bg-secondary/50 border-border/30 text-muted-foreground hover:border-border'
-                          }`}
-                        >
-                          {opt.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Amount */}
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground mb-1.5 block">Trading Amount (USDT)</label>
-                    <div className="bg-secondary/50 border border-border/50 rounded-lg px-4 py-3 text-lg font-bold text-foreground font-mono">
-                      ${fmt(plan.minAmount)}
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1.5">Fixed amount for this package. Balance: ${fmt(balance)}</p>
-                  </div>
+                <div className="space-y-2 py-2 max-h-[320px] overflow-y-auto">
+                  {TRADING_PAIRS.map((pair) => {
+                    const isSelected = selectedPair === pair.value;
+                    return (
+                      <button
+                        key={pair.value}
+                        onClick={() => setSelectedPair(pair.value)}
+                        className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border transition-all ${
+                          isSelected
+                            ? 'bg-gold/15 border-gold/50'
+                            : 'bg-secondary/40 border-border/30 hover:border-border'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className={`text-base font-mono font-bold ${isSelected ? 'text-gold' : 'text-foreground'}`}>
+                            {pair.label}
+                          </span>
+                          {pair.recommended && (
+                            <Badge className="bg-success/15 text-success border-0 text-[10px] font-mono tracking-wider">RECOMMENDED</Badge>
+                          )}
+                        </div>
+                        <div className={`w-4 h-4 rounded-full border-2 ${isSelected ? 'border-gold bg-gold' : 'border-border'}`}>
+                          {isSelected && <div className="w-full h-full rounded-full flex items-center justify-center"><div className="w-1.5 h-1.5 rounded-full bg-gold-foreground" /></div>}
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
 
                 <DialogFooter className="flex gap-2 sm:gap-2">
                   <Button
                     variant="outline"
                     className="flex-1 h-12 font-semibold text-sm"
-                    onClick={() => setSelectedPlan(null)}
+                    onClick={() => setDialogStep('configure')}
+                    disabled={isStarting}
                   >
-                    Cancel
+                    Back
                   </Button>
                   <Button
                     className="flex-[2] h-12 font-semibold text-sm bg-gold hover:bg-gold/90 text-gold-foreground shadow-[0_0_16px_hsl(43_96%_56%/0.3)]"
-                    onClick={() => handleStart(plan)}
-                    disabled={isStarting || balance < plan.minAmount}
+                    onClick={() => handleStartTrading(plan)}
+                    disabled={isStarting}
                   >
-                    {isStarting ? 'Starting…' : `Deploy $${fmt(plan.minAmount)}`}
+                    {isStarting ? 'Starting…' : `Start Trading ${selectedPair}`}
                   </Button>
                 </DialogFooter>
               </>
