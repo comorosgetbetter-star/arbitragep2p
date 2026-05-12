@@ -43,6 +43,15 @@ const DURATION_OPTIONS = [
   { label: '10 min', minutes: 10 },
 ];
 
+const TRADING_PAIRS = [
+  { value: 'BTC/USDT', label: 'BTC/USDT', recommended: true },
+  { value: 'ETH/USDT', label: 'ETH/USDT' },
+  { value: 'USDT/USD', label: 'USDT/USD' },
+  { value: 'BNB/USDT', label: 'BNB/USDT' },
+  { value: 'SOL/USDT', label: 'SOL/USDT' },
+  { value: 'XRP/USDT', label: 'XRP/USDT' },
+];
+
 const FLYWHEEL_PACKAGE_MINUTE_DIVISOR = 10;
 
 const FLYWHEEL_PLANS = [
