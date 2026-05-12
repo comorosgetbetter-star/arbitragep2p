@@ -198,7 +198,7 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
   }, [trades, storageKey]);
 
   useEffect(() => {
-    if (isCompleted || session.status !== 'active') return;
+    if (isCompleted || session.status !== 'active' || searchingEntries) return;
 
     const runTradeRound = () => {
       setIsTrading(true);
@@ -252,7 +252,14 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
     const initialTimeout = setTimeout(runTradeRound, 1000);
     const interval = setInterval(runTradeRound, 4000 + Math.random() * 3000);
     return () => { clearTimeout(initialTimeout); clearInterval(interval); };
-  }, [isCompleted, session.status, session.staked_amount, session.started_at, session.ends_at, session.daily_return_pct, session.plan_name]);
+  }, [isCompleted, session.status, session.staked_amount, session.started_at, session.ends_at, session.daily_return_pct, session.plan_name, searchingEntries]);
+
+  // "Looking for entries" warmup before first trade for new sessions
+  useEffect(() => {
+    if (!searchingEntries) return;
+    const timeout = setTimeout(() => setSearchingEntries(false), 7000);
+    return () => clearTimeout(timeout);
+  }, [searchingEntries]);
 
   // Catch up profits when phone wakes up / tab becomes visible again
   useEffect(() => {
