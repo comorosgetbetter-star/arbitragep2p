@@ -24,7 +24,7 @@ export const CryptoGrid = () => {
             <div className="flex items-center gap-2 mb-2">
               <img src={getCryptoLogo(crypto.symbol)} alt={crypto.symbol} className="w-6 h-6 rounded-full" />
               <span className="font-bold text-sm">
-                {crypto.symbol}<span className="text-muted-foreground font-normal">/USDT</span>
+                {crypto.symbol}<span className="text-muted-foreground font-normal">/{crypto.symbol === 'USDT' ? 'USD' : 'USDT'}</span>
               </span>
             </div>
             <p className="font-display font-bold text-base">
