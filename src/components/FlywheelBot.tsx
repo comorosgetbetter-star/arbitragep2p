@@ -619,7 +619,7 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
     return () => { supabase.removeChannel(channel); };
   }, [user, fetchSessions]);
 
-  const handleStart = async (plan: typeof FLYWHEEL_PLANS[0]) => {
+  const handleContinue = (plan: typeof FLYWHEEL_PLANS[0]) => {
     if (!user) return;
     if (balance < plan.minAmount) {
       toast({ title: 'Minimum not met', description: `Minimum is $${fmt(plan.minAmount)}`, variant: 'destructive' });
@@ -629,30 +629,30 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
       toast({ title: 'Insufficient balance', description: `Your balance is $${fmt(balance)}`, variant: 'destructive' });
       return;
     }
-    setConfirmPlan(plan);
+    setSelectedPair(TRADING_PAIRS[0].value);
+    setDialogStep('pair');
   };
 
-  const handleConfirmStart = async () => {
-    if (!confirmPlan || !user) return;
-
-    const tradeAmount = confirmPlan.minAmount;
+  const handleStartTrading = async (plan: typeof FLYWHEEL_PLANS[0]) => {
+    if (!user) return;
+    const tradeAmount = plan.minAmount;
     if (balance < tradeAmount) {
-      toast({ title: 'Insufficient balance', description: `You need $${fmt(tradeAmount)} for ${confirmPlan.name}`, variant: 'destructive' });
+      toast({ title: 'Insufficient balance', description: `You need $${fmt(tradeAmount)} for ${plan.name}`, variant: 'destructive' });
       return;
     }
 
     setIsStarting(true);
-    setConfirmPlan(null);
     try {
       const { error } = await supabase.rpc('start_flywheel', {
-        _plan_name: confirmPlan.name,
+        _plan_name: plan.name,
         _amount: tradeAmount,
-        _daily_return_pct: confirmPlan.dailyReturnPct,
+        _daily_return_pct: plan.dailyReturnPct,
         _lock_minutes: selectedDuration.minutes,
       });
       if (error) throw error;
-      toast({ title: 'Flywheel started! 🚀', description: `$${fmt(tradeAmount)} deployed on ${confirmPlan.name}` });
+      toast({ title: 'Flywheel started! 🚀', description: `$${fmt(tradeAmount)} deployed on ${plan.name} • ${selectedPair}` });
       setSelectedPlan(null);
+      setDialogStep('configure');
       setSelectedDuration(DURATION_OPTIONS[0]);
       refetchBalance();
       fetchSessions();
