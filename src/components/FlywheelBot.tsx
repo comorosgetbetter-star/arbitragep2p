@@ -119,6 +119,8 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
   const [isTrading, setIsTrading] = useState(false);
   const [tradingCountdown, setTradingCountdown] = useState(0);
   const [lastResult, setLastResult] = useState<TradeRound | null>(null);
+  // Resume sessions skip the entry search; new sessions get a brief "looking for entries" warmup
+  const [searchingEntries, setSearchingEntries] = useState(() => (initialState?.trades?.length ?? 0) === 0);
   const roundIdRef = useRef(initialState?.roundId ?? 0);
   const cumulativeNetRef = useRef(initialState?.cumulativeNet ?? 0);
   const tradesEndRef = useRef<HTMLDivElement>(null);
