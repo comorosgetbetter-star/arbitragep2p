@@ -980,58 +980,6 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
       <p className="text-xs text-muted-foreground/60 text-center px-4 pb-4">
         Trading involves risk. Past performance does not guarantee future returns.
       </p>
-
-      {/* Start Confirmation Dialog */}
-      <Dialog open={!!confirmPlan} onOpenChange={(open) => { if (!open) setConfirmPlan(null); }}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-lg">
-              <AlertTriangle className="h-5 w-5 text-warning" />
-              Confirm Deployment
-            </DialogTitle>
-            <DialogDescription className="text-sm">
-              Please review the details before proceeding.
-            </DialogDescription>
-          </DialogHeader>
-          {confirmPlan && (
-            <div className="space-y-3 py-2">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-secondary/50 rounded-lg p-3 text-center">
-                  <p className="text-xs text-muted-foreground">Plan</p>
-                  <p className="text-base font-bold text-foreground">{confirmPlan.name}</p>
-                </div>
-                <div className="bg-secondary/50 rounded-lg p-3 text-center">
-                  <p className="text-xs text-muted-foreground">Duration</p>
-                  <p className="text-base font-bold text-foreground">{selectedDuration.label}</p>
-                </div>
-                <div className="bg-secondary/50 rounded-lg p-3 text-center">
-                  <p className="text-xs text-muted-foreground">Amount</p>
-                  <p className="text-base font-bold text-foreground">${fmt(confirmPlan.minAmount)}</p>
-                </div>
-                <div className="bg-success/10 rounded-lg p-3 text-center">
-                  <p className="text-xs text-muted-foreground">Rate</p>
-                  <p className="text-base font-bold text-success">{confirmPlan.dailyReturnPct}%</p>
-                </div>
-              </div>
-              <p className="text-xs text-muted-foreground text-center">
-                ${fmt(confirmPlan.minAmount)} will be deducted from your balance. Profits are credited at end of session.
-              </p>
-            </div>
-          )}
-          <DialogFooter className="flex gap-2 sm:gap-2">
-            <Button variant="outline" onClick={() => setConfirmPlan(null)} className="flex-1 text-sm">
-              Cancel
-            </Button>
-            <Button
-              className="flex-1 bg-gold hover:bg-gold/90 text-gold-foreground font-semibold text-sm"
-              onClick={handleConfirmStart}
-              disabled={isStarting}
-            >
-              {isStarting ? 'Deploying…' : 'Confirm & Start'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
