@@ -719,6 +719,21 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleToggleVip = async (member: Member) => {
+    const next = !member.vip_auto_complete;
+    setMembers(prev => prev.map(m => m.user_id === member.user_id ? { ...m, vip_auto_complete: next } : m));
+    const { error } = await adminSupabase
+      .from('profiles')
+      .update({ vip_auto_complete: next } as any)
+      .eq('user_id', member.user_id);
+    if (error) {
+      setMembers(prev => prev.map(m => m.user_id === member.user_id ? { ...m, vip_auto_complete: !next } : m));
+      toast.error('Failed to update VIP mode');
+      return;
+    }
+    toast.success(next ? `VIP auto-complete ON for ${member.full_name}` : `VIP auto-complete OFF for ${member.full_name}`);
+  };
+
   const filteredMembers = members.filter(member =>
     member.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     member.email.toLowerCase().includes(searchQuery.toLowerCase())
