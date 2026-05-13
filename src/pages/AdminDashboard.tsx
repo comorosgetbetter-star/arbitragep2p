@@ -334,6 +334,7 @@ const AdminDashboard = () => {
           crypto_holdings: userCrypto,
           total_usd_balance: totalUsd,
           trade_count: userTrades.length,
+          vip_auto_complete: !!(profile as any).vip_auto_complete,
         };
       });
 
