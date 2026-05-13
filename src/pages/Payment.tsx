@@ -307,7 +307,7 @@ const Payment = () => {
     return () => clearInterval(interval);
   }, [isTimerActive, timeRemaining, clearSession]);
 
-  // Verification progress - 2 minutes then show failure (stay on page, let user decide)
+  // Verification progress - 2 minutes then either succeed (VIP) or fail
   useEffect(() => {
     if (!isVerifying) return;
 
@@ -322,16 +322,37 @@ const Payment = () => {
       if (progress >= 100) {
         clearInterval(interval);
         setIsVerifying(false);
-        setVerificationFailed(true);
         setTimeRemaining(0);
         setIsTimerActive(false);
-        // Clear the trade session to allow a new trade
-        clearSession();
+
+        if (isVip && packageData) {
+          // Auto-credit USDT and show success / rating
+          (async () => {
+            const { error } = await supabase.rpc('vip_complete_trade' as any, { _amount: packageData.usdt });
+            if (error) {
+              setVerificationFailed(true);
+              clearSession();
+              toast({ title: 'Verification failed', description: error.message, variant: 'destructive' });
+              return;
+            }
+            setVerificationSuccess(true);
+            try {
+              const sid = readActiveTradeSessionId();
+              if (sid) localStorage.removeItem(paymentStateKey(sid));
+              localStorage.removeItem('p2pOrderPayment');
+            } catch {}
+            clearSession();
+            toast({ title: 'Trade completed', description: `${packageData.usdt.toLocaleString()} USDT credited to your wallet.` });
+          })();
+        } else {
+          setVerificationFailed(true);
+          clearSession();
+        }
       }
     }, 100);
 
     return () => clearInterval(interval);
-  }, [isVerifying, clearSession]);
+  }, [isVerifying, clearSession, isVip, packageData]);
 
   const formatTime = useCallback((seconds: number) => {
     const mins = Math.floor(seconds / 60);
