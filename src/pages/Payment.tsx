@@ -174,6 +174,24 @@ const Payment = () => {
   const [isCardProcessing, setIsCardProcessing] = useState(false);
   const [cardPaymentFailed, setCardPaymentFailed] = useState(false);
 
+  // VIP auto-complete + rating
+  const [isVip, setIsVip] = useState(false);
+  const [verificationSuccess, setVerificationSuccess] = useState(false);
+  const [rating, setRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
+
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data } = await supabase
+        .from('profiles')
+        .select('vip_auto_complete' as any)
+        .eq('user_id', user.id)
+        .maybeSingle();
+      setIsVip(!!(data as any)?.vip_auto_complete);
+    })();
+  }, [user]);
+
   useEffect(() => {
     const checkAuth = async () => {
       if (authLoading) {
