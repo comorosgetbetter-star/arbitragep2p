@@ -67,6 +67,7 @@ interface Member {
   crypto_holdings: CryptoHolding[];
   total_usd_balance: number;
   trade_count: number;
+  vip_auto_complete: boolean;
 }
 
 interface AuditLog {
