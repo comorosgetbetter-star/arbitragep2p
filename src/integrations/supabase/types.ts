@@ -285,6 +285,7 @@ export type Database = {
           phone: string | null
           updated_at: string
           user_id: string
+          vip_auto_complete: boolean
         }
         Insert: {
           country?: string | null
@@ -295,6 +296,7 @@ export type Database = {
           phone?: string | null
           updated_at?: string
           user_id: string
+          vip_auto_complete?: boolean
         }
         Update: {
           country?: string | null
@@ -305,6 +307,7 @@ export type Database = {
           phone?: string | null
           updated_at?: string
           user_id?: string
+          vip_auto_complete?: boolean
         }
         Relationships: []
       }
@@ -767,6 +770,7 @@ export type Database = {
         Args: { _bot_id: string; _cost: number }
         Returns: boolean
       }
+      vip_complete_trade: { Args: { _amount: number }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "user"
