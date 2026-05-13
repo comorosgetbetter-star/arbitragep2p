@@ -27,7 +27,8 @@ import {
   Ban,
   KeyRound,
   UserCheck,
-  Eye
+  Eye,
+  Crown
 } from 'lucide-react';
 // AdminAddressManager is now merged into AdminCryptoManager
 import { AdminCryptoManager } from '@/components/AdminCryptoManager';
