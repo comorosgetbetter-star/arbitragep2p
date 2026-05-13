@@ -926,29 +926,42 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
                   </DialogDescription>
                 </DialogHeader>
 
-                <div className="space-y-2 py-2 max-h-[320px] overflow-y-auto">
+                <div className="space-y-2 py-2 max-h-[360px] overflow-y-auto pr-1">
                   {TRADING_PAIRS.map((pair) => {
                     const isSelected = selectedPair === pair.value;
                     return (
                       <button
                         key={pair.value}
                         onClick={() => setSelectedPair(pair.value)}
-                        className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border transition-all ${
+                        className={`group w-full flex items-center gap-3 px-3.5 py-3 rounded-xl border transition-all text-left ${
                           isSelected
-                            ? 'bg-gold/15 border-gold/50'
-                            : 'bg-secondary/40 border-border/30 hover:border-border'
+                            ? 'bg-gradient-to-r from-gold/15 via-gold/8 to-transparent border-gold/60 shadow-[0_0_0_1px_hsl(43_96%_56%/0.2)]'
+                            : 'bg-secondary/30 border-border/40 hover:border-gold/30 hover:bg-secondary/50'
                         }`}
                       >
-                        <div className="flex items-center gap-2">
-                          <span className={`text-base font-mono font-bold ${isSelected ? 'text-gold' : 'text-foreground'}`}>
-                            {pair.label}
-                          </span>
-                          {pair.recommended && (
-                            <Badge className="bg-success/15 text-success border-0 text-[10px] font-mono tracking-wider">RECOMMENDED</Badge>
-                          )}
+                        <div className={`w-9 h-9 rounded-full overflow-hidden bg-background flex items-center justify-center shrink-0 ring-1 ${isSelected ? 'ring-gold/40' : 'ring-border/40'}`}>
+                          <img
+                            src={pair.logo}
+                            alt={pair.base}
+                            className="w-full h-full object-cover"
+                            loading="lazy"
+                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                          />
                         </div>
-                        <div className={`w-4 h-4 rounded-full border-2 ${isSelected ? 'border-gold bg-gold' : 'border-border'}`}>
-                          {isSelected && <div className="w-full h-full rounded-full flex items-center justify-center"><div className="w-1.5 h-1.5 rounded-full bg-gold-foreground" /></div>}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className={`text-[15px] font-bold tracking-tight ${isSelected ? 'text-gold' : 'text-foreground'}`}>
+                              {pair.base}
+                              <span className="text-muted-foreground font-medium">/{pair.quote}</span>
+                            </span>
+                            {pair.recommended && (
+                              <Badge className="bg-success/15 text-success border-0 text-[9px] font-bold tracking-wider px-1.5 py-0">RECOMMENDED</Badge>
+                            )}
+                          </div>
+                          <p className="text-[11px] text-muted-foreground mt-0.5 font-mono">Spot · High liquidity</p>
+                        </div>
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${isSelected ? 'border-gold bg-gold' : 'border-border group-hover:border-gold/50'}`}>
+                          {isSelected && <div className="w-2 h-2 rounded-full bg-gold-foreground" />}
                         </div>
                       </button>
                     );
