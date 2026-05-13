@@ -439,8 +439,8 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
               <span className="text-destructive">{lossesCount}L</span>
             </div>
           </div>
-          <p className={`text-3xl font-bold font-mono tracking-tight ${accruedProfit >= 0 ? 'text-success' : 'text-destructive'}`}>
-            {accruedProfit >= 0 ? '+' : '-'}${fmt(Math.abs(accruedProfit))}
+          <p className={`text-3xl font-bold font-mono tracking-tight ${displayedNetProfit >= 0 ? 'text-success' : 'text-destructive'}`}>
+            {displayedNetProfit >= 0 ? '+' : '-'}${fmt(Math.abs(displayedNetProfit))}
           </p>
         </div>
 
