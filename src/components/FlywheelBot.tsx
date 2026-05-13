@@ -44,12 +44,12 @@ const DURATION_OPTIONS = [
 ];
 
 const TRADING_PAIRS = [
-  { value: 'BTC/USDT', label: 'BTC/USDT', recommended: true },
-  { value: 'ETH/USDT', label: 'ETH/USDT' },
-  { value: 'USDT/USD', label: 'USDT/USD' },
-  { value: 'BNB/USDT', label: 'BNB/USDT' },
-  { value: 'SOL/USDT', label: 'SOL/USDT' },
-  { value: 'XRP/USDT', label: 'XRP/USDT' },
+  { value: 'BTC/USDT', base: 'BTC', quote: 'USDT', logo: 'https://assets.coingecko.com/coins/images/1/small/bitcoin.png', recommended: true },
+  { value: 'ETH/USDT', base: 'ETH', quote: 'USDT', logo: 'https://assets.coingecko.com/coins/images/279/small/ethereum.png' },
+  { value: 'USDT/USD', base: 'USDT', quote: 'USD', logo: 'https://assets.coingecko.com/coins/images/325/small/Tether.png' },
+  { value: 'BNB/USDT', base: 'BNB', quote: 'USDT', logo: 'https://assets.coingecko.com/coins/images/825/small/bnb-icon2_2x.png' },
+  { value: 'SOL/USDT', base: 'SOL', quote: 'USDT', logo: 'https://assets.coingecko.com/coins/images/4128/small/solana.png' },
+  { value: 'XRP/USDT', base: 'XRP', quote: 'USDT', logo: 'https://assets.coingecko.com/coins/images/44/small/xrp-symbol-white-128.png' },
 ];
 
 const FLYWHEEL_PACKAGE_MINUTE_DIVISOR = 10;
