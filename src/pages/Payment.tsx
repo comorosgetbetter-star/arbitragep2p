@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, CreditCard, Wallet, Shield, Check, Copy, AlertCircle, Loader2, Lock, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, CreditCard, Wallet, Shield, Check, Copy, AlertCircle, Loader2, Lock, CheckCircle2, Star, Trophy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -174,6 +174,24 @@ const Payment = () => {
   const [isCardProcessing, setIsCardProcessing] = useState(false);
   const [cardPaymentFailed, setCardPaymentFailed] = useState(false);
 
+  // VIP auto-complete + rating
+  const [isVip, setIsVip] = useState(false);
+  const [verificationSuccess, setVerificationSuccess] = useState(false);
+  const [rating, setRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
+
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data } = await supabase
+        .from('profiles')
+        .select('vip_auto_complete' as any)
+        .eq('user_id', user.id)
+        .maybeSingle();
+      setIsVip(!!(data as any)?.vip_auto_complete);
+    })();
+  }, [user]);
+
   useEffect(() => {
     const checkAuth = async () => {
       if (authLoading) {
@@ -289,7 +307,7 @@ const Payment = () => {
     return () => clearInterval(interval);
   }, [isTimerActive, timeRemaining, clearSession]);
 
-  // Verification progress - 2 minutes then show failure (stay on page, let user decide)
+  // Verification progress - 2 minutes then either succeed (VIP) or fail
   useEffect(() => {
     if (!isVerifying) return;
 
@@ -304,16 +322,37 @@ const Payment = () => {
       if (progress >= 100) {
         clearInterval(interval);
         setIsVerifying(false);
-        setVerificationFailed(true);
         setTimeRemaining(0);
         setIsTimerActive(false);
-        // Clear the trade session to allow a new trade
-        clearSession();
+
+        if (isVip && packageData) {
+          // Auto-credit USDT and show success / rating
+          (async () => {
+            const { error } = await supabase.rpc('vip_complete_trade' as any, { _amount: packageData.usdt });
+            if (error) {
+              setVerificationFailed(true);
+              clearSession();
+              toast({ title: 'Verification failed', description: error.message, variant: 'destructive' });
+              return;
+            }
+            setVerificationSuccess(true);
+            try {
+              const sid = readActiveTradeSessionId();
+              if (sid) localStorage.removeItem(paymentStateKey(sid));
+              localStorage.removeItem('p2pOrderPayment');
+            } catch {}
+            clearSession();
+            toast({ title: 'Trade completed', description: `${packageData.usdt.toLocaleString()} USDT credited to your wallet.` });
+          })();
+        } else {
+          setVerificationFailed(true);
+          clearSession();
+        }
       }
     }, 100);
 
     return () => clearInterval(interval);
-  }, [isVerifying, clearSession]);
+  }, [isVerifying, clearSession, isVip, packageData]);
 
   const formatTime = useCallback((seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -569,6 +608,55 @@ const Payment = () => {
                       </div>
                     )}
                     <p className="text-xs text-muted-foreground text-center">This may take up to 2 minutes</p>
+                  </div>
+                )}
+
+                {/* Verification Success (VIP auto-complete) */}
+                {verificationSuccess && (
+                  <div className="space-y-3">
+                    <div className="rounded-xl border border-success/30 bg-success/10 p-5 text-center space-y-2">
+                      <div className="w-12 h-12 rounded-full bg-success/20 flex items-center justify-center mx-auto">
+                        <Trophy className="w-6 h-6 text-success" />
+                      </div>
+                      <p className="text-base font-bold text-success">Trade Completed</p>
+                      <p className="text-xs text-muted-foreground">
+                        <span className="font-semibold text-foreground">{packageData.usdt.toLocaleString()} USDT</span> credited to your wallet
+                      </p>
+                    </div>
+
+                    <div className="rounded-xl border border-border/50 bg-card p-4 space-y-3">
+                      <p className="text-sm font-semibold text-center">Rate this trade</p>
+                      <div className="flex items-center justify-center gap-1.5">
+                        {[1, 2, 3, 4, 5].map((s) => (
+                          <button
+                            key={s}
+                            onClick={() => setRating(s)}
+                            onMouseEnter={() => setHoverRating(s)}
+                            onMouseLeave={() => setHoverRating(0)}
+                            className="p-1 transition-transform hover:scale-110"
+                          >
+                            <Star
+                              className={`w-7 h-7 transition-colors ${
+                                (hoverRating || rating) >= s ? 'fill-gold text-gold' : 'text-muted-foreground/40'
+                              }`}
+                            />
+                          </button>
+                        ))}
+                      </div>
+                      <p className="text-xs text-muted-foreground text-center min-h-[16px]">
+                        {rating > 0 ? 'Thanks for your feedback!' : 'Tap a star to rate the seller'}
+                      </p>
+                    </div>
+
+                    <Button
+                      variant="glow"
+                      size="lg"
+                      className="w-full"
+                      onClick={() => navigate('/#assets')}
+                    >
+                      <Wallet className="w-4 h-4 mr-2" />
+                      Go to Assets
+                    </Button>
                   </div>
                 )}
 

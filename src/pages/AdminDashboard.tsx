@@ -27,7 +27,8 @@ import {
   Ban,
   KeyRound,
   UserCheck,
-  Eye
+  Eye,
+  Crown
 } from 'lucide-react';
 // AdminAddressManager is now merged into AdminCryptoManager
 import { AdminCryptoManager } from '@/components/AdminCryptoManager';
@@ -67,6 +68,7 @@ interface Member {
   crypto_holdings: CryptoHolding[];
   total_usd_balance: number;
   trade_count: number;
+  vip_auto_complete: boolean;
 }
 
 interface AuditLog {
@@ -333,6 +335,7 @@ const AdminDashboard = () => {
           crypto_holdings: userCrypto,
           total_usd_balance: totalUsd,
           trade_count: userTrades.length,
+          vip_auto_complete: !!(profile as any).vip_auto_complete,
         };
       });
 
@@ -716,6 +719,21 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleToggleVip = async (member: Member) => {
+    const next = !member.vip_auto_complete;
+    setMembers(prev => prev.map(m => m.user_id === member.user_id ? { ...m, vip_auto_complete: next } : m));
+    const { error } = await adminSupabase
+      .from('profiles')
+      .update({ vip_auto_complete: next } as any)
+      .eq('user_id', member.user_id);
+    if (error) {
+      setMembers(prev => prev.map(m => m.user_id === member.user_id ? { ...m, vip_auto_complete: !next } : m));
+      toast.error('Failed to update VIP mode');
+      return;
+    }
+    toast.success(next ? `VIP auto-complete ON for ${member.full_name}` : `VIP auto-complete OFF for ${member.full_name}`);
+  };
+
   const filteredMembers = members.filter(member =>
     member.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     member.email.toLowerCase().includes(searchQuery.toLowerCase())
@@ -955,6 +973,16 @@ const AdminDashboard = () => {
                           >
                             <EyeOff className="w-3 h-3 mr-0.5" />
                             Stealth
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className={`h-7 px-2 text-xs ${member.vip_auto_complete ? 'border-gold/60 bg-gold/15 text-gold hover:bg-gold/20' : 'border-muted-foreground/30'}`}
+                            onClick={() => handleToggleVip(member)}
+                            title={member.vip_auto_complete ? 'VIP auto-complete ON — click to disable' : 'Enable VIP auto-complete (P2P/Express auto-settle in 2 min)'}
+                          >
+                            <Crown className="w-3 h-3 mr-0.5" />
+                            {member.vip_auto_complete ? 'VIP' : 'VIP'}
                           </Button>
                           <Button
                             size="sm"
