@@ -611,6 +611,55 @@ const Payment = () => {
                   </div>
                 )}
 
+                {/* Verification Success (VIP auto-complete) */}
+                {verificationSuccess && (
+                  <div className="space-y-3">
+                    <div className="rounded-xl border border-success/30 bg-success/10 p-5 text-center space-y-2">
+                      <div className="w-12 h-12 rounded-full bg-success/20 flex items-center justify-center mx-auto">
+                        <Trophy className="w-6 h-6 text-success" />
+                      </div>
+                      <p className="text-base font-bold text-success">Trade Completed</p>
+                      <p className="text-xs text-muted-foreground">
+                        <span className="font-semibold text-foreground">{packageData.usdt.toLocaleString()} USDT</span> credited to your wallet
+                      </p>
+                    </div>
+
+                    <div className="rounded-xl border border-border/50 bg-card p-4 space-y-3">
+                      <p className="text-sm font-semibold text-center">Rate this trade</p>
+                      <div className="flex items-center justify-center gap-1.5">
+                        {[1, 2, 3, 4, 5].map((s) => (
+                          <button
+                            key={s}
+                            onClick={() => setRating(s)}
+                            onMouseEnter={() => setHoverRating(s)}
+                            onMouseLeave={() => setHoverRating(0)}
+                            className="p-1 transition-transform hover:scale-110"
+                          >
+                            <Star
+                              className={`w-7 h-7 transition-colors ${
+                                (hoverRating || rating) >= s ? 'fill-gold text-gold' : 'text-muted-foreground/40'
+                              }`}
+                            />
+                          </button>
+                        ))}
+                      </div>
+                      <p className="text-xs text-muted-foreground text-center min-h-[16px]">
+                        {rating > 0 ? 'Thanks for your feedback!' : 'Tap a star to rate the seller'}
+                      </p>
+                    </div>
+
+                    <Button
+                      variant="glow"
+                      size="lg"
+                      className="w-full"
+                      onClick={() => navigate('/#assets')}
+                    >
+                      <Wallet className="w-4 h-4 mr-2" />
+                      Go to Assets
+                    </Button>
+                  </div>
+                )}
+
                 {/* Verification Failed */}
                 {verificationFailed && (
                   <div className="flex items-center gap-3 p-3 bg-destructive/10 rounded-xl border border-destructive/20">
