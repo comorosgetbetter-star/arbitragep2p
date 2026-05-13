@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, CreditCard, Wallet, Shield, Check, Copy, AlertCircle, Loader2, Lock, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, CreditCard, Wallet, Shield, Check, Copy, AlertCircle, Loader2, Lock, CheckCircle2, Star, Trophy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
