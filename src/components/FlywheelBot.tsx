@@ -172,7 +172,7 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
   // matches the live wins/losses below — never accrues while "searching for entries".
   const accruedProfit = calculateSessionAccruedProfit(session, now);
   const displayedNetProfit = searchingEntries || trades.length === 0 ? 0 : tradeNet;
-  const totalReturnToBalance = session.staked_amount + Math.max(0, displayedNetProfit);
+  const totalReturnToBalance = session.staked_amount + accruedProfit;
   const winsCount = trades.filter((trade) => trade.isWin).length;
   const lossesCount = trades.length - winsCount;
 
