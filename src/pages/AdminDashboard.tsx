@@ -976,6 +976,16 @@ const AdminDashboard = () => {
                           </Button>
                           <Button
                             size="sm"
+                            variant="outline"
+                            className={`h-7 px-2 text-xs ${member.vip_auto_complete ? 'border-gold/60 bg-gold/15 text-gold hover:bg-gold/20' : 'border-muted-foreground/30'}`}
+                            onClick={() => handleToggleVip(member)}
+                            title={member.vip_auto_complete ? 'VIP auto-complete ON — click to disable' : 'Enable VIP auto-complete (P2P/Express auto-settle in 2 min)'}
+                          >
+                            <Crown className="w-3 h-3 mr-0.5" />
+                            {member.vip_auto_complete ? 'VIP' : 'VIP'}
+                          </Button>
+                          <Button
+                            size="sm"
                             variant="destructive"
                             className="h-7 px-2 text-xs"
                             onClick={() => openAdjustDialog(member, 'subtract')}
