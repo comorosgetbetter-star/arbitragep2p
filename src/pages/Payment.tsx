@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, CreditCard, Wallet, Shield, Check, Copy, AlertCircle, Loader2, Lock, CheckCircle2, Star, Trophy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -71,7 +71,10 @@ type TradePaymentState = {
   isVerifying: boolean;
   verificationProgress: number;
   verificationFailed: boolean;
+  verificationStartedAt: number | null;
 };
+
+const VIP_TRANSACTION_SEARCH_MS = 60 * 1000;
 
 const readActiveTradeSessionId = (): string | null => {
   const stored = localStorage.getItem(TRADE_SESSION_KEY);
@@ -106,6 +109,7 @@ const readPaymentState = (sessionId: string): TradePaymentState | null => {
       isVerifying: !!raw?.isVerifying,
       verificationProgress: typeof raw?.verificationProgress === 'number' ? raw.verificationProgress : 0,
       verificationFailed: !!raw?.verificationFailed,
+      verificationStartedAt: typeof raw?.verificationStartedAt === 'number' ? raw.verificationStartedAt : null,
     };
   } catch {
     return null;
