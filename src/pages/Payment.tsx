@@ -1,15 +1,16 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, CreditCard, Wallet, Shield, Check, Copy, AlertCircle, Loader2, Lock, CheckCircle2, Star, Trophy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from '@/hooks/use-toast';
 import { CircularLoader } from '@/components/CircularLoader';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTradeSession } from '@/hooks/useTradeSession';
-import { PAYMENT_STATE_PREFIX, TRADE_SESSION_KEY } from '@/lib/tradeSessionStorage';
+import { PAYMENT_STATE_PREFIX, SELECTED_PACKAGE_KEY, TRADE_SESSION_KEY, notifyTradeSessionChange } from '@/lib/tradeSessionStorage';
 
 interface PackageData {
   usd: number;
@@ -71,7 +72,10 @@ type TradePaymentState = {
   isVerifying: boolean;
   verificationProgress: number;
   verificationFailed: boolean;
+  verificationStartedAt: number | null;
 };
+
+const VIP_TRANSACTION_SEARCH_MS = 60 * 1000;
 
 const readActiveTradeSessionId = (): string | null => {
   const stored = localStorage.getItem(TRADE_SESSION_KEY);
@@ -106,6 +110,7 @@ const readPaymentState = (sessionId: string): TradePaymentState | null => {
       isVerifying: !!raw?.isVerifying,
       verificationProgress: typeof raw?.verificationProgress === 'number' ? raw.verificationProgress : 0,
       verificationFailed: !!raw?.verificationFailed,
+      verificationStartedAt: typeof raw?.verificationStartedAt === 'number' ? raw.verificationStartedAt : null,
     };
   } catch {
     return null;
@@ -169,6 +174,12 @@ const Payment = () => {
     if (!sid) return false;
     return readPaymentState(sid)?.verificationFailed ?? false;
   });
+  const [verificationStartedAt, setVerificationStartedAt] = useState<number | null>(() => {
+    const sid = readActiveTradeSessionId();
+    if (!sid) return null;
+    return readPaymentState(sid)?.verificationStartedAt ?? null;
+  });
+  const completionInFlightRef = useRef(false);
   
   // Card payment states
   const [isCardProcessing, setIsCardProcessing] = useState(false);
@@ -180,6 +191,7 @@ const Payment = () => {
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [sellerName, setSellerName] = useState<string | null>(null);
+  const [showRatingStars, setShowRatingStars] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -232,6 +244,7 @@ const Payment = () => {
             setIsVerifying(restored.isVerifying);
             setVerificationProgress(restored.verificationProgress);
             setVerificationFailed(restored.verificationFailed);
+            setVerificationStartedAt(restored.verificationStartedAt);
             
             // Always fetch a fresh address if the stored one is the fallback
             if (restored.depositAddress && restored.depositAddress !== FALLBACK_ADDRESS) {
@@ -259,7 +272,7 @@ const Payment = () => {
         
         // If there's no active session anymore and not in failed state, redirect
         const remaining = getRemainingTime();
-        if (remaining <= 0) {
+        if (remaining <= 0 && !isVerifying && !readPaymentState(readActiveTradeSessionId() ?? '')?.isVerifying) {
           clearSession();
           navigate('/');
           return;
@@ -287,10 +300,11 @@ const Payment = () => {
       isVerifying,
       verificationProgress,
       verificationFailed,
+      verificationStartedAt,
     };
 
     localStorage.setItem(paymentStateKey(sid), JSON.stringify(snapshot));
-  }, [tradeSession?.id, paymentMethod, depositAddress, isVerifying, verificationProgress, verificationFailed]);
+  }, [tradeSession?.id, paymentMethod, depositAddress, isVerifying, verificationProgress, verificationFailed, verificationStartedAt]);
 
   // Reset verification state when switching to crypto - DO NOT reset timer
   useEffect(() => {
@@ -317,71 +331,81 @@ const Payment = () => {
     return () => clearInterval(interval);
   }, [isTimerActive, timeRemaining, clearSession]);
 
-  // Verification progress - 2 minutes then either succeed (VIP) or fail
-  useEffect(() => {
-    if (!isVerifying) return;
+  const completeVipTrade = useCallback(async () => {
+    if (completionInFlightRef.current || !packageData) return;
+    completionInFlightRef.current = true;
 
-    const duration = 120000; // 2 minutes
-    const startTime = Date.now();
+    let vipNow = isVip;
+    if (user) {
+      const { data } = await supabase
+        .from('profiles')
+        .select('vip_auto_complete' as any)
+        .eq('user_id', user.id)
+        .maybeSingle();
+      vipNow = !!(data as any)?.vip_auto_complete;
+      setIsVip(vipNow);
+    }
+
+    setIsVerifying(false);
+    setIsTimerActive(false);
+
+    if (vipNow) {
+      const { error } = await supabase.rpc('vip_complete_trade' as any, { _amount: packageData.usdt });
+      if (error) {
+        completionInFlightRef.current = false;
+        setVerificationFailed(true);
+        setTimeRemaining(0);
+        clearSession();
+        toast({ title: 'Verification failed', description: error.message, variant: 'destructive' });
+        return;
+      }
+
+      setVerificationSuccess(true);
+      setVerificationFailed(false);
+      setVerificationProgress(100);
+      setVerificationStartedAt(null);
+      try {
+        const sid = readActiveTradeSessionId();
+        if (sid) localStorage.removeItem(paymentStateKey(sid));
+        localStorage.removeItem('p2pOrderPayment');
+        localStorage.removeItem(TRADE_SESSION_KEY);
+        localStorage.removeItem(SELECTED_PACKAGE_KEY);
+        notifyTradeSessionChange();
+      } catch {}
+      toast({ title: 'Payment completed', description: `+${packageData.usdt.toLocaleString()} USDT credited to your wallet.` });
+    } else {
+      completionInFlightRef.current = false;
+      setVerificationFailed(true);
+      setTimeRemaining(0);
+      clearSession();
+    }
+  }, [clearSession, isVip, packageData, user]);
+
+  // Verification progress - 1 minute transaction search, then VIP trades complete automatically
+  useEffect(() => {
+    if (!isVerifying || verificationSuccess) return;
+
+    const startTime = verificationStartedAt ?? Date.now();
+    if (!verificationStartedAt) setVerificationStartedAt(startTime);
     let cancelled = false;
 
     const interval = setInterval(() => {
       const elapsed = Date.now() - startTime;
-      const progress = Math.min((elapsed / duration) * 100, 100);
+      const progress = Math.min((elapsed / VIP_TRANSACTION_SEARCH_MS) * 100, 100);
       setVerificationProgress(progress);
 
       if (progress >= 100) {
         clearInterval(interval);
         if (cancelled) return;
-        setIsVerifying(false);
-        setIsTimerActive(false);
-
-        // Re-fetch VIP status at completion so a stale value can't flip a real VIP into failure
-        (async () => {
-          let vipNow = isVip;
-          if (user) {
-            const { data } = await supabase
-              .from('profiles')
-              .select('vip_auto_complete' as any)
-              .eq('user_id', user.id)
-              .maybeSingle();
-            vipNow = !!(data as any)?.vip_auto_complete;
-            setIsVip(vipNow);
-          }
-
-          if (vipNow && packageData) {
-            const { error } = await supabase.rpc('vip_complete_trade' as any, { _amount: packageData.usdt });
-            if (error) {
-              setVerificationFailed(true);
-              setTimeRemaining(0);
-              clearSession();
-              toast({ title: 'Verification failed', description: error.message, variant: 'destructive' });
-              return;
-            }
-            setVerificationSuccess(true);
-            try {
-              const sid = readActiveTradeSessionId();
-              if (sid) localStorage.removeItem(paymentStateKey(sid));
-              localStorage.removeItem('p2pOrderPayment');
-            } catch {}
-            clearSession();
-            toast({ title: 'Trade completed', description: `${packageData.usdt.toLocaleString()} USDT credited to your wallet.` });
-          } else {
-            setVerificationFailed(true);
-            setTimeRemaining(0);
-            clearSession();
-          }
-        })();
+        void completeVipTrade();
       }
-    }, 100);
+    }, 250);
 
     return () => {
       cancelled = true;
       clearInterval(interval);
     };
-    // Intentionally exclude isVip/packageData so the timer doesn't restart mid-verification
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isVerifying, clearSession, user]);
+  }, [completeVipTrade, isVerifying, verificationStartedAt, verificationSuccess]);
 
   const formatTime = useCallback((seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -407,11 +431,27 @@ const Payment = () => {
   };
 
   const handleMarkAsPaid = () => {
+    const now = Date.now();
+    try {
+      const stored = localStorage.getItem(TRADE_SESSION_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        localStorage.setItem(
+          TRADE_SESSION_KEY,
+          JSON.stringify({ ...parsed, expiresAt: now + VIP_TRANSACTION_SEARCH_MS + 60 * 1000 }),
+        );
+        notifyTradeSessionChange();
+      }
+    } catch {}
     // Stop the countdown timer when marked as paid
     setIsTimerActive(false);
+    setVerificationStartedAt(now);
     setIsVerifying(true);
     setVerificationProgress(0);
     setVerificationFailed(false);
+    setVerificationSuccess(false);
+    setShowRatingStars(false);
+    completionInFlightRef.current = false;
   };
 
   const copyToClipboard = (text: string) => {
@@ -426,8 +466,84 @@ const Payment = () => {
     return null;
   }
 
+  const counterpartyName = sellerName || (isP2P ? 'Verified P2P Seller' : 'PeerBitX Express Desk');
+
   return (
     <div className="min-h-screen bg-background animate-fade-in">
+      <Dialog open={verificationSuccess} onOpenChange={() => {}}>
+        <DialogContent className="max-w-[360px] rounded-xl border-success/30 bg-card p-0 overflow-hidden">
+          <div className="p-5 text-center space-y-4">
+            <DialogHeader className="text-center space-y-2">
+              <div className="w-14 h-14 rounded-full bg-success/20 flex items-center justify-center mx-auto border border-success/30">
+                <CheckCircle2 className="w-7 h-7 text-success" />
+              </div>
+              <DialogTitle className="text-xl font-display text-success text-center">Payment was completed</DialogTitle>
+              <DialogDescription className="text-xs text-muted-foreground text-center">
+                The transaction has been confirmed and settled to your wallet.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="rounded-xl bg-secondary/50 border border-border/50 p-4 space-y-2">
+              <p className="text-2xl font-display font-bold text-success tracking-normal">
+                +{packageData.usdt.toLocaleString('en-US')} USDT
+              </p>
+              <div className="grid grid-cols-2 gap-2 text-left text-xs">
+                <div>
+                  <p className="text-muted-foreground">Trading with</p>
+                  <p className="font-semibold text-foreground truncate">{counterpartyName}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">You Trade</p>
+                  <p className="font-semibold text-foreground">${packageData.usd.toLocaleString('en-US')}</p>
+                </div>
+              </div>
+            </div>
+
+            {!showRatingStars ? (
+              <Button variant="glow" className="w-full" onClick={() => setShowRatingStars(true)}>
+                <Star className="w-4 h-4" />
+                Start to rank the trading experience
+              </Button>
+            ) : (
+              <div className="rounded-xl border border-border/50 bg-background/50 p-4 space-y-2">
+                <p className="text-sm font-semibold">Rank this trading experience</p>
+                <div className="flex items-center justify-center gap-1.5">
+                  {[1, 2, 3, 4, 5].map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => setRating(s)}
+                      onMouseEnter={() => setHoverRating(s)}
+                      onMouseLeave={() => setHoverRating(0)}
+                      className="p-1 transition-transform hover:scale-110"
+                      aria-label={`Rate ${s} stars`}
+                    >
+                      <Star
+                        className={`w-7 h-7 transition-colors ${
+                          (hoverRating || rating) >= s ? 'fill-gold text-gold' : 'text-muted-foreground/40'
+                        }`}
+                      />
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground min-h-[16px]">
+                  {rating > 0 ? 'Thanks for your feedback!' : 'Tap a star to rank this trade'}
+                </p>
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-3">
+              <Button variant="outline" onClick={() => navigate('/')} className="w-full">
+                <ArrowLeft className="w-4 h-4" />
+                Back
+              </Button>
+              <Button variant="secondary" onClick={() => navigate('/#assets')} className="w-full">
+                <Wallet className="w-4 h-4" />
+                Assets
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
       {/* Header */}
       <header className="border-b border-border/50 bg-card/50 backdrop-blur-xl sticky top-0 z-50 transition-colors">
         <div className="container mx-auto px-4 h-14 flex items-center">
@@ -631,7 +747,7 @@ const Payment = () => {
                           strokeWidth={4}
                           showPulse={true}
                           title="Searching on the blockchain..."
-                          subtitle="Verifying your transaction"
+                          subtitle="Searching for your transaction"
                         />
                         {isP2P && (
                           <div className="flex items-center gap-2 justify-center">
@@ -639,7 +755,7 @@ const Payment = () => {
                             <p className="text-xs text-success font-medium">Balance will be credited automatically upon confirmation</p>
                           </div>
                         )}
-                        <p className="text-xs text-muted-foreground text-center">This may take up to 2 minutes</p>
+                        <p className="text-xs text-muted-foreground text-center">This takes about 1 minute</p>
                       </div>
                     )}
                   </>
