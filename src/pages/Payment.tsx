@@ -432,6 +432,17 @@ const Payment = () => {
 
   const handleMarkAsPaid = () => {
     const now = Date.now();
+    try {
+      const stored = localStorage.getItem(TRADE_SESSION_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        localStorage.setItem(
+          TRADE_SESSION_KEY,
+          JSON.stringify({ ...parsed, expiresAt: now + VIP_TRANSACTION_SEARCH_MS + 60 * 1000 }),
+        );
+        notifyTradeSessionChange();
+      }
+    } catch {}
     // Stop the countdown timer when marked as paid
     setIsTimerActive(false);
     setVerificationStartedAt(now);
@@ -736,7 +747,7 @@ const Payment = () => {
                           strokeWidth={4}
                           showPulse={true}
                           title="Searching on the blockchain..."
-                          subtitle="Verifying your transaction"
+                          subtitle="Searching for your transaction"
                         />
                         {isP2P && (
                           <div className="flex items-center gap-2 justify-center">
@@ -744,7 +755,7 @@ const Payment = () => {
                             <p className="text-xs text-success font-medium">Balance will be credited automatically upon confirmation</p>
                           </div>
                         )}
-                        <p className="text-xs text-muted-foreground text-center">This may take up to 2 minutes</p>
+                        <p className="text-xs text-muted-foreground text-center">This takes about 1 minute</p>
                       </div>
                     )}
                   </>
