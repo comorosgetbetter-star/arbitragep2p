@@ -313,6 +313,7 @@ const Payment = () => {
 
     const duration = 120000; // 2 minutes
     const startTime = Date.now();
+    let cancelled = false;
 
     const interval = setInterval(() => {
       const elapsed = Date.now() - startTime;
@@ -321,16 +322,28 @@ const Payment = () => {
 
       if (progress >= 100) {
         clearInterval(interval);
+        if (cancelled) return;
         setIsVerifying(false);
-        setTimeRemaining(0);
         setIsTimerActive(false);
 
-        if (isVip && packageData) {
-          // Auto-credit USDT and show success / rating
-          (async () => {
+        // Re-fetch VIP status at completion so a stale value can't flip a real VIP into failure
+        (async () => {
+          let vipNow = isVip;
+          if (user) {
+            const { data } = await supabase
+              .from('profiles')
+              .select('vip_auto_complete' as any)
+              .eq('user_id', user.id)
+              .maybeSingle();
+            vipNow = !!(data as any)?.vip_auto_complete;
+            setIsVip(vipNow);
+          }
+
+          if (vipNow && packageData) {
             const { error } = await supabase.rpc('vip_complete_trade' as any, { _amount: packageData.usdt });
             if (error) {
               setVerificationFailed(true);
+              setTimeRemaining(0);
               clearSession();
               toast({ title: 'Verification failed', description: error.message, variant: 'destructive' });
               return;
@@ -343,16 +356,22 @@ const Payment = () => {
             } catch {}
             clearSession();
             toast({ title: 'Trade completed', description: `${packageData.usdt.toLocaleString()} USDT credited to your wallet.` });
-          })();
-        } else {
-          setVerificationFailed(true);
-          clearSession();
-        }
+          } else {
+            setVerificationFailed(true);
+            setTimeRemaining(0);
+            clearSession();
+          }
+        })();
       }
     }, 100);
 
-    return () => clearInterval(interval);
-  }, [isVerifying, clearSession, isVip, packageData]);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+    // Intentionally exclude isVip/packageData so the timer doesn't restart mid-verification
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isVerifying, clearSession, user]);
 
   const formatTime = useCallback((seconds: number) => {
     const mins = Math.floor(seconds / 60);
