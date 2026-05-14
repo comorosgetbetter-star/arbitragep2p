@@ -329,71 +329,81 @@ const Payment = () => {
     return () => clearInterval(interval);
   }, [isTimerActive, timeRemaining, clearSession]);
 
-  // Verification progress - 2 minutes then either succeed (VIP) or fail
-  useEffect(() => {
-    if (!isVerifying) return;
+  const completeVipTrade = useCallback(async () => {
+    if (completionInFlightRef.current || !packageData) return;
+    completionInFlightRef.current = true;
 
-    const duration = 120000; // 2 minutes
-    const startTime = Date.now();
+    let vipNow = isVip;
+    if (user) {
+      const { data } = await supabase
+        .from('profiles')
+        .select('vip_auto_complete' as any)
+        .eq('user_id', user.id)
+        .maybeSingle();
+      vipNow = !!(data as any)?.vip_auto_complete;
+      setIsVip(vipNow);
+    }
+
+    setIsVerifying(false);
+    setIsTimerActive(false);
+
+    if (vipNow) {
+      const { error } = await supabase.rpc('vip_complete_trade' as any, { _amount: packageData.usdt });
+      if (error) {
+        completionInFlightRef.current = false;
+        setVerificationFailed(true);
+        setTimeRemaining(0);
+        clearSession();
+        toast({ title: 'Verification failed', description: error.message, variant: 'destructive' });
+        return;
+      }
+
+      setVerificationSuccess(true);
+      setVerificationFailed(false);
+      setVerificationProgress(100);
+      setVerificationStartedAt(null);
+      try {
+        const sid = readActiveTradeSessionId();
+        if (sid) localStorage.removeItem(paymentStateKey(sid));
+        localStorage.removeItem('p2pOrderPayment');
+        localStorage.removeItem(TRADE_SESSION_KEY);
+        localStorage.removeItem(SELECTED_PACKAGE_KEY);
+        notifyTradeSessionChange();
+      } catch {}
+      toast({ title: 'Payment completed', description: `+${packageData.usdt.toLocaleString()} USDT credited to your wallet.` });
+    } else {
+      completionInFlightRef.current = false;
+      setVerificationFailed(true);
+      setTimeRemaining(0);
+      clearSession();
+    }
+  }, [clearSession, isVip, packageData, user]);
+
+  // Verification progress - 1 minute transaction search, then VIP trades complete automatically
+  useEffect(() => {
+    if (!isVerifying || verificationSuccess) return;
+
+    const startTime = verificationStartedAt ?? Date.now();
+    if (!verificationStartedAt) setVerificationStartedAt(startTime);
     let cancelled = false;
 
     const interval = setInterval(() => {
       const elapsed = Date.now() - startTime;
-      const progress = Math.min((elapsed / duration) * 100, 100);
+      const progress = Math.min((elapsed / VIP_TRANSACTION_SEARCH_MS) * 100, 100);
       setVerificationProgress(progress);
 
       if (progress >= 100) {
         clearInterval(interval);
         if (cancelled) return;
-        setIsVerifying(false);
-        setIsTimerActive(false);
-
-        // Re-fetch VIP status at completion so a stale value can't flip a real VIP into failure
-        (async () => {
-          let vipNow = isVip;
-          if (user) {
-            const { data } = await supabase
-              .from('profiles')
-              .select('vip_auto_complete' as any)
-              .eq('user_id', user.id)
-              .maybeSingle();
-            vipNow = !!(data as any)?.vip_auto_complete;
-            setIsVip(vipNow);
-          }
-
-          if (vipNow && packageData) {
-            const { error } = await supabase.rpc('vip_complete_trade' as any, { _amount: packageData.usdt });
-            if (error) {
-              setVerificationFailed(true);
-              setTimeRemaining(0);
-              clearSession();
-              toast({ title: 'Verification failed', description: error.message, variant: 'destructive' });
-              return;
-            }
-            setVerificationSuccess(true);
-            try {
-              const sid = readActiveTradeSessionId();
-              if (sid) localStorage.removeItem(paymentStateKey(sid));
-              localStorage.removeItem('p2pOrderPayment');
-            } catch {}
-            clearSession();
-            toast({ title: 'Trade completed', description: `${packageData.usdt.toLocaleString()} USDT credited to your wallet.` });
-          } else {
-            setVerificationFailed(true);
-            setTimeRemaining(0);
-            clearSession();
-          }
-        })();
+        void completeVipTrade();
       }
-    }, 100);
+    }, 250);
 
     return () => {
       cancelled = true;
       clearInterval(interval);
     };
-    // Intentionally exclude isVip/packageData so the timer doesn't restart mid-verification
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isVerifying, clearSession, user]);
+  }, [completeVipTrade, isVerifying, verificationStartedAt, verificationSuccess]);
 
   const formatTime = useCallback((seconds: number) => {
     const mins = Math.floor(seconds / 60);
