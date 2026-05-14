@@ -724,7 +724,7 @@ const Payment = () => {
                 )}
 
                 {/* Mark as Paid */}
-                {!isVerifying && !verificationFailed && timeRemaining > 0 && (
+                {!isVerifying && !verificationFailed && !verificationSuccess && timeRemaining > 0 && (
                   <Button variant="glow" size="lg" className="w-full" onClick={handleMarkAsPaid}>
                     <Check className="h-4 w-4 mr-2" />
                     Mark as Paid
