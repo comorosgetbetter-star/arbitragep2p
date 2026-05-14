@@ -298,10 +298,11 @@ const Payment = () => {
       isVerifying,
       verificationProgress,
       verificationFailed,
+      verificationStartedAt,
     };
 
     localStorage.setItem(paymentStateKey(sid), JSON.stringify(snapshot));
-  }, [tradeSession?.id, paymentMethod, depositAddress, isVerifying, verificationProgress, verificationFailed]);
+  }, [tradeSession?.id, paymentMethod, depositAddress, isVerifying, verificationProgress, verificationFailed, verificationStartedAt]);
 
   // Reset verification state when switching to crypto - DO NOT reset timer
   useEffect(() => {
