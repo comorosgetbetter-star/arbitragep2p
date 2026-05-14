@@ -209,6 +209,15 @@ const Payment = () => {
       // Detect if this is a P2P order
       setIsP2P(isP2POrder());
 
+      // Capture seller name (if P2P) before it gets cleared on success
+      try {
+        const stored = localStorage.getItem('p2pOrderPayment');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed?.sellerName) setSellerName(parsed.sellerName);
+        }
+      } catch {}
+
       // Get selected package from trade session
       const storedPackage = localStorage.getItem('selectedPackage');
       if (storedPackage) {
