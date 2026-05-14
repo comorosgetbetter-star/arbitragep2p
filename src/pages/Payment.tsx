@@ -9,7 +9,7 @@ import { CircularLoader } from '@/components/CircularLoader';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTradeSession } from '@/hooks/useTradeSession';
-import { PAYMENT_STATE_PREFIX, TRADE_SESSION_KEY } from '@/lib/tradeSessionStorage';
+import { PAYMENT_STATE_PREFIX, SELECTED_PACKAGE_KEY, TRADE_SESSION_KEY, notifyTradeSessionChange } from '@/lib/tradeSessionStorage';
 
 interface PackageData {
   usd: number;
@@ -173,6 +173,12 @@ const Payment = () => {
     if (!sid) return false;
     return readPaymentState(sid)?.verificationFailed ?? false;
   });
+  const [verificationStartedAt, setVerificationStartedAt] = useState<number | null>(() => {
+    const sid = readActiveTradeSessionId();
+    if (!sid) return null;
+    return readPaymentState(sid)?.verificationStartedAt ?? null;
+  });
+  const completionInFlightRef = useRef(false);
   
   // Card payment states
   const [isCardProcessing, setIsCardProcessing] = useState(false);
@@ -184,6 +190,7 @@ const Payment = () => {
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [sellerName, setSellerName] = useState<string | null>(null);
+  const [showRatingStars, setShowRatingStars] = useState(false);
 
   useEffect(() => {
     if (!user) return;
