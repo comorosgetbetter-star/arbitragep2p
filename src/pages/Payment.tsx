@@ -561,83 +561,88 @@ const Payment = () => {
             {paymentMethod === 'crypto' && (
               <div className="space-y-3">
 
-                {/* Timer + instruction row */}
-                <div className="flex items-center gap-3 p-3 rounded-xl border border-warning/20 bg-warning/5">
-                  <div className="text-center shrink-0">
-                    <p className="text-[10px] text-warning/70 uppercase tracking-wide">Time left</p>
-                    <p className={`text-xl font-display font-bold leading-none mt-0.5 ${timeRemaining <= 60 ? 'text-destructive' : 'text-warning'}`}>
-                      {formatTime(timeRemaining)}
-                    </p>
-                  </div>
-                  <div className="w-px h-8 bg-warning/20 shrink-0" />
-                  <p className="text-xs text-warning/90 leading-relaxed">
-                    Send USDT to the address below, then tap <strong>Mark as Paid</strong>. Our system verifies the transaction and{isP2P ? ' automatically credits your wallet.' : ' confirms on the blockchain.'}
-                  </p>
-                </div>
-
-                {timeRemaining <= 0 && (
-                  <p className="text-xs text-destructive text-center">Time expired. Please go back and start a new trade.</p>
-                )}
-
-                {/* Escrow notice — compact, P2P only */}
-                {isP2P && (
-                  <div className="flex items-center gap-2 p-2.5 rounded-lg border border-success/20 bg-success/5">
-                    <Lock className="h-3.5 w-3.5 text-success shrink-0" />
-                    <p className="text-xs text-success font-medium">Seller's funds locked in escrow — released automatically upon on-chain confirmation</p>
-                  </div>
-                )}
-
-                {/* Steps — minimal horizontal strip */}
-                <div className="flex items-center gap-1 px-1">
-                  {[
-                    'Copy address',
-                    'Send USDT',
-                    'Mark as Paid',
-                    isP2P ? 'Balance credited' : 'Blockchain confirmed',
-                  ].map((label, i) => (
-                    <div key={i} className="flex items-center gap-1 flex-1 min-w-0">
-                      <div className="w-4 h-4 rounded-full bg-primary/10 text-primary text-[9px] font-bold flex items-center justify-center shrink-0">{i + 1}</div>
-                      <p className="text-[10px] text-muted-foreground truncate">{label}</p>
-                      {i < 3 && <div className="w-2 h-px bg-border shrink-0" />}
+                {/* Hide payment UI once trade is successfully completed */}
+                {!verificationSuccess && (
+                  <>
+                    {/* Timer + instruction row */}
+                    <div className="flex items-center gap-3 p-3 rounded-xl border border-warning/20 bg-warning/5">
+                      <div className="text-center shrink-0">
+                        <p className="text-[10px] text-warning/70 uppercase tracking-wide">Time left</p>
+                        <p className={`text-xl font-display font-bold leading-none mt-0.5 ${timeRemaining <= 60 ? 'text-destructive' : 'text-warning'}`}>
+                          {formatTime(timeRemaining)}
+                        </p>
+                      </div>
+                      <div className="w-px h-8 bg-warning/20 shrink-0" />
+                      <p className="text-xs text-warning/90 leading-relaxed">
+                        Send USDT to the address below, then tap <strong>Mark as Paid</strong>. Our system verifies the transaction and{isP2P ? ' automatically credits your wallet.' : ' confirms on the blockchain.'}
+                      </p>
                     </div>
-                  ))}
-                </div>
 
-                {/* USDT Address */}
-                <div className="bg-secondary/50 rounded-xl p-3">
-                  <p className="text-[11px] text-muted-foreground mb-2 uppercase tracking-wide">Send USDT (TRC20) to:</p>
-                  <div className="flex items-center gap-2 bg-background/50 rounded-lg p-2.5">
-                    <code className="text-xs font-mono flex-1 break-all leading-relaxed">{depositAddress}</code>
-                    <button
-                      onClick={() => copyToClipboard(depositAddress)}
-                      className="p-1.5 hover:bg-secondary rounded-lg transition-colors shrink-0"
-                    >
-                      <Copy className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                  <p className="text-[11px] text-muted-foreground mt-2">
-                    Amount: <span className="font-bold text-primary">${packageData.usd.toLocaleString()} USDT</span>
-                  </p>
-                </div>
+                    {timeRemaining <= 0 && !isVerifying && !verificationFailed && (
+                      <p className="text-xs text-destructive text-center">Time expired. Please go back and start a new trade.</p>
+                    )}
 
-                {/* Verification Status */}
-                {isVerifying && (
-                  <div className="bg-secondary/50 rounded-xl p-6 space-y-3">
-                    <CircularLoader
-                      size={80}
-                      strokeWidth={4}
-                      showPulse={true}
-                      title="Searching on the blockchain..."
-                      subtitle="Verifying your transaction"
-                    />
+                    {/* Escrow notice — compact, P2P only */}
                     {isP2P && (
-                      <div className="flex items-center gap-2 justify-center">
-                        <CheckCircle2 className="h-3.5 w-3.5 text-success" />
-                        <p className="text-xs text-success font-medium">Balance will be credited automatically upon confirmation</p>
+                      <div className="flex items-center gap-2 p-2.5 rounded-lg border border-success/20 bg-success/5">
+                        <Lock className="h-3.5 w-3.5 text-success shrink-0" />
+                        <p className="text-xs text-success font-medium">Seller's funds locked in escrow — released automatically upon on-chain confirmation</p>
                       </div>
                     )}
-                    <p className="text-xs text-muted-foreground text-center">This may take up to 2 minutes</p>
-                  </div>
+
+                    {/* Steps — minimal horizontal strip */}
+                    <div className="flex items-center gap-1 px-1">
+                      {[
+                        'Copy address',
+                        'Send USDT',
+                        'Mark as Paid',
+                        isP2P ? 'Balance credited' : 'Blockchain confirmed',
+                      ].map((label, i) => (
+                        <div key={i} className="flex items-center gap-1 flex-1 min-w-0">
+                          <div className="w-4 h-4 rounded-full bg-primary/10 text-primary text-[9px] font-bold flex items-center justify-center shrink-0">{i + 1}</div>
+                          <p className="text-[10px] text-muted-foreground truncate">{label}</p>
+                          {i < 3 && <div className="w-2 h-px bg-border shrink-0" />}
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* USDT Address */}
+                    <div className="bg-secondary/50 rounded-xl p-3">
+                      <p className="text-[11px] text-muted-foreground mb-2 uppercase tracking-wide">Send USDT (TRC20) to:</p>
+                      <div className="flex items-center gap-2 bg-background/50 rounded-lg p-2.5">
+                        <code className="text-xs font-mono flex-1 break-all leading-relaxed">{depositAddress}</code>
+                        <button
+                          onClick={() => copyToClipboard(depositAddress)}
+                          className="p-1.5 hover:bg-secondary rounded-lg transition-colors shrink-0"
+                        >
+                          <Copy className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground mt-2">
+                        Amount: <span className="font-bold text-primary">${packageData.usd.toLocaleString()} USDT</span>
+                      </p>
+                    </div>
+
+                    {/* Verification Status */}
+                    {isVerifying && (
+                      <div className="bg-secondary/50 rounded-xl p-6 space-y-3">
+                        <CircularLoader
+                          size={80}
+                          strokeWidth={4}
+                          showPulse={true}
+                          title="Searching on the blockchain..."
+                          subtitle="Verifying your transaction"
+                        />
+                        {isP2P && (
+                          <div className="flex items-center gap-2 justify-center">
+                            <CheckCircle2 className="h-3.5 w-3.5 text-success" />
+                            <p className="text-xs text-success font-medium">Balance will be credited automatically upon confirmation</p>
+                          </div>
+                        )}
+                        <p className="text-xs text-muted-foreground text-center">This may take up to 2 minutes</p>
+                      </div>
+                    )}
+                  </>
                 )}
 
                 {/* Verification Success (VIP auto-complete) */}
@@ -651,10 +656,17 @@ const Payment = () => {
                       <p className="text-xs text-muted-foreground">
                         <span className="font-semibold text-foreground">{packageData.usdt.toLocaleString()} USDT</span> credited to your wallet
                       </p>
+                      {sellerName && (
+                        <p className="text-[11px] text-muted-foreground">
+                          Trade with <span className="font-semibold text-foreground">{sellerName}</span>
+                        </p>
+                      )}
                     </div>
 
                     <div className="rounded-xl border border-border/50 bg-card p-4 space-y-3">
-                      <p className="text-sm font-semibold text-center">Rate this trade</p>
+                      <p className="text-sm font-semibold text-center">
+                        Rate {sellerName ? sellerName : 'this trade'}
+                      </p>
                       <div className="flex items-center justify-center gap-1.5">
                         {[1, 2, 3, 4, 5].map((s) => (
                           <button
@@ -677,15 +689,26 @@ const Payment = () => {
                       </p>
                     </div>
 
-                    <Button
-                      variant="glow"
-                      size="lg"
-                      className="w-full"
-                      onClick={() => navigate('/#assets')}
-                    >
-                      <Wallet className="w-4 h-4 mr-2" />
-                      Go to Assets
-                    </Button>
+                    <div className="grid grid-cols-2 gap-3">
+                      <Button
+                        variant="outline"
+                        size="lg"
+                        className="w-full"
+                        onClick={() => navigate('/')}
+                      >
+                        <ArrowLeft className="w-4 h-4 mr-2" />
+                        Back to Home
+                      </Button>
+                      <Button
+                        variant="glow"
+                        size="lg"
+                        className="w-full"
+                        onClick={() => navigate('/#assets')}
+                      >
+                        <Wallet className="w-4 h-4 mr-2" />
+                        Go to Assets
+                      </Button>
+                    </div>
                   </div>
                 )}
 
