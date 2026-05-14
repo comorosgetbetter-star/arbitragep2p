@@ -4,6 +4,7 @@ import { ArrowLeft, CreditCard, Wallet, Shield, Check, Copy, AlertCircle, Loader
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from '@/hooks/use-toast';
 import { CircularLoader } from '@/components/CircularLoader';
 import { supabase } from '@/integrations/supabase/client';
@@ -243,6 +244,7 @@ const Payment = () => {
             setIsVerifying(restored.isVerifying);
             setVerificationProgress(restored.verificationProgress);
             setVerificationFailed(restored.verificationFailed);
+            setVerificationStartedAt(restored.verificationStartedAt);
             
             // Always fetch a fresh address if the stored one is the fallback
             if (restored.depositAddress && restored.depositAddress !== FALLBACK_ADDRESS) {
@@ -270,7 +272,7 @@ const Payment = () => {
         
         // If there's no active session anymore and not in failed state, redirect
         const remaining = getRemainingTime();
-        if (remaining <= 0) {
+        if (remaining <= 0 && !isVerifying && !readPaymentState(readActiveTradeSessionId() ?? '')?.isVerifying) {
           clearSession();
           navigate('/');
           return;
