@@ -179,6 +179,7 @@ const Payment = () => {
   const [verificationSuccess, setVerificationSuccess] = useState(false);
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
+  const [sellerName, setSellerName] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
