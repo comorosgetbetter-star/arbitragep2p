@@ -429,11 +429,16 @@ const Payment = () => {
   };
 
   const handleMarkAsPaid = () => {
+    const now = Date.now();
     // Stop the countdown timer when marked as paid
     setIsTimerActive(false);
+    setVerificationStartedAt(now);
     setIsVerifying(true);
     setVerificationProgress(0);
     setVerificationFailed(false);
+    setVerificationSuccess(false);
+    setShowRatingStars(false);
+    completionInFlightRef.current = false;
   };
 
   const copyToClipboard = (text: string) => {
