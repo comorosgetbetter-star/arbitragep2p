@@ -455,8 +455,84 @@ const Payment = () => {
     return null;
   }
 
+  const counterpartyName = sellerName || (isP2P ? 'Verified P2P Seller' : 'PeerBitX Express Desk');
+
   return (
     <div className="min-h-screen bg-background animate-fade-in">
+      <Dialog open={verificationSuccess} onOpenChange={() => {}}>
+        <DialogContent className="max-w-[360px] rounded-xl border-success/30 bg-card p-0 overflow-hidden">
+          <div className="p-5 text-center space-y-4">
+            <DialogHeader className="text-center space-y-2">
+              <div className="w-14 h-14 rounded-full bg-success/20 flex items-center justify-center mx-auto border border-success/30">
+                <CheckCircle2 className="w-7 h-7 text-success" />
+              </div>
+              <DialogTitle className="text-xl font-display text-success text-center">Payment was completed</DialogTitle>
+              <DialogDescription className="text-xs text-muted-foreground text-center">
+                The transaction has been confirmed and settled to your wallet.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="rounded-xl bg-secondary/50 border border-border/50 p-4 space-y-2">
+              <p className="text-2xl font-display font-bold text-success tracking-normal">
+                +{packageData.usdt.toLocaleString('en-US')} USDT
+              </p>
+              <div className="grid grid-cols-2 gap-2 text-left text-xs">
+                <div>
+                  <p className="text-muted-foreground">Trading with</p>
+                  <p className="font-semibold text-foreground truncate">{counterpartyName}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">You Trade</p>
+                  <p className="font-semibold text-foreground">${packageData.usd.toLocaleString('en-US')}</p>
+                </div>
+              </div>
+            </div>
+
+            {!showRatingStars ? (
+              <Button variant="glow" className="w-full" onClick={() => setShowRatingStars(true)}>
+                <Star className="w-4 h-4" />
+                Start to rank the trading experience
+              </Button>
+            ) : (
+              <div className="rounded-xl border border-border/50 bg-background/50 p-4 space-y-2">
+                <p className="text-sm font-semibold">Rank this trading experience</p>
+                <div className="flex items-center justify-center gap-1.5">
+                  {[1, 2, 3, 4, 5].map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => setRating(s)}
+                      onMouseEnter={() => setHoverRating(s)}
+                      onMouseLeave={() => setHoverRating(0)}
+                      className="p-1 transition-transform hover:scale-110"
+                      aria-label={`Rate ${s} stars`}
+                    >
+                      <Star
+                        className={`w-7 h-7 transition-colors ${
+                          (hoverRating || rating) >= s ? 'fill-gold text-gold' : 'text-muted-foreground/40'
+                        }`}
+                      />
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground min-h-[16px]">
+                  {rating > 0 ? 'Thanks for your feedback!' : 'Tap a star to rank this trade'}
+                </p>
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-3">
+              <Button variant="outline" onClick={() => navigate('/')} className="w-full">
+                <ArrowLeft className="w-4 h-4" />
+                Back
+              </Button>
+              <Button variant="secondary" onClick={() => navigate('/#assets')} className="w-full">
+                <Wallet className="w-4 h-4" />
+                Assets
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
       {/* Header */}
       <header className="border-b border-border/50 bg-card/50 backdrop-blur-xl sticky top-0 z-50 transition-colors">
         <div className="container mx-auto px-4 h-14 flex items-center">
