@@ -408,6 +408,59 @@ export const AssetsView = () => {
     );
   }
 
+  // ── SUB-VIEW: Withdraw – Processing confirmation ──
+  if (subView === 'withdraw-processing' && withdrawalReceipt) {
+    const formattedAmount = withdrawalReceipt.amount.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: withdrawalReceipt.symbol === 'USDT' ? 2 : 8,
+    });
+    const estimatedTime = new Date(withdrawalReceipt.estimatedAt).toLocaleString('en-US', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+    });
+
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center px-4 py-10 text-center animate-fade-in">
+        <div className="w-full max-w-sm space-y-6">
+          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-primary/10 border border-primary/20 shadow-[0_0_28px_hsl(var(--primary)/0.18)]">
+            <Hourglass className="h-11 w-11 text-primary" />
+          </div>
+
+          <div className="space-y-2">
+            <h2 className="text-xl font-display font-bold text-foreground">Withdrawal Processing</h2>
+            <p className="text-3xl font-display font-bold text-foreground tracking-normal">
+              {formattedAmount} {withdrawalReceipt.symbol}
+            </p>
+          </div>
+
+          <div className="space-y-1.5 text-sm text-muted-foreground">
+            <p>Estimated completion time: {estimatedTime}</p>
+            <p>You will receive an email once withdrawal is completed.</p>
+            <p>View history for latest updates.</p>
+          </div>
+
+          <Button
+            variant="glow"
+            size="lg"
+            className="w-full"
+            onClick={() => {
+              setWithdrawalReceipt(null);
+              setSubView('main');
+            }}
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Assets
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   // ── SUB-VIEW: Convert ──
   if (subView === 'convert') {
     // Available cryptos the user has balance in (including USDT)
