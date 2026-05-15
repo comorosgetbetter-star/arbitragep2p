@@ -208,6 +208,10 @@ const Payment = () => {
 
   useEffect(() => {
     const checkAuth = async () => {
+      if (verificationSuccess) {
+        return;
+      }
+
       if (authLoading) {
         return;
       }
@@ -288,7 +292,7 @@ const Payment = () => {
     };
     
     void checkAuth();
-  }, [authLoading, user, navigate, clearSession, getRemainingTime]);
+  }, [authLoading, user, navigate, clearSession, getRemainingTime, verificationSuccess]);
 
   // Persist payment step state (so Resume restores the exact view and address)
   useEffect(() => {
@@ -520,9 +524,9 @@ const Payment = () => {
               </div>
             )}
 
-            <Button variant="glow" size="lg" onClick={() => navigate('/#assets')} className="w-full">
-              <Wallet className="w-4 h-4 mr-2" />
-              Back to Assets
+            <Button variant="glow" size="lg" onClick={() => navigate('/')} className="w-full">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Home
             </Button>
           </div>
         </DialogContent>
