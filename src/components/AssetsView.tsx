@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useUserData } from '@/contexts/UserDataContext';
 import { useCryptoPrices } from '@/hooks/useCryptoPrices';
 import { supabase } from '@/integrations/supabase/client';
-import { Eye, EyeOff, Download, Upload, Clock, ChevronRight, ChevronDown, ChevronUp, SlidersHorizontal, Sparkles, ArrowLeft, Copy, Check, Loader2, Wallet, ArrowDownLeft, ArrowUpRight, XCircle, CheckCircle2, ArrowLeftRight, FileDown, TrendingUp, TrendingDown } from 'lucide-react';
+import { Eye, EyeOff, Download, Upload, Clock, ChevronRight, ChevronDown, ChevronUp, SlidersHorizontal, Sparkles, ArrowLeft, Loader2, Wallet, ArrowDownLeft, ArrowUpRight, CheckCircle2, ArrowLeftRight, FileDown, TrendingUp, TrendingDown, Hourglass } from 'lucide-react';
 import { AssetsMainSkeleton } from '@/components/skeletons/AssetsMainSkeleton';
 import { DepositSkeleton } from '@/components/skeletons/DepositSkeleton';
 import { CRYPTO_LOGOS } from '@/lib/cryptoLogos';
@@ -14,9 +14,16 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { calculatePortfolioValue, formatUsd } from '@/lib/portfolioValue';
 
-type AssetsSubView = 'main' | 'deposit' | 'withdraw' | 'withdraw-form' | 'convert' | 'history';
+type AssetsSubView = 'main' | 'deposit' | 'withdraw' | 'withdraw-form' | 'withdraw-processing' | 'convert' | 'history';
 type HistoryFilter = 'all' | 'deposits' | 'withdrawals';
 const HISTORY_PAGE_SIZE = 10;
+
+interface WithdrawalReceipt {
+  amount: number;
+  symbol: string;
+  network: string;
+  estimatedAt: string;
+}
 
 interface ActivityItem {
   id: string;
@@ -107,6 +114,7 @@ export const AssetsView = () => {
   const [selectedNetwork, setSelectedNetwork] = useState('trc20');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [withdrawCrypto, setWithdrawCrypto] = useState('USDT');
+  const [withdrawalReceipt, setWithdrawalReceipt] = useState<WithdrawalReceipt | null>(null);
   const [historyFilter, setHistoryFilter] = useState<HistoryFilter>('all');
   const [historyPage, setHistoryPage] = useState(1);
   const [historyItems, setHistoryItems] = useState<ActivityItem[]>([]);
@@ -206,19 +214,25 @@ export const AssetsView = () => {
     if (amount > withdrawSelectedBalance) { toast.error('Insufficient balance'); return; }
     setIsSubmitting(true);
     try {
-      const { error } = await supabase.from('withdrawals').insert({
+      const { data, error } = await supabase.from('withdrawals').insert({
         user_id: user.id,
         amount,
         wallet_address: walletAddress,
         network: selectedNetwork,
         crypto_symbol: withdrawCrypto,
-      } as any);
+      } as any).select('id, expires_at').single();
       if (error) throw error;
       await refetchWithdrawals();
       toast.success('Withdrawal submitted — processing...');
+      setWithdrawalReceipt({
+        amount,
+        symbol: withdrawCrypto,
+        network: selectedNetwork,
+        estimatedAt: (data as any)?.expires_at || new Date(Date.now() + 2 * 60 * 1000).toISOString(),
+      });
       setWithdrawAmount('');
       setWalletAddress('');
-      setSubView('main');
+      setSubView('withdraw-processing');
     } catch (error) {
       console.error('Withdrawal error:', error);
       toast.error('Failed to submit withdrawal');
