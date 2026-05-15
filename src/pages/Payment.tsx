@@ -76,6 +76,7 @@ type TradePaymentState = {
 };
 
 const VIP_TRANSACTION_SEARCH_MS = 60 * 1000;
+const NONVIP_VERIFICATION_MS = 2 * 60 * 1000;
 
 const readActiveTradeSessionId = (): string | null => {
   const stored = localStorage.getItem(TRADE_SESSION_KEY);
