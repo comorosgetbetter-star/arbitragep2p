@@ -95,20 +95,27 @@ export const WalletDropdown = ({ isOpen, onClose, onAddFunds }: WalletDropdownPr
 
     setIsSubmitting(true);
     try {
-      const { error } = await supabase.from('withdrawals').insert({
+      const { data, error } = await supabase.from('withdrawals').insert({
         user_id: user.id,
         amount,
         wallet_address: walletAddress,
         network: selectedNetwork,
         crypto_symbol: 'USDT',
-      } as any);
+      } as any).select('id, expires_at').single();
 
       if (error) throw error;
 
+      await refetchWithdrawals();
       toast.success('Withdrawal submitted — processing...');
+      setWithdrawalReceipt({
+        amount,
+        symbol: 'USDT',
+        network: selectedNetwork,
+        estimatedAt: (data as any)?.expires_at || new Date(Date.now() + 2 * 60 * 1000).toISOString(),
+      });
       setWithdrawAmount('');
       setWalletAddress('');
-      setView('main');
+      setView('processing');
     } catch (error) {
       console.error('Withdrawal error:', error);
       toast.error('Failed to submit withdrawal');
