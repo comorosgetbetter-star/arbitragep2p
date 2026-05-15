@@ -520,16 +520,10 @@ const Payment = () => {
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-3">
-              <Button variant="outline" onClick={() => navigate('/')} className="w-full">
-                <ArrowLeft className="w-4 h-4" />
-                Back
-              </Button>
-              <Button variant="secondary" onClick={() => navigate('/#assets')} className="w-full">
-                <Wallet className="w-4 h-4" />
-                Assets
-              </Button>
-            </div>
+            <Button variant="glow" size="lg" onClick={() => navigate('/#assets')} className="w-full">
+              <Wallet className="w-4 h-4 mr-2" />
+              Back to Assets
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
