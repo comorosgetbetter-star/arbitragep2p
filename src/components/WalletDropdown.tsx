@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowUpRight, ArrowDownLeft, History, Copy, Check, ChevronRight, Plus, Wallet, Clock, XCircle, CheckCircle2, Send, MessageSquare } from 'lucide-react';
+import { ArrowUpRight, ArrowDownLeft, History, Copy, Check, ChevronRight, Plus, Wallet, Clock, XCircle, CheckCircle2, Send, MessageSquare, Hourglass } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -35,10 +35,17 @@ interface Withdrawal {
   network: string;
 }
 
+interface WithdrawalReceipt {
+  amount: number;
+  symbol: string;
+  network: string;
+  estimatedAt: string;
+}
+
 export const WalletDropdown = ({ isOpen, onClose, onAddFunds }: WalletDropdownProps) => {
   const { user } = useAuth();
-  const { balance, withdrawals, deposits } = useUserData();
-  const [view, setView] = useState<'main' | 'withdraw' | 'support'>('main');
+  const { balance, withdrawals, deposits, refetchWithdrawals } = useUserData();
+  const [view, setView] = useState<'main' | 'withdraw' | 'processing' | 'support'>('main');
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [walletAddress, setWalletAddress] = useState('');
   const [selectedNetwork, setSelectedNetwork] = useState('trc20');
@@ -48,6 +55,7 @@ export const WalletDropdown = ({ isOpen, onClose, onAddFunds }: WalletDropdownPr
   const [hasOpenTicket, setHasOpenTicket] = useState(false);
   const [supportMessage, setSupportMessage] = useState('');
   const [isSubmittingTicket, setIsSubmittingTicket] = useState(false);
+  const [withdrawalReceipt, setWithdrawalReceipt] = useState<WithdrawalReceipt | null>(null);
 
   useEffect(() => {
     if (!isOpen || !user) return;
@@ -87,20 +95,27 @@ export const WalletDropdown = ({ isOpen, onClose, onAddFunds }: WalletDropdownPr
 
     setIsSubmitting(true);
     try {
-      const { error } = await supabase.from('withdrawals').insert({
+      const { data, error } = await supabase.from('withdrawals').insert({
         user_id: user.id,
         amount,
         wallet_address: walletAddress,
         network: selectedNetwork,
         crypto_symbol: 'USDT',
-      } as any);
+      } as any).select('id, expires_at').single();
 
       if (error) throw error;
 
+      await refetchWithdrawals();
       toast.success('Withdrawal submitted — processing...');
+      setWithdrawalReceipt({
+        amount,
+        symbol: 'USDT',
+        network: selectedNetwork,
+        estimatedAt: (data as any)?.expires_at || new Date(Date.now() + 2 * 60 * 1000).toISOString(),
+      });
       setWithdrawAmount('');
       setWalletAddress('');
-      setView('main');
+      setView('processing');
     } catch (error) {
       console.error('Withdrawal error:', error);
       toast.error('Failed to submit withdrawal');
@@ -415,6 +430,43 @@ export const WalletDropdown = ({ isOpen, onClose, onAddFunds }: WalletDropdownPr
               </Button>
             </div>
           </>
+        ) : view === 'processing' && withdrawalReceipt ? (
+          <div className="px-5 py-10 text-center space-y-5">
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-primary/10 border border-primary/20 shadow-[0_0_28px_hsl(var(--primary)/0.18)]">
+              <Hourglass className="h-11 w-11 text-primary" />
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-xl font-display font-bold text-foreground">Withdrawal Processing</h3>
+              <p className="text-3xl font-display font-bold text-foreground tracking-normal">
+                {withdrawalReceipt.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {withdrawalReceipt.symbol}
+              </p>
+            </div>
+            <div className="space-y-1.5 text-sm text-muted-foreground">
+              <p>
+                Estimated completion time: {new Date(withdrawalReceipt.estimatedAt).toLocaleString('en-US', {
+                  year: 'numeric',
+                  month: '2-digit',
+                  day: '2-digit',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  second: '2-digit',
+                  hour12: false,
+                })}
+              </p>
+              <p>You will receive an email once withdrawal is completed.</p>
+              <p>View history for latest updates.</p>
+            </div>
+            <Button
+              variant="glow"
+              className="w-full"
+              onClick={() => {
+                setWithdrawalReceipt(null);
+                setView('main');
+              }}
+            >
+              Back to Wallet
+            </Button>
+          </div>
         ) : (
           <>
             {/* Support Ticket View */}

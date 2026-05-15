@@ -208,6 +208,10 @@ const Payment = () => {
 
   useEffect(() => {
     const checkAuth = async () => {
+      if (verificationSuccess) {
+        return;
+      }
+
       if (authLoading) {
         return;
       }
@@ -288,7 +292,7 @@ const Payment = () => {
     };
     
     void checkAuth();
-  }, [authLoading, user, navigate, clearSession, getRemainingTime]);
+  }, [authLoading, user, navigate, clearSession, getRemainingTime, verificationSuccess]);
 
   // Persist payment step state (so Resume restores the exact view and address)
   useEffect(() => {
@@ -322,7 +326,11 @@ const Payment = () => {
       setTimeRemaining((prev) => {
         if (prev <= 1) {
           setIsTimerActive(false);
-          clearSession(); // Clear session when timer expires
+          // Do not destroy the page while a submitted payment is being verified.
+          // The original payment window still expires, but verification must finish visibly.
+          if (!isVerifying && !verificationSuccess) {
+            clearSession();
+          }
           return 0;
         }
         return prev - 1;
@@ -330,7 +338,7 @@ const Payment = () => {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [isTimerActive, timeRemaining, clearSession]);
+  }, [isTimerActive, timeRemaining, clearSession, isVerifying, verificationSuccess]);
 
   const completeVerification = useCallback(async () => {
     if (completionInFlightRef.current || !packageData) return;
@@ -460,7 +468,7 @@ const Payment = () => {
   return (
     <div className="min-h-screen bg-background animate-fade-in">
       <Dialog open={verificationSuccess} onOpenChange={() => {}}>
-        <DialogContent className="max-w-[360px] rounded-xl border-success/30 bg-card p-0 overflow-hidden">
+        <DialogContent className="max-w-[360px] rounded-xl border-success/30 bg-card p-0 overflow-hidden [&>button]:hidden">
           <div className="p-5 text-center space-y-4">
             <DialogHeader className="text-center space-y-2">
               <div className="w-14 h-14 rounded-full bg-success/20 flex items-center justify-center mx-auto border border-success/30">
@@ -520,9 +528,9 @@ const Payment = () => {
               </div>
             )}
 
-            <Button variant="glow" size="lg" onClick={() => navigate('/#assets')} className="w-full">
-              <Wallet className="w-4 h-4 mr-2" />
-              Back to Assets
+            <Button variant="glow" size="lg" onClick={() => navigate('/')} className="w-full">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Home
             </Button>
           </div>
         </DialogContent>
@@ -788,26 +796,10 @@ const Payment = () => {
                       </p>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
-                      <Button
-                        variant="outline"
-                        size="lg"
-                        className="w-full"
-                        onClick={() => navigate('/')}
-                      >
-                        <ArrowLeft className="w-4 h-4 mr-2" />
-                        Back to Home
-                      </Button>
-                      <Button
-                        variant="glow"
-                        size="lg"
-                        className="w-full"
-                        onClick={() => navigate('/#assets')}
-                      >
-                        <Wallet className="w-4 h-4 mr-2" />
-                        Go to Assets
-                      </Button>
-                    </div>
+                    <Button variant="glow" size="lg" className="w-full" onClick={() => navigate('/')}>
+                      <ArrowLeft className="w-4 h-4 mr-2" />
+                      Back to Home
+                    </Button>
                   </div>
                 )}
 

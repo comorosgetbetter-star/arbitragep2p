@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useUserData } from '@/contexts/UserDataContext';
 import { useCryptoPrices } from '@/hooks/useCryptoPrices';
 import { supabase } from '@/integrations/supabase/client';
-import { Eye, EyeOff, Download, Upload, Clock, ChevronRight, ChevronDown, ChevronUp, SlidersHorizontal, Sparkles, ArrowLeft, Copy, Check, Loader2, Wallet, ArrowDownLeft, ArrowUpRight, XCircle, CheckCircle2, ArrowLeftRight, FileDown, TrendingUp, TrendingDown } from 'lucide-react';
+import { Eye, EyeOff, Download, Upload, Clock, ChevronRight, ChevronDown, ChevronUp, SlidersHorizontal, Sparkles, ArrowLeft, Loader2, Wallet, ArrowDownLeft, ArrowUpRight, CheckCircle2, ArrowLeftRight, FileDown, TrendingUp, TrendingDown, Hourglass } from 'lucide-react';
 import { AssetsMainSkeleton } from '@/components/skeletons/AssetsMainSkeleton';
 import { DepositSkeleton } from '@/components/skeletons/DepositSkeleton';
 import { CRYPTO_LOGOS } from '@/lib/cryptoLogos';
@@ -14,9 +14,16 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { calculatePortfolioValue, formatUsd } from '@/lib/portfolioValue';
 
-type AssetsSubView = 'main' | 'deposit' | 'withdraw' | 'withdraw-form' | 'convert' | 'history';
+type AssetsSubView = 'main' | 'deposit' | 'withdraw' | 'withdraw-form' | 'withdraw-processing' | 'convert' | 'history';
 type HistoryFilter = 'all' | 'deposits' | 'withdrawals';
 const HISTORY_PAGE_SIZE = 10;
+
+interface WithdrawalReceipt {
+  amount: number;
+  symbol: string;
+  network: string;
+  estimatedAt: string;
+}
 
 interface ActivityItem {
   id: string;
@@ -107,6 +114,7 @@ export const AssetsView = () => {
   const [selectedNetwork, setSelectedNetwork] = useState('trc20');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [withdrawCrypto, setWithdrawCrypto] = useState('USDT');
+  const [withdrawalReceipt, setWithdrawalReceipt] = useState<WithdrawalReceipt | null>(null);
   const [historyFilter, setHistoryFilter] = useState<HistoryFilter>('all');
   const [historyPage, setHistoryPage] = useState(1);
   const [historyItems, setHistoryItems] = useState<ActivityItem[]>([]);
@@ -206,19 +214,25 @@ export const AssetsView = () => {
     if (amount > withdrawSelectedBalance) { toast.error('Insufficient balance'); return; }
     setIsSubmitting(true);
     try {
-      const { error } = await supabase.from('withdrawals').insert({
+      const { data, error } = await supabase.from('withdrawals').insert({
         user_id: user.id,
         amount,
         wallet_address: walletAddress,
         network: selectedNetwork,
         crypto_symbol: withdrawCrypto,
-      } as any);
+      } as any).select('id, expires_at').single();
       if (error) throw error;
       await refetchWithdrawals();
       toast.success('Withdrawal submitted — processing...');
+      setWithdrawalReceipt({
+        amount,
+        symbol: withdrawCrypto,
+        network: selectedNetwork,
+        estimatedAt: (data as any)?.expires_at || new Date(Date.now() + 2 * 60 * 1000).toISOString(),
+      });
       setWithdrawAmount('');
       setWalletAddress('');
-      setSubView('main');
+      setSubView('withdraw-processing');
     } catch (error) {
       console.error('Withdrawal error:', error);
       toast.error('Failed to submit withdrawal');
@@ -388,6 +402,59 @@ export const AssetsView = () => {
           </div>
           <Button className="w-full" disabled={!withdrawAmount || !walletAddress || isSubmitting} onClick={handleSubmitWithdrawal}>
             {isSubmitting ? 'Submitting...' : `Withdraw ${withdrawCrypto}`}
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── SUB-VIEW: Withdraw – Processing confirmation ──
+  if (subView === 'withdraw-processing' && withdrawalReceipt) {
+    const formattedAmount = withdrawalReceipt.amount.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: withdrawalReceipt.symbol === 'USDT' ? 2 : 8,
+    });
+    const estimatedTime = new Date(withdrawalReceipt.estimatedAt).toLocaleString('en-US', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+    });
+
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center px-4 py-10 text-center animate-fade-in">
+        <div className="w-full max-w-sm space-y-6">
+          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-primary/10 border border-primary/20 shadow-[0_0_28px_hsl(var(--primary)/0.18)]">
+            <Hourglass className="h-11 w-11 text-primary" />
+          </div>
+
+          <div className="space-y-2">
+            <h2 className="text-xl font-display font-bold text-foreground">Withdrawal Processing</h2>
+            <p className="text-3xl font-display font-bold text-foreground tracking-normal">
+              {formattedAmount} {withdrawalReceipt.symbol}
+            </p>
+          </div>
+
+          <div className="space-y-1.5 text-sm text-muted-foreground">
+            <p>Estimated completion time: {estimatedTime}</p>
+            <p>You will receive an email once withdrawal is completed.</p>
+            <p>View history for latest updates.</p>
+          </div>
+
+          <Button
+            variant="glow"
+            size="lg"
+            className="w-full"
+            onClick={() => {
+              setWithdrawalReceipt(null);
+              setSubView('main');
+            }}
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Assets
           </Button>
         </div>
       </div>
