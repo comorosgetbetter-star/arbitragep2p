@@ -326,7 +326,11 @@ const Payment = () => {
       setTimeRemaining((prev) => {
         if (prev <= 1) {
           setIsTimerActive(false);
-          clearSession(); // Clear session when timer expires
+          // Do not destroy the page while a submitted payment is being verified.
+          // The original payment window still expires, but verification must finish visibly.
+          if (!isVerifying && !verificationSuccess) {
+            clearSession();
+          }
           return 0;
         }
         return prev - 1;
@@ -334,7 +338,7 @@ const Payment = () => {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [isTimerActive, timeRemaining, clearSession]);
+  }, [isTimerActive, timeRemaining, clearSession, isVerifying, verificationSuccess]);
 
   const completeVerification = useCallback(async () => {
     if (completionInFlightRef.current || !packageData) return;
