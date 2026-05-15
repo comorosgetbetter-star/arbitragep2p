@@ -468,7 +468,7 @@ const Payment = () => {
   return (
     <div className="min-h-screen bg-background animate-fade-in">
       <Dialog open={verificationSuccess} onOpenChange={() => {}}>
-        <DialogContent className="max-w-[360px] rounded-xl border-success/30 bg-card p-0 overflow-hidden">
+        <DialogContent className="max-w-[360px] rounded-xl border-success/30 bg-card p-0 overflow-hidden [&>button]:hidden">
           <div className="p-5 text-center space-y-4">
             <DialogHeader className="text-center space-y-2">
               <div className="w-14 h-14 rounded-full bg-success/20 flex items-center justify-center mx-auto border border-success/30">
