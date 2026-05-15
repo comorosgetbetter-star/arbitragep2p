@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowUpRight, ArrowDownLeft, History, Copy, Check, ChevronRight, Plus, Wallet, Clock, XCircle, CheckCircle2, Send, MessageSquare } from 'lucide-react';
+import { ArrowUpRight, ArrowDownLeft, History, Copy, Check, ChevronRight, Plus, Wallet, Clock, XCircle, CheckCircle2, Send, MessageSquare, Hourglass } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -35,10 +35,17 @@ interface Withdrawal {
   network: string;
 }
 
+interface WithdrawalReceipt {
+  amount: number;
+  symbol: string;
+  network: string;
+  estimatedAt: string;
+}
+
 export const WalletDropdown = ({ isOpen, onClose, onAddFunds }: WalletDropdownProps) => {
   const { user } = useAuth();
-  const { balance, withdrawals, deposits } = useUserData();
-  const [view, setView] = useState<'main' | 'withdraw' | 'support'>('main');
+  const { balance, withdrawals, deposits, refetchWithdrawals } = useUserData();
+  const [view, setView] = useState<'main' | 'withdraw' | 'processing' | 'support'>('main');
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [walletAddress, setWalletAddress] = useState('');
   const [selectedNetwork, setSelectedNetwork] = useState('trc20');
@@ -48,6 +55,7 @@ export const WalletDropdown = ({ isOpen, onClose, onAddFunds }: WalletDropdownPr
   const [hasOpenTicket, setHasOpenTicket] = useState(false);
   const [supportMessage, setSupportMessage] = useState('');
   const [isSubmittingTicket, setIsSubmittingTicket] = useState(false);
+  const [withdrawalReceipt, setWithdrawalReceipt] = useState<WithdrawalReceipt | null>(null);
 
   useEffect(() => {
     if (!isOpen || !user) return;
