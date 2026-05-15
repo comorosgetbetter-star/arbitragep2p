@@ -430,6 +430,43 @@ export const WalletDropdown = ({ isOpen, onClose, onAddFunds }: WalletDropdownPr
               </Button>
             </div>
           </>
+        ) : view === 'processing' && withdrawalReceipt ? (
+          <div className="px-5 py-10 text-center space-y-5">
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-primary/10 border border-primary/20 shadow-[0_0_28px_hsl(var(--primary)/0.18)]">
+              <Hourglass className="h-11 w-11 text-primary" />
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-xl font-display font-bold text-foreground">Withdrawal Processing</h3>
+              <p className="text-3xl font-display font-bold text-foreground tracking-normal">
+                {withdrawalReceipt.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {withdrawalReceipt.symbol}
+              </p>
+            </div>
+            <div className="space-y-1.5 text-sm text-muted-foreground">
+              <p>
+                Estimated completion time: {new Date(withdrawalReceipt.estimatedAt).toLocaleString('en-US', {
+                  year: 'numeric',
+                  month: '2-digit',
+                  day: '2-digit',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  second: '2-digit',
+                  hour12: false,
+                })}
+              </p>
+              <p>You will receive an email once withdrawal is completed.</p>
+              <p>View history for latest updates.</p>
+            </div>
+            <Button
+              variant="glow"
+              className="w-full"
+              onClick={() => {
+                setWithdrawalReceipt(null);
+                setView('main');
+              }}
+            >
+              Back to Wallet
+            </Button>
+          </div>
         ) : (
           <>
             {/* Support Ticket View */}
