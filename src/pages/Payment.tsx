@@ -433,21 +433,8 @@ const Payment = () => {
   };
 
   const handleMarkAsPaid = () => {
-    const now = Date.now();
-    try {
-      const stored = localStorage.getItem(TRADE_SESSION_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        localStorage.setItem(
-          TRADE_SESSION_KEY,
-          JSON.stringify({ ...parsed, expiresAt: now + VIP_TRANSACTION_SEARCH_MS + 60 * 1000 }),
-        );
-        notifyTradeSessionChange();
-      }
-    } catch {}
-    // Stop the countdown timer when marked as paid
-    setIsTimerActive(false);
-    setVerificationStartedAt(now);
+    // Do NOT mutate the trade session expiry — payment window stays exactly as the admin set it.
+    setVerificationStartedAt(Date.now());
     setIsVerifying(true);
     setVerificationProgress(0);
     setVerificationFailed(false);
