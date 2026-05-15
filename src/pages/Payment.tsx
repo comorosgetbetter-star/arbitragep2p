@@ -796,26 +796,10 @@ const Payment = () => {
                       </p>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
-                      <Button
-                        variant="outline"
-                        size="lg"
-                        className="w-full"
-                        onClick={() => navigate('/')}
-                      >
-                        <ArrowLeft className="w-4 h-4 mr-2" />
-                        Back to Home
-                      </Button>
-                      <Button
-                        variant="glow"
-                        size="lg"
-                        className="w-full"
-                        onClick={() => navigate('/#assets')}
-                      >
-                        <Wallet className="w-4 h-4 mr-2" />
-                        Go to Assets
-                      </Button>
-                    </div>
+                    <Button variant="glow" size="lg" className="w-full" onClick={() => navigate('/')}>
+                      <ArrowLeft className="w-4 h-4 mr-2" />
+                      Back to Home
+                    </Button>
                   </div>
                 )}
 
