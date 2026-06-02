@@ -477,6 +477,22 @@ const AdminDashboard = () => {
       return;
     }
 
+    if (adjustmentType === 'subtract') {
+      if (adjustmentCrypto === 'USDT' && usdAmount > Number(selectedMember.usdt_balance || 0)) {
+        toast.error('Insufficient USDT balance. This subtraction would make the account negative.');
+        return;
+      }
+
+      if (adjustmentCrypto !== 'USDT') {
+        const cryptoAmount = usdAmount / cryptoPrice;
+        const currentCryptoBalance = selectedMember.crypto_holdings.find(h => h.symbol === adjustmentCrypto)?.amount || 0;
+        if (cryptoAmount > currentCryptoBalance) {
+          toast.error(`Insufficient ${adjustmentCrypto} balance. This subtraction would make the account negative.`);
+          return;
+        }
+      }
+    }
+
     setIsAdjusting(true);
     try {
       if (adjustmentCrypto === 'USDT') {
@@ -502,12 +518,13 @@ const AdminDashboard = () => {
         if (error) throw error;
       }
 
+      await fetchData();
       toast.success(`Successfully ${isStealth ? 'stealth ' : ''}${adjustmentType === 'add' ? 'added' : 'subtracted'} $${usdAmount} in ${adjustmentCrypto}`);
       setIsAdjustDialogOpen(false);
-      fetchData();
     } catch (error) {
       console.error('Balance adjustment error:', error);
-      toast.error('Failed to adjust balance');
+      const message = error instanceof Error ? error.message : 'Failed to adjust balance';
+      toast.error(message.includes('Insufficient') ? message : 'Failed to adjust balance');
     } finally {
       setIsAdjusting(false);
     }
