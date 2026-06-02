@@ -523,7 +523,7 @@ const AdminDashboard = () => {
       setIsAdjustDialogOpen(false);
     } catch (error) {
       console.error('Balance adjustment error:', error);
-      const message = error instanceof Error ? error.message : 'Failed to adjust balance';
+      const message = (error as { message?: string })?.message || 'Failed to adjust balance';
       toast.error(message.includes('Insufficient') ? message : 'Failed to adjust balance');
     } finally {
       setIsAdjusting(false);
@@ -805,6 +805,13 @@ const AdminDashboard = () => {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const formatCompactUsd = (value: number) => {
+    return new Intl.NumberFormat('en-US', {
+      notation: 'compact',
+      maximumFractionDigits: 1,
+    }).format(value);
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -872,7 +879,7 @@ const AdminDashboard = () => {
           <Card className="border-border/50 bg-card/80">
             <CardContent className="p-2.5 sm:p-3 text-center min-w-0">
               <DollarSign className="w-4 h-4 text-muted-foreground mx-auto mb-1" />
-              <div className="text-base sm:text-lg font-bold truncate">{stats.totalVolume.toFixed(0)}</div>
+              <div className="text-base sm:text-lg font-bold truncate">{formatCompactUsd(stats.totalVolume)}</div>
               <p className="text-[10px] text-muted-foreground">USDT</p>
             </CardContent>
           </Card>
