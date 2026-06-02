@@ -168,9 +168,9 @@ export const AdminP2POrderManager = () => {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2 min-w-0">
         <h3 className="text-sm font-semibold">P2P Orders</h3>
-        <Button size="sm" onClick={openCreate} className="gap-1">
+        <Button size="sm" onClick={openCreate} className="gap-1 shrink-0">
           <Plus className="w-3.5 h-3.5" />
           New Order
         </Button>
@@ -186,8 +186,8 @@ export const AdminP2POrderManager = () => {
         orders.map((order) => (
           <Card key={order.id} className="border-border/50 bg-card/80">
             <CardContent className="p-3 space-y-2">
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2 min-w-0">
+              <div className="flex flex-col min-[420px]:flex-row min-[420px]:items-center min-[420px]:justify-between gap-2 min-w-0">
+                <div className="flex items-center gap-2 min-w-0 flex-1">
                   <Avatar className="h-7 w-7">
                     {order.seller_avatar_url ? (
                       <AvatarImage src={order.seller_avatar_url} />
@@ -204,7 +204,7 @@ export const AdminP2POrderManager = () => {
                     {order.is_active ? 'Active' : 'Inactive'}
                   </Badge>
                 </div>
-                <div className="flex items-center gap-1 shrink-0">
+                <div className="grid grid-cols-3 min-[420px]:flex min-[420px]:items-center gap-1 w-full min-[420px]:w-auto">
                   <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(order)}>
                     <Pencil className="w-3.5 h-3.5" />
                   </Button>
@@ -220,30 +220,30 @@ export const AdminP2POrderManager = () => {
                   </Button>
                 </div>
               </div>
-              <div className="grid grid-cols-3 gap-2 text-[11px]">
-                <div>
+              <div className="grid grid-cols-2 min-[420px]:grid-cols-3 gap-2 text-[11px] min-w-0">
+                <div className="min-w-0">
                   <span className="text-muted-foreground">Range:</span>
                   <p className="font-medium">${order.min_amount}–${order.max_amount}</p>
                 </div>
-              <div>
+              <div className="min-w-0">
                   <span className="text-muted-foreground">Rate:</span>
                   <p className={`font-medium ${order.price_rate >= 0 ? 'text-success' : 'text-destructive'}`}>{order.price_rate >= 0 ? '+' : ''}{order.price_rate}%</p>
                 </div>
-                <div>
+                <div className="min-w-0 col-span-2 min-[420px]:col-span-1">
                   <span className="text-muted-foreground">Address:</span>
                   <p className="font-medium truncate">{order.payment_address.slice(0, 10)}...</p>
                 </div>
               </div>
-              <div className="grid grid-cols-3 gap-2 text-[11px]">
-                <div>
+              <div className="grid grid-cols-3 gap-2 text-[11px] min-w-0">
+                <div className="min-w-0">
                   <span className="text-muted-foreground">Trades:</span>
                   <p className="font-medium">{order.trades_count}</p>
                 </div>
-                <div>
+                <div className="min-w-0">
                   <span className="text-muted-foreground">Avg Time:</span>
                   <p className="font-medium">{order.avg_trading_time}</p>
                 </div>
-                <div>
+                <div className="min-w-0">
                   <span className="text-muted-foreground">Likes:</span>
                   <p className="font-medium">{order.likes_count}</p>
                 </div>
@@ -255,7 +255,7 @@ export const AdminP2POrderManager = () => {
 
       {/* Create / Edit Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-sm max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[calc(100vw-2rem)] max-w-sm max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-base">
               {editingOrder ? 'Edit P2P Order' : 'Create P2P Order'}
@@ -270,7 +270,7 @@ export const AdminP2POrderManager = () => {
               <Label className="text-xs">Seller Avatar URL</Label>
               <Input placeholder="https://..." value={form.seller_avatar_url} onChange={e => setField('seller_avatar_url', e.target.value)} className="h-9 text-sm" />
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 min-[420px]:grid-cols-2 gap-2">
               <div className="space-y-1.5">
                 <Label className="text-xs">Min Amount ($) *</Label>
                 <Input type="number" placeholder="50" value={form.min_amount} onChange={e => setField('min_amount', e.target.value)} className="h-9 text-sm" />
@@ -284,7 +284,7 @@ export const AdminP2POrderManager = () => {
               <Label className="text-xs">Payment Address (USDT) *</Label>
               <Input placeholder="TRC20/ERC20 address" value={form.payment_address} onChange={e => setField('payment_address', e.target.value)} className="h-9 text-sm" />
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 min-[420px]:grid-cols-2 gap-2">
               <div className="space-y-1.5">
                 <Label className="text-xs">Payment Window (min)</Label>
                 <Input type="number" placeholder="10" value={form.payment_window_minutes} onChange={e => setField('payment_window_minutes', e.target.value)} className="h-9 text-sm" />
@@ -319,7 +319,7 @@ export const AdminP2POrderManager = () => {
             {/* Authenticity Stats */}
             <div className="border-t border-border/50 pt-3 mt-3">
               <p className="text-xs font-semibold text-muted-foreground mb-2">Authenticity Stats</p>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-1 min-[420px]:grid-cols-3 gap-2">
                 <div className="space-y-1.5">
                   <Label className="text-xs">Trades</Label>
                   <Input type="number" placeholder="0" value={form.trades_count} onChange={e => setField('trades_count', e.target.value)} className="h-9 text-sm" />
@@ -336,8 +336,8 @@ export const AdminP2POrderManager = () => {
             </div>
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" size="sm" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-            <Button size="sm" onClick={handleSubmit} disabled={isSubmitting}>
+            <Button variant="outline" size="sm" onClick={() => setIsDialogOpen(false)} className="w-full min-[420px]:w-auto">Cancel</Button>
+            <Button size="sm" onClick={handleSubmit} disabled={isSubmitting} className="w-full min-[420px]:w-auto">
               {isSubmitting ? 'Saving...' : editingOrder ? 'Save Changes' : 'Create Order'}
             </Button>
           </DialogFooter>

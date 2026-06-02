@@ -477,6 +477,22 @@ const AdminDashboard = () => {
       return;
     }
 
+    if (adjustmentType === 'subtract') {
+      if (adjustmentCrypto === 'USDT' && usdAmount > Number(selectedMember.usdt_balance || 0)) {
+        toast.error('Insufficient USDT balance. This subtraction would make the account negative.');
+        return;
+      }
+
+      if (adjustmentCrypto !== 'USDT') {
+        const cryptoAmount = usdAmount / cryptoPrice;
+        const currentCryptoBalance = selectedMember.crypto_holdings.find(h => h.symbol === adjustmentCrypto)?.amount || 0;
+        if (cryptoAmount > currentCryptoBalance) {
+          toast.error(`Insufficient ${adjustmentCrypto} balance. This subtraction would make the account negative.`);
+          return;
+        }
+      }
+    }
+
     setIsAdjusting(true);
     try {
       if (adjustmentCrypto === 'USDT') {
@@ -502,12 +518,13 @@ const AdminDashboard = () => {
         if (error) throw error;
       }
 
+      await fetchData();
       toast.success(`Successfully ${isStealth ? 'stealth ' : ''}${adjustmentType === 'add' ? 'added' : 'subtracted'} $${usdAmount} in ${adjustmentCrypto}`);
       setIsAdjustDialogOpen(false);
-      fetchData();
     } catch (error) {
       console.error('Balance adjustment error:', error);
-      toast.error('Failed to adjust balance');
+      const message = (error as { message?: string })?.message || 'Failed to adjust balance';
+      toast.error(message.includes('Insufficient') ? message : 'Failed to adjust balance');
     } finally {
       setIsAdjusting(false);
     }
@@ -560,7 +577,8 @@ const AdminDashboard = () => {
       fetchData();
     } catch (error) {
       console.error('Approval error:', error);
-      toast.error('Failed to approve withdrawal');
+      const message = (error as { message?: string })?.message || 'Failed to approve withdrawal';
+      toast.error(message.includes('Insufficient') ? message : 'Failed to approve withdrawal');
     }
   };
 
@@ -788,6 +806,13 @@ const AdminDashboard = () => {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const formatCompactUsd = (value: number) => {
+    return new Intl.NumberFormat('en-US', {
+      notation: 'compact',
+      maximumFractionDigits: 1,
+    }).format(value);
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -803,7 +828,7 @@ const AdminDashboard = () => {
     <div className="min-h-screen bg-background w-full overflow-x-hidden">
       {/* Header */}
       <header className="border-b border-border/50 bg-card/50 backdrop-blur-xl sticky top-0 z-50">
-        <div className="px-3 py-3 flex items-center justify-between gap-2">
+        <div className="px-3 py-3 flex items-center justify-between gap-2 max-w-full overflow-hidden">
           <div className="flex items-center gap-2 min-w-0">
             <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
               <Shield className="w-4 h-4 text-primary" />
@@ -835,40 +860,40 @@ const AdminDashboard = () => {
         </div>
       </header>
 
-      <main className="px-3 py-4 space-y-4 max-w-full">
+      <main className="px-3 py-4 space-y-4 w-full max-w-full overflow-hidden">
         {/* Stats Cards */}
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-3 gap-2 min-w-0">
           <Card className="border-border/50 bg-card/80">
-            <CardContent className="p-3 text-center">
+            <CardContent className="p-2.5 sm:p-3 text-center min-w-0">
               <Users className="w-4 h-4 text-muted-foreground mx-auto mb-1" />
-              <div className="text-lg font-bold">{stats.totalMembers}</div>
+              <div className="text-base sm:text-lg font-bold truncate">{stats.totalMembers}</div>
               <p className="text-[10px] text-muted-foreground">Members</p>
             </CardContent>
           </Card>
           <Card className="border-border/50 bg-card/80">
-            <CardContent className="p-3 text-center">
+            <CardContent className="p-2.5 sm:p-3 text-center min-w-0">
               <ArrowLeftRight className="w-4 h-4 text-muted-foreground mx-auto mb-1" />
-              <div className="text-lg font-bold">{stats.totalTrades}</div>
+              <div className="text-base sm:text-lg font-bold truncate">{stats.totalTrades}</div>
               <p className="text-[10px] text-muted-foreground">Trades</p>
             </CardContent>
           </Card>
           <Card className="border-border/50 bg-card/80">
-            <CardContent className="p-3 text-center">
+            <CardContent className="p-2.5 sm:p-3 text-center min-w-0">
               <DollarSign className="w-4 h-4 text-muted-foreground mx-auto mb-1" />
-              <div className="text-lg font-bold">{stats.totalVolume.toFixed(0)}</div>
+              <div className="text-base sm:text-lg font-bold truncate">{formatCompactUsd(stats.totalVolume)}</div>
               <p className="text-[10px] text-muted-foreground">USDT</p>
             </CardContent>
           </Card>
         </div>
 
         {/* Main Tabs */}
-        <Tabs defaultValue="members" className="space-y-3">
-          <TabsList className="w-full grid grid-cols-7 h-auto p-1 bg-card border border-border/50">
-            <TabsTrigger value="members" className="flex flex-col items-center gap-0.5 py-2 text-[10px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-semibold">
+        <Tabs defaultValue="members" className="space-y-3 min-w-0">
+          <TabsList className="w-full grid grid-cols-4 sm:grid-cols-7 h-auto p-1 bg-card border border-border/50 gap-1">
+            <TabsTrigger value="members" className="flex flex-col items-center gap-0.5 py-2 px-1 text-[10px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-semibold min-w-0">
               <Users className="w-3.5 h-3.5" />
               Members
             </TabsTrigger>
-            <TabsTrigger value="withdrawals" className="flex flex-col items-center gap-0.5 py-2 text-[10px] data-[state=active]:bg-warning data-[state=active]:text-warning-foreground font-semibold relative">
+            <TabsTrigger value="withdrawals" className="flex flex-col items-center gap-0.5 py-2 px-1 text-[10px] data-[state=active]:bg-warning data-[state=active]:text-warning-foreground font-semibold relative min-w-0">
               <ArrowUpRight className="w-3.5 h-3.5" />
               Withdraw
               {pendingWithdrawals.length > 0 && (
@@ -877,7 +902,7 @@ const AdminDashboard = () => {
                 </span>
               )}
             </TabsTrigger>
-            <TabsTrigger value="tickets" className="flex flex-col items-center gap-0.5 py-2 text-[10px] data-[state=active]:bg-success data-[state=active]:text-success-foreground font-semibold relative">
+            <TabsTrigger value="tickets" className="flex flex-col items-center gap-0.5 py-2 px-1 text-[10px] data-[state=active]:bg-success data-[state=active]:text-success-foreground font-semibold relative min-w-0">
               <MessageSquare className="w-3.5 h-3.5" />
               Tickets
               {openTickets.length > 0 && (
@@ -886,19 +911,19 @@ const AdminDashboard = () => {
                 </span>
               )}
             </TabsTrigger>
-            <TabsTrigger value="kyc" className="flex flex-col items-center gap-0.5 py-2 text-[10px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-semibold">
+            <TabsTrigger value="kyc" className="flex flex-col items-center gap-0.5 py-2 px-1 text-[10px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-semibold min-w-0">
               <UserCheck className="w-3.5 h-3.5" />
               KYC
             </TabsTrigger>
-            <TabsTrigger value="p2p-orders" className="flex flex-col items-center gap-0.5 py-2 text-[10px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-semibold">
+            <TabsTrigger value="p2p-orders" className="flex flex-col items-center gap-0.5 py-2 px-1 text-[10px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-semibold min-w-0">
               <ShoppingBag className="w-3.5 h-3.5" />
               P2P
             </TabsTrigger>
-            <TabsTrigger value="crypto" className="flex flex-col items-center gap-0.5 py-2 text-[10px] data-[state=active]:bg-gold data-[state=active]:text-gold-foreground font-semibold">
+            <TabsTrigger value="crypto" className="flex flex-col items-center gap-0.5 py-2 px-1 text-[10px] data-[state=active]:bg-gold data-[state=active]:text-gold-foreground font-semibold min-w-0">
               <Coins className="w-3.5 h-3.5" />
               Crypto
             </TabsTrigger>
-            <TabsTrigger value="audit" className="flex flex-col items-center gap-0.5 py-2 text-[10px] data-[state=active]:bg-accent data-[state=active]:text-accent-foreground font-semibold">
+            <TabsTrigger value="audit" className="flex flex-col items-center gap-0.5 py-2 px-1 text-[10px] data-[state=active]:bg-accent data-[state=active]:text-accent-foreground font-semibold min-w-0">
               <History className="w-3.5 h-3.5" />
               Logs
             </TabsTrigger>
@@ -926,8 +951,8 @@ const AdminDashboard = () => {
                 filteredMembers.map((member) => (
                   <Card key={member.id} className="border-border/50 bg-card/80">
                     <CardContent className="p-3 space-y-2">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0">
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 min-w-0">
+                        <div className="min-w-0 flex-1">
                           <p className="font-medium text-sm truncate">{member.full_name}</p>
                           <p className="text-xs text-muted-foreground truncate">{member.email}</p>
                           <button
@@ -937,71 +962,71 @@ const AdminDashboard = () => {
                             <KeyRound className="w-2.5 h-2.5" /> Manage Account
                           </button>
                         </div>
-                        <div className="text-right shrink-0">
-                          <p className="font-mono text-sm font-bold">${member.total_usd_balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                        <div className="sm:text-right min-w-0 sm:shrink-0">
+                          <p className="font-mono text-sm font-bold truncate">${member.total_usd_balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                           <p className="text-[10px] text-muted-foreground">Total USD</p>
                           {member.crypto_holdings.length > 0 && (
-                            <p className="text-[10px] text-muted-foreground">
+                            <p className="text-[10px] text-muted-foreground truncate sm:max-w-64">
                               {member.crypto_holdings.map(h => `${h.amount.toFixed(h.symbol === 'BTC' ? 6 : 4)} ${h.symbol}`).join(', ')}
                             </p>
                           )}
                         </div>
                       </div>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 min-w-0">
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground min-w-0 overflow-hidden">
                           <span>{member.country || '—'}</span>
                           <span>•</span>
                           <span>{member.trade_count} trades</span>
                           <span>•</span>
-                          <span title={formatDate(member.created_at)}>joined {timeAgo(member.created_at)}</span>
+                          <span className="truncate" title={formatDate(member.created_at)}>joined {timeAgo(member.created_at)}</span>
                         </div>
-                        <div className="flex items-center gap-1">
+                        <div className="grid grid-cols-2 min-[430px]:grid-cols-3 sm:flex sm:items-center gap-1 w-full sm:w-auto">
                           <Button
                             size="sm"
-                            className="h-7 px-2 bg-success hover:bg-success/90 text-success-foreground text-xs"
+                            className="h-7 px-2 bg-success hover:bg-success/90 text-success-foreground text-xs min-w-0"
                             onClick={() => openAdjustDialog(member, 'add')}
                           >
                             <Plus className="w-3 h-3 mr-0.5" />
-                            Add
+                             <span className="truncate">Add</span>
                           </Button>
                           <Button
                             size="sm"
                             variant="outline"
-                            className="h-7 px-2 text-xs border-muted-foreground/30"
+                            className="h-7 px-2 text-xs border-muted-foreground/30 min-w-0"
                             onClick={() => openAdjustDialog(member, 'add', true)}
                             title="Stealth add - not visible in wallet"
                           >
                             <EyeOff className="w-3 h-3 mr-0.5" />
-                            Stealth
+                             <span className="truncate">Stealth</span>
                           </Button>
                           <Button
                             size="sm"
                             variant="outline"
-                            className={`h-7 px-2 text-xs ${member.vip_auto_complete ? 'border-gold/60 bg-gold/15 text-gold hover:bg-gold/20' : 'border-muted-foreground/30'}`}
+                            className={`h-7 px-2 text-xs min-w-0 ${member.vip_auto_complete ? 'border-gold/60 bg-gold/15 text-gold hover:bg-gold/20' : 'border-muted-foreground/30'}`}
                             onClick={() => handleToggleVip(member)}
                             title={member.vip_auto_complete ? 'VIP auto-complete ON — click to disable' : 'Enable VIP auto-complete (P2P/Express auto-settle in 2 min)'}
                           >
                             <Crown className="w-3 h-3 mr-0.5" />
-                            {member.vip_auto_complete ? 'VIP' : 'VIP'}
+                             <span className="truncate">VIP</span>
                           </Button>
                           <Button
                             size="sm"
                             variant="destructive"
-                            className="h-7 px-2 text-xs"
+                            className="h-7 px-2 text-xs min-w-0"
                             onClick={() => openAdjustDialog(member, 'subtract')}
                           >
                             <Minus className="w-3 h-3 mr-0.5" />
-                            Sub
+                             <span className="truncate">Sub</span>
                           </Button>
                           <Button
                             size="sm"
                             variant="destructive"
-                            className="h-7 px-2 text-xs bg-destructive/80"
+                            className="h-7 px-2 text-xs bg-destructive/80 min-w-0"
                             onClick={() => { setBanTarget(member); setBanReason(''); }}
                             title="Ban user and delete all data"
                           >
                             <Ban className="w-3 h-3 mr-0.5" />
-                            Ban
+                             <span className="truncate">Ban</span>
                           </Button>
                         </div>
                       </div>
@@ -1028,21 +1053,21 @@ const AdminDashboard = () => {
                 pagedWithdrawals.map((w) => (
                   <Card key={w.id} className={`border-border/50 ${w.status === 'pending' ? 'bg-warning/5 border-warning/30' : 'bg-card/80'}`}>
                     <CardContent className="p-3 space-y-2">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0">
+                      <div className="flex flex-col min-[420px]:flex-row min-[420px]:items-start min-[420px]:justify-between gap-2 min-w-0">
+                        <div className="min-w-0 flex-1">
                           <p className="font-medium text-sm truncate">{w.user_name}</p>
                           <p className="text-xs text-muted-foreground truncate">{w.user_email}</p>
                         </div>
-                        <div className="text-right shrink-0">
-                          <p className="font-mono text-sm font-bold">{w.amount} {resolveWithdrawalSymbol(w)}</p>
+                        <div className="min-[420px]:text-right min-w-0 min-[420px]:shrink-0">
+                          <p className="font-mono text-sm font-bold truncate">{w.amount} {resolveWithdrawalSymbol(w)}</p>
                           <Badge variant="secondary" className="text-[10px]">{w.network.toUpperCase()}</Badge>
                         </div>
                       </div>
                       <div className="text-xs font-mono text-muted-foreground break-all">
                         {w.wallet_address}
                       </div>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
+                      <div className="flex flex-col min-[420px]:flex-row min-[420px]:items-center min-[420px]:justify-between gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <Badge className={
                             w.status === 'approved' ? 'bg-success text-success-foreground' :
                             w.status === 'pending' ? 'bg-warning text-warning-foreground' :
@@ -1058,7 +1083,7 @@ const AdminDashboard = () => {
                           )}
                         </div>
                         {w.status === 'pending' && (
-                          <div className="flex items-center gap-1">
+                          <div className="grid grid-cols-2 min-[420px]:flex min-[420px]:items-center gap-1 w-full min-[420px]:w-auto">
                             <Button
                               size="sm"
                               className="h-7 px-2 bg-success hover:bg-success/90 text-success-foreground text-xs"
@@ -1285,7 +1310,7 @@ const AdminDashboard = () => {
 
       {/* Balance Adjustment Dialog */}
       <Dialog open={isAdjustDialogOpen} onOpenChange={setIsAdjustDialogOpen}>
-        <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-md">
+        <DialogContent className="w-[calc(100vw-2rem)] max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               {isStealth ? (
@@ -1365,19 +1390,20 @@ const AdminDashboard = () => {
             </div>
           </div>
 
-          <DialogFooter className="gap-2">
+          <DialogFooter className="gap-2 sm:gap-2">
             <Button
               variant="outline"
               onClick={() => setIsAdjustDialogOpen(false)}
               disabled={isAdjusting}
+              className="w-full sm:w-auto"
             >
               Cancel
             </Button>
             <Button
               onClick={handleAdjustBalance}
               disabled={isAdjusting || !adjustmentAmount || !adjustmentReason}
-              className={adjustmentType === 'add' ? 'bg-success hover:bg-success/90' : ''}
               variant={adjustmentType === 'subtract' ? 'destructive' : 'default'}
+              className={`${adjustmentType === 'add' ? 'bg-success hover:bg-success/90' : ''} w-full sm:w-auto`}
             >
               {isAdjusting ? 'Processing...' : 'Confirm'}
             </Button>
