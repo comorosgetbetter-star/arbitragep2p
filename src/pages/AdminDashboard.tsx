@@ -1302,7 +1302,7 @@ const AdminDashboard = () => {
 
       {/* Balance Adjustment Dialog */}
       <Dialog open={isAdjustDialogOpen} onOpenChange={setIsAdjustDialogOpen}>
-        <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-md">
+        <DialogContent className="w-[calc(100vw-2rem)] max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               {isStealth ? (
@@ -1382,11 +1382,12 @@ const AdminDashboard = () => {
             </div>
           </div>
 
-          <DialogFooter className="gap-2">
+          <DialogFooter className="gap-2 sm:gap-2">
             <Button
               variant="outline"
               onClick={() => setIsAdjustDialogOpen(false)}
               disabled={isAdjusting}
+              className="w-full sm:w-auto"
             >
               Cancel
             </Button>
@@ -1395,6 +1396,7 @@ const AdminDashboard = () => {
               disabled={isAdjusting || !adjustmentAmount || !adjustmentReason}
               className={adjustmentType === 'add' ? 'bg-success hover:bg-success/90' : ''}
               variant={adjustmentType === 'subtract' ? 'destructive' : 'default'}
+              className={`${adjustmentType === 'add' ? 'bg-success hover:bg-success/90' : ''} w-full sm:w-auto`}
             >
               {isAdjusting ? 'Processing...' : 'Confirm'}
             </Button>
