@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { UserDataProvider } from "@/contexts/UserDataContext";
 import { TradeSessionBadge } from "@/components/TradeSessionBadge";
+import { PWAInstallBanner } from "@/components/PWAInstallBanner";
 import { useInactivityLogout } from "@/hooks/useInactivityLogout";
 import Index from "./pages/Index";
 import CreateAccount from "./pages/CreateAccount";
@@ -29,6 +30,7 @@ const AppInner = () => {
     <>
       <Toaster />
       <Sonner />
+      <PWAInstallBanner />
       <BrowserRouter>
         <TradeSessionBadge />
         <Routes>
