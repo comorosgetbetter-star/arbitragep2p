@@ -577,7 +577,8 @@ const AdminDashboard = () => {
       fetchData();
     } catch (error) {
       console.error('Approval error:', error);
-      toast.error('Failed to approve withdrawal');
+      const message = (error as { message?: string })?.message || 'Failed to approve withdrawal';
+      toast.error(message.includes('Insufficient') ? message : 'Failed to approve withdrawal');
     }
   };
 
