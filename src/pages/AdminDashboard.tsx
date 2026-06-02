@@ -1394,7 +1394,6 @@ const AdminDashboard = () => {
             <Button
               onClick={handleAdjustBalance}
               disabled={isAdjusting || !adjustmentAmount || !adjustmentReason}
-              className={adjustmentType === 'add' ? 'bg-success hover:bg-success/90' : ''}
               variant={adjustmentType === 'subtract' ? 'destructive' : 'default'}
               className={`${adjustmentType === 'add' ? 'bg-success hover:bg-success/90' : ''} w-full sm:w-auto`}
             >
