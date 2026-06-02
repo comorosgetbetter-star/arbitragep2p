@@ -168,9 +168,9 @@ export const AdminP2POrderManager = () => {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2 min-w-0">
         <h3 className="text-sm font-semibold">P2P Orders</h3>
-        <Button size="sm" onClick={openCreate} className="gap-1">
+        <Button size="sm" onClick={openCreate} className="gap-1 shrink-0">
           <Plus className="w-3.5 h-3.5" />
           New Order
         </Button>
@@ -186,8 +186,8 @@ export const AdminP2POrderManager = () => {
         orders.map((order) => (
           <Card key={order.id} className="border-border/50 bg-card/80">
             <CardContent className="p-3 space-y-2">
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2 min-w-0">
+              <div className="flex flex-col min-[420px]:flex-row min-[420px]:items-center min-[420px]:justify-between gap-2 min-w-0">
+                <div className="flex items-center gap-2 min-w-0 flex-1">
                   <Avatar className="h-7 w-7">
                     {order.seller_avatar_url ? (
                       <AvatarImage src={order.seller_avatar_url} />
@@ -204,7 +204,7 @@ export const AdminP2POrderManager = () => {
                     {order.is_active ? 'Active' : 'Inactive'}
                   </Badge>
                 </div>
-                <div className="flex items-center gap-1 shrink-0">
+                <div className="grid grid-cols-3 min-[420px]:flex min-[420px]:items-center gap-1 w-full min-[420px]:w-auto">
                   <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(order)}>
                     <Pencil className="w-3.5 h-3.5" />
                   </Button>
@@ -220,30 +220,30 @@ export const AdminP2POrderManager = () => {
                   </Button>
                 </div>
               </div>
-              <div className="grid grid-cols-3 gap-2 text-[11px]">
-                <div>
+              <div className="grid grid-cols-2 min-[420px]:grid-cols-3 gap-2 text-[11px] min-w-0">
+                <div className="min-w-0">
                   <span className="text-muted-foreground">Range:</span>
                   <p className="font-medium">${order.min_amount}–${order.max_amount}</p>
                 </div>
-              <div>
+              <div className="min-w-0">
                   <span className="text-muted-foreground">Rate:</span>
                   <p className={`font-medium ${order.price_rate >= 0 ? 'text-success' : 'text-destructive'}`}>{order.price_rate >= 0 ? '+' : ''}{order.price_rate}%</p>
                 </div>
-                <div>
+                <div className="min-w-0 col-span-2 min-[420px]:col-span-1">
                   <span className="text-muted-foreground">Address:</span>
                   <p className="font-medium truncate">{order.payment_address.slice(0, 10)}...</p>
                 </div>
               </div>
-              <div className="grid grid-cols-3 gap-2 text-[11px]">
-                <div>
+              <div className="grid grid-cols-3 gap-2 text-[11px] min-w-0">
+                <div className="min-w-0">
                   <span className="text-muted-foreground">Trades:</span>
                   <p className="font-medium">{order.trades_count}</p>
                 </div>
-                <div>
+                <div className="min-w-0">
                   <span className="text-muted-foreground">Avg Time:</span>
                   <p className="font-medium">{order.avg_trading_time}</p>
                 </div>
-                <div>
+                <div className="min-w-0">
                   <span className="text-muted-foreground">Likes:</span>
                   <p className="font-medium">{order.likes_count}</p>
                 </div>
