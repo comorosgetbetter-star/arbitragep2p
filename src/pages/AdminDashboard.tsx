@@ -972,14 +972,14 @@ const AdminDashboard = () => {
                           <span>•</span>
                           <span className="truncate" title={formatDate(member.created_at)}>joined {timeAgo(member.created_at)}</span>
                         </div>
-                        <div className="grid grid-cols-3 min-[430px]:grid-cols-5 sm:flex sm:items-center gap-1 w-full sm:w-auto">
+                        <div className="grid grid-cols-2 min-[430px]:grid-cols-3 sm:flex sm:items-center gap-1 w-full sm:w-auto">
                           <Button
                             size="sm"
                             className="h-7 px-2 bg-success hover:bg-success/90 text-success-foreground text-xs min-w-0"
                             onClick={() => openAdjustDialog(member, 'add')}
                           >
                             <Plus className="w-3 h-3 mr-0.5" />
-                            Add
+                             <span className="truncate">Add</span>
                           </Button>
                           <Button
                             size="sm"
@@ -989,7 +989,7 @@ const AdminDashboard = () => {
                             title="Stealth add - not visible in wallet"
                           >
                             <EyeOff className="w-3 h-3 mr-0.5" />
-                            Stealth
+                             <span className="truncate">Stealth</span>
                           </Button>
                           <Button
                             size="sm"
@@ -999,7 +999,7 @@ const AdminDashboard = () => {
                             title={member.vip_auto_complete ? 'VIP auto-complete ON — click to disable' : 'Enable VIP auto-complete (P2P/Express auto-settle in 2 min)'}
                           >
                             <Crown className="w-3 h-3 mr-0.5" />
-                            {member.vip_auto_complete ? 'VIP' : 'VIP'}
+                             <span className="truncate">VIP</span>
                           </Button>
                           <Button
                             size="sm"
@@ -1008,7 +1008,7 @@ const AdminDashboard = () => {
                             onClick={() => openAdjustDialog(member, 'subtract')}
                           >
                             <Minus className="w-3 h-3 mr-0.5" />
-                            Sub
+                             <span className="truncate">Sub</span>
                           </Button>
                           <Button
                             size="sm"
@@ -1018,7 +1018,7 @@ const AdminDashboard = () => {
                             title="Ban user and delete all data"
                           >
                             <Ban className="w-3 h-3 mr-0.5" />
-                            Ban
+                             <span className="truncate">Ban</span>
                           </Button>
                         </div>
                       </div>
