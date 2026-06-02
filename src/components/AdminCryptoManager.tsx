@@ -223,13 +223,13 @@ export const AdminCryptoManager = () => {
           return (
             <Card key={crypto.id} className={`border ${colorClass} transition-all`}>
               <CardContent className="p-3 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
+                <div className="flex items-center justify-between gap-2 min-w-0">
+                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
                     <img src={CRYPTO_LOGOS[crypto.symbol]} alt={crypto.symbol} className="w-8 h-8 rounded-full" />
-                    <div>
-                      <div className="flex items-center gap-1.5">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5 min-w-0">
                         <span className="font-semibold text-sm">{crypto.symbol}</span>
-                        <span className="text-xs text-muted-foreground">{crypto.name}</span>
+                        <span className="text-xs text-muted-foreground truncate">{crypto.name}</span>
                       </div>
                       <div className="flex items-center gap-1.5 mt-0.5">
                         {crypto.is_enabled ? (
@@ -343,7 +343,7 @@ export const AdminCryptoManager = () => {
             {tradeAddresses.map((addr, idx) => (
               <Card key={addr.id} className="border-border/50 bg-card/80">
                 <CardContent className="p-2.5 space-y-2">
-                  <div className="flex items-center justify-between gap-2">
+                  <div className="flex flex-col min-[420px]:flex-row min-[420px]:items-center min-[420px]:justify-between gap-2 min-w-0">
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5">
                         <span className="text-[10px] font-bold text-warning">#{idx + 1}</span>
@@ -351,7 +351,7 @@ export const AdminCryptoManager = () => {
                       </div>
                       <Badge variant="secondary" className="text-[9px] mt-0.5">{addr.network.toUpperCase()}</Badge>
                     </div>
-                    <div className="flex gap-1 shrink-0">
+                    <div className="grid grid-cols-2 min-[420px]:flex gap-1 w-full min-[420px]:w-auto">
                       <Button
                         variant="outline"
                         size="icon"
@@ -369,16 +369,16 @@ export const AdminCryptoManager = () => {
                     </div>
                   </div>
                   {editingTradeId === addr.id && (
-                    <div className="flex gap-2">
+                    <div className="flex flex-col min-[420px]:flex-row gap-2">
                       <Input
                         value={editingTradeAddr}
                         onChange={(e) => setEditingTradeAddr(e.target.value)}
                         className="text-xs font-mono h-8 flex-1"
                       />
-                      <Button size="sm" className="h-8 text-xs" onClick={() => handleEditTradeAddress(addr.id)}>
+                      <Button size="sm" className="h-8 text-xs w-full min-[420px]:w-auto" onClick={() => handleEditTradeAddress(addr.id)}>
                         <Save className="w-3 h-3 mr-1" /> Save
                       </Button>
-                      <Button size="sm" variant="ghost" className="h-8 text-xs" onClick={() => setEditingTradeId(null)}>
+                      <Button size="sm" variant="ghost" className="h-8 text-xs w-full min-[420px]:w-auto" onClick={() => setEditingTradeId(null)}>
                         Cancel
                       </Button>
                     </div>
