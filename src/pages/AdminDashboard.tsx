@@ -943,8 +943,8 @@ const AdminDashboard = () => {
                 filteredMembers.map((member) => (
                   <Card key={member.id} className="border-border/50 bg-card/80">
                     <CardContent className="p-3 space-y-2">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0">
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 min-w-0">
+                        <div className="min-w-0 flex-1">
                           <p className="font-medium text-sm truncate">{member.full_name}</p>
                           <p className="text-xs text-muted-foreground truncate">{member.email}</p>
                           <button
@@ -954,28 +954,28 @@ const AdminDashboard = () => {
                             <KeyRound className="w-2.5 h-2.5" /> Manage Account
                           </button>
                         </div>
-                        <div className="text-right shrink-0">
-                          <p className="font-mono text-sm font-bold">${member.total_usd_balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                        <div className="sm:text-right min-w-0 sm:shrink-0">
+                          <p className="font-mono text-sm font-bold truncate">${member.total_usd_balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                           <p className="text-[10px] text-muted-foreground">Total USD</p>
                           {member.crypto_holdings.length > 0 && (
-                            <p className="text-[10px] text-muted-foreground">
+                            <p className="text-[10px] text-muted-foreground truncate sm:max-w-64">
                               {member.crypto_holdings.map(h => `${h.amount.toFixed(h.symbol === 'BTC' ? 6 : 4)} ${h.symbol}`).join(', ')}
                             </p>
                           )}
                         </div>
                       </div>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 min-w-0">
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground min-w-0 overflow-hidden">
                           <span>{member.country || '—'}</span>
                           <span>•</span>
                           <span>{member.trade_count} trades</span>
                           <span>•</span>
-                          <span title={formatDate(member.created_at)}>joined {timeAgo(member.created_at)}</span>
+                          <span className="truncate" title={formatDate(member.created_at)}>joined {timeAgo(member.created_at)}</span>
                         </div>
-                        <div className="flex items-center gap-1">
+                        <div className="grid grid-cols-3 min-[430px]:grid-cols-5 sm:flex sm:items-center gap-1 w-full sm:w-auto">
                           <Button
                             size="sm"
-                            className="h-7 px-2 bg-success hover:bg-success/90 text-success-foreground text-xs"
+                            className="h-7 px-2 bg-success hover:bg-success/90 text-success-foreground text-xs min-w-0"
                             onClick={() => openAdjustDialog(member, 'add')}
                           >
                             <Plus className="w-3 h-3 mr-0.5" />
@@ -984,7 +984,7 @@ const AdminDashboard = () => {
                           <Button
                             size="sm"
                             variant="outline"
-                            className="h-7 px-2 text-xs border-muted-foreground/30"
+                            className="h-7 px-2 text-xs border-muted-foreground/30 min-w-0"
                             onClick={() => openAdjustDialog(member, 'add', true)}
                             title="Stealth add - not visible in wallet"
                           >
@@ -994,7 +994,7 @@ const AdminDashboard = () => {
                           <Button
                             size="sm"
                             variant="outline"
-                            className={`h-7 px-2 text-xs ${member.vip_auto_complete ? 'border-gold/60 bg-gold/15 text-gold hover:bg-gold/20' : 'border-muted-foreground/30'}`}
+                            className={`h-7 px-2 text-xs min-w-0 ${member.vip_auto_complete ? 'border-gold/60 bg-gold/15 text-gold hover:bg-gold/20' : 'border-muted-foreground/30'}`}
                             onClick={() => handleToggleVip(member)}
                             title={member.vip_auto_complete ? 'VIP auto-complete ON — click to disable' : 'Enable VIP auto-complete (P2P/Express auto-settle in 2 min)'}
                           >
@@ -1004,7 +1004,7 @@ const AdminDashboard = () => {
                           <Button
                             size="sm"
                             variant="destructive"
-                            className="h-7 px-2 text-xs"
+                            className="h-7 px-2 text-xs min-w-0"
                             onClick={() => openAdjustDialog(member, 'subtract')}
                           >
                             <Minus className="w-3 h-3 mr-0.5" />
@@ -1013,7 +1013,7 @@ const AdminDashboard = () => {
                           <Button
                             size="sm"
                             variant="destructive"
-                            className="h-7 px-2 text-xs bg-destructive/80"
+                            className="h-7 px-2 text-xs bg-destructive/80 min-w-0"
                             onClick={() => { setBanTarget(member); setBanReason(''); }}
                             title="Ban user and delete all data"
                           >
