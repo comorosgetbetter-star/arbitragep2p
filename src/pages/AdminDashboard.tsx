@@ -820,7 +820,7 @@ const AdminDashboard = () => {
     <div className="min-h-screen bg-background w-full overflow-x-hidden">
       {/* Header */}
       <header className="border-b border-border/50 bg-card/50 backdrop-blur-xl sticky top-0 z-50">
-        <div className="px-3 py-3 flex items-center justify-between gap-2">
+        <div className="px-3 py-3 flex items-center justify-between gap-2 max-w-full overflow-hidden">
           <div className="flex items-center gap-2 min-w-0">
             <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
               <Shield className="w-4 h-4 text-primary" />
@@ -852,40 +852,40 @@ const AdminDashboard = () => {
         </div>
       </header>
 
-      <main className="px-3 py-4 space-y-4 max-w-full">
+      <main className="px-3 py-4 space-y-4 w-full max-w-full overflow-hidden">
         {/* Stats Cards */}
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-3 gap-2 min-w-0">
           <Card className="border-border/50 bg-card/80">
-            <CardContent className="p-3 text-center">
+            <CardContent className="p-2.5 sm:p-3 text-center min-w-0">
               <Users className="w-4 h-4 text-muted-foreground mx-auto mb-1" />
-              <div className="text-lg font-bold">{stats.totalMembers}</div>
+              <div className="text-base sm:text-lg font-bold truncate">{stats.totalMembers}</div>
               <p className="text-[10px] text-muted-foreground">Members</p>
             </CardContent>
           </Card>
           <Card className="border-border/50 bg-card/80">
-            <CardContent className="p-3 text-center">
+            <CardContent className="p-2.5 sm:p-3 text-center min-w-0">
               <ArrowLeftRight className="w-4 h-4 text-muted-foreground mx-auto mb-1" />
-              <div className="text-lg font-bold">{stats.totalTrades}</div>
+              <div className="text-base sm:text-lg font-bold truncate">{stats.totalTrades}</div>
               <p className="text-[10px] text-muted-foreground">Trades</p>
             </CardContent>
           </Card>
           <Card className="border-border/50 bg-card/80">
-            <CardContent className="p-3 text-center">
+            <CardContent className="p-2.5 sm:p-3 text-center min-w-0">
               <DollarSign className="w-4 h-4 text-muted-foreground mx-auto mb-1" />
-              <div className="text-lg font-bold">{stats.totalVolume.toFixed(0)}</div>
+              <div className="text-base sm:text-lg font-bold truncate">{stats.totalVolume.toFixed(0)}</div>
               <p className="text-[10px] text-muted-foreground">USDT</p>
             </CardContent>
           </Card>
         </div>
 
         {/* Main Tabs */}
-        <Tabs defaultValue="members" className="space-y-3">
-          <TabsList className="w-full grid grid-cols-7 h-auto p-1 bg-card border border-border/50">
-            <TabsTrigger value="members" className="flex flex-col items-center gap-0.5 py-2 text-[10px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-semibold">
+        <Tabs defaultValue="members" className="space-y-3 min-w-0">
+          <TabsList className="w-full grid grid-cols-4 sm:grid-cols-7 h-auto p-1 bg-card border border-border/50 gap-1">
+            <TabsTrigger value="members" className="flex flex-col items-center gap-0.5 py-2 px-1 text-[10px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-semibold min-w-0">
               <Users className="w-3.5 h-3.5" />
               Members
             </TabsTrigger>
-            <TabsTrigger value="withdrawals" className="flex flex-col items-center gap-0.5 py-2 text-[10px] data-[state=active]:bg-warning data-[state=active]:text-warning-foreground font-semibold relative">
+            <TabsTrigger value="withdrawals" className="flex flex-col items-center gap-0.5 py-2 px-1 text-[10px] data-[state=active]:bg-warning data-[state=active]:text-warning-foreground font-semibold relative min-w-0">
               <ArrowUpRight className="w-3.5 h-3.5" />
               Withdraw
               {pendingWithdrawals.length > 0 && (
@@ -894,7 +894,7 @@ const AdminDashboard = () => {
                 </span>
               )}
             </TabsTrigger>
-            <TabsTrigger value="tickets" className="flex flex-col items-center gap-0.5 py-2 text-[10px] data-[state=active]:bg-success data-[state=active]:text-success-foreground font-semibold relative">
+            <TabsTrigger value="tickets" className="flex flex-col items-center gap-0.5 py-2 px-1 text-[10px] data-[state=active]:bg-success data-[state=active]:text-success-foreground font-semibold relative min-w-0">
               <MessageSquare className="w-3.5 h-3.5" />
               Tickets
               {openTickets.length > 0 && (
@@ -903,19 +903,19 @@ const AdminDashboard = () => {
                 </span>
               )}
             </TabsTrigger>
-            <TabsTrigger value="kyc" className="flex flex-col items-center gap-0.5 py-2 text-[10px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-semibold">
+            <TabsTrigger value="kyc" className="flex flex-col items-center gap-0.5 py-2 px-1 text-[10px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-semibold min-w-0">
               <UserCheck className="w-3.5 h-3.5" />
               KYC
             </TabsTrigger>
-            <TabsTrigger value="p2p-orders" className="flex flex-col items-center gap-0.5 py-2 text-[10px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-semibold">
+            <TabsTrigger value="p2p-orders" className="flex flex-col items-center gap-0.5 py-2 px-1 text-[10px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-semibold min-w-0">
               <ShoppingBag className="w-3.5 h-3.5" />
               P2P
             </TabsTrigger>
-            <TabsTrigger value="crypto" className="flex flex-col items-center gap-0.5 py-2 text-[10px] data-[state=active]:bg-gold data-[state=active]:text-gold-foreground font-semibold">
+            <TabsTrigger value="crypto" className="flex flex-col items-center gap-0.5 py-2 px-1 text-[10px] data-[state=active]:bg-gold data-[state=active]:text-gold-foreground font-semibold min-w-0">
               <Coins className="w-3.5 h-3.5" />
               Crypto
             </TabsTrigger>
-            <TabsTrigger value="audit" className="flex flex-col items-center gap-0.5 py-2 text-[10px] data-[state=active]:bg-accent data-[state=active]:text-accent-foreground font-semibold">
+            <TabsTrigger value="audit" className="flex flex-col items-center gap-0.5 py-2 px-1 text-[10px] data-[state=active]:bg-accent data-[state=active]:text-accent-foreground font-semibold min-w-0">
               <History className="w-3.5 h-3.5" />
               Logs
             </TabsTrigger>
