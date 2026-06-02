@@ -1045,21 +1045,21 @@ const AdminDashboard = () => {
                 pagedWithdrawals.map((w) => (
                   <Card key={w.id} className={`border-border/50 ${w.status === 'pending' ? 'bg-warning/5 border-warning/30' : 'bg-card/80'}`}>
                     <CardContent className="p-3 space-y-2">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0">
+                      <div className="flex flex-col min-[420px]:flex-row min-[420px]:items-start min-[420px]:justify-between gap-2 min-w-0">
+                        <div className="min-w-0 flex-1">
                           <p className="font-medium text-sm truncate">{w.user_name}</p>
                           <p className="text-xs text-muted-foreground truncate">{w.user_email}</p>
                         </div>
-                        <div className="text-right shrink-0">
-                          <p className="font-mono text-sm font-bold">{w.amount} {resolveWithdrawalSymbol(w)}</p>
+                        <div className="min-[420px]:text-right min-w-0 min-[420px]:shrink-0">
+                          <p className="font-mono text-sm font-bold truncate">{w.amount} {resolveWithdrawalSymbol(w)}</p>
                           <Badge variant="secondary" className="text-[10px]">{w.network.toUpperCase()}</Badge>
                         </div>
                       </div>
                       <div className="text-xs font-mono text-muted-foreground break-all">
                         {w.wallet_address}
                       </div>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
+                      <div className="flex flex-col min-[420px]:flex-row min-[420px]:items-center min-[420px]:justify-between gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <Badge className={
                             w.status === 'approved' ? 'bg-success text-success-foreground' :
                             w.status === 'pending' ? 'bg-warning text-warning-foreground' :
@@ -1075,7 +1075,7 @@ const AdminDashboard = () => {
                           )}
                         </div>
                         {w.status === 'pending' && (
-                          <div className="flex items-center gap-1">
+                          <div className="grid grid-cols-2 min-[420px]:flex min-[420px]:items-center gap-1 w-full min-[420px]:w-auto">
                             <Button
                               size="sm"
                               className="h-7 px-2 bg-success hover:bg-success/90 text-success-foreground text-xs"
