@@ -227,6 +227,7 @@ export type Database = {
           likes_count: number
           max_amount: number
           min_amount: number
+          order_type: string
           payment_address: string
           payment_method: string
           payment_window_minutes: number
@@ -245,6 +246,7 @@ export type Database = {
           likes_count?: number
           max_amount: number
           min_amount: number
+          order_type?: string
           payment_address: string
           payment_method?: string
           payment_window_minutes?: number
@@ -263,6 +265,7 @@ export type Database = {
           likes_count?: number
           max_amount?: number
           min_amount?: number
+          order_type?: string
           payment_address?: string
           payment_method?: string
           payment_window_minutes?: number
@@ -743,6 +746,10 @@ export type Database = {
       normalize_withdrawal_symbol: {
         Args: { _crypto_symbol: string; _network: string }
         Returns: string
+      }
+      p2p_sell_usdt: {
+        Args: { _amount: number; _order_id: string }
+        Returns: boolean
       }
       start_flywheel: {
         Args: {
