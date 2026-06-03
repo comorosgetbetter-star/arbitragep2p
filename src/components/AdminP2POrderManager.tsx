@@ -88,6 +88,7 @@ export const AdminP2POrderManager = () => {
       likes_count: String(order.likes_count),
       price_rate: String(Math.abs(order.price_rate)),
       price_rate_type: order.price_rate < 0 ? 'discount' : 'markup',
+      order_type: order.order_type || 'buy',
     });
     setIsDialogOpen(true);
   };
