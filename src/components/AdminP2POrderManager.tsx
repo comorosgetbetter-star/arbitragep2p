@@ -273,6 +273,25 @@ export const AdminP2POrderManager = () => {
           </DialogHeader>
           <div className="space-y-3 py-2">
             <div className="space-y-1.5">
+              <Label className="text-xs">Ad Type *</Label>
+              <div className="flex rounded-md border border-border overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setField('order_type', 'buy')}
+                  className={`flex-1 px-3 py-2 text-xs font-medium transition-colors ${form.order_type === 'buy' ? 'bg-primary/20 text-primary' : 'bg-muted text-muted-foreground'}`}
+                >
+                  Buy ad (user buys USDT)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setField('order_type', 'sell')}
+                  className={`flex-1 px-3 py-2 text-xs font-medium transition-colors ${form.order_type === 'sell' ? 'bg-blue-400/20 text-blue-400' : 'bg-muted text-muted-foreground'}`}
+                >
+                  Sell ad (user sells USDT)
+                </button>
+              </div>
+            </div>
+            <div className="space-y-1.5">
               <Label className="text-xs">Seller Name *</Label>
               <Input placeholder="e.g. CryptoKing" value={form.seller_name} onChange={e => setField('seller_name', e.target.value)} className="h-9 text-sm" />
             </div>
