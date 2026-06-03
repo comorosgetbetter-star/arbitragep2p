@@ -203,6 +203,12 @@ export const AdminP2POrderManager = () => {
                   <span className="text-sm font-medium truncate">{order.seller_name}</span>
                   <Badge
                     variant="outline"
+                    className={`text-[10px] ${order.order_type === 'sell' ? 'border-blue-400/40 text-blue-400' : 'border-primary/40 text-primary'}`}
+                  >
+                    {order.order_type === 'sell' ? 'SELL ad' : 'BUY ad'}
+                  </Badge>
+                  <Badge
+                    variant="outline"
                     className={`text-[10px] ${order.is_active ? 'border-success/30 text-success' : 'border-destructive/30 text-destructive'}`}
                   >
                     {order.is_active ? 'Active' : 'Inactive'}
