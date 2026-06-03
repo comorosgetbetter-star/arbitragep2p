@@ -118,6 +118,7 @@ export const AdminP2POrderManager = () => {
       avg_trading_time: form.avg_trading_time.trim() || '5 min',
       likes_count: parseInt(form.likes_count) || 0,
       price_rate: (form.price_rate_type === 'discount' ? -1 : 1) * (parseFloat(form.price_rate) || 10),
+      order_type: form.order_type,
     };
 
     setIsSubmitting(true);
