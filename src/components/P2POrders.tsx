@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useUserData } from '@/contexts/UserDataContext';
 import { useTradeSession } from '@/hooks/useTradeSession';
 import { toast } from '@/components/ui/sonner';
 import { Badge } from '@/components/ui/badge';
@@ -16,7 +17,7 @@ import {
   DialogFooter,
   DialogDescription,
 } from '@/components/ui/dialog';
-import { Clock, ShieldCheck, ThumbsUp, BarChart3, Timer, Lock } from 'lucide-react';
+import { Clock, ShieldCheck, ThumbsUp, BarChart3, Timer, Lock, Wallet } from 'lucide-react';
 import type { TradeSession } from '@/hooks/useTradeSession';
 import { P2POrdersSkeleton } from '@/components/skeletons/P2POrdersSkeleton';
 
@@ -42,20 +43,29 @@ interface P2POrder {
   is_active: boolean;
   created_at: string;
   price_rate: number;
+  order_type: 'buy' | 'sell';
 }
+
+const MIN_SELL_BALANCE = 35;
 
 export const P2POrders = () => {
   const [orders, setOrders] = useState<P2POrder[]>([]);
   const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState<'buy' | 'sell'>('buy');
   const [selectedOrder, setSelectedOrder] = useState<P2POrder | null>(null);
   const [buyAmount, setBuyAmount] = useState('');
+  const [sellAmount, setSellAmount] = useState('');
   const [showConflictModal, setShowConflictModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showSellConfirmModal, setShowSellConfirmModal] = useState(false);
   const [errorOrderId, setErrorOrderId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
   const [pendingOrder, setPendingOrder] = useState<{ order: P2POrder; amount: number; usdt: number } | null>(null);
+  const [pendingSell, setPendingSell] = useState<{ order: P2POrder; amount: number } | null>(null);
+  const [sellSubmitting, setSellSubmitting] = useState(false);
   const [existingSession, setExistingSession] = useState<TradeSession | null>(null);
   const { user, loading: authLoading } = useAuth();
+  const { balance, refetchBalance } = useUserData();
   const navigate = useNavigate();
   const { startSession, clearSession, getStoredSession } = useTradeSession();
 
@@ -70,6 +80,10 @@ export const P2POrders = () => {
   }, []);
 
   useEffect(() => { fetchOrders(); }, [fetchOrders]);
+
+  const buyOrders = orders.filter(o => (o.order_type ?? 'buy') === 'buy');
+  const sellOrders = orders.filter(o => o.order_type === 'sell');
+  const visibleOrders = tab === 'buy' ? buyOrders : sellOrders;
 
   const handleBuyNow = (order: P2POrder) => {
     const amount = parseFloat(buyAmount);
@@ -92,6 +106,73 @@ export const P2POrders = () => {
 
     setPendingOrder({ order, amount, usdt });
     setShowConfirmModal(true);
+  };
+
+  const handleSellNow = (order: P2POrder) => {
+    if (authLoading) return;
+    if (!user) {
+      toast.info('Please sign in to start a trade');
+      navigate('/login');
+      return;
+    }
+
+    if (balance < MIN_SELL_BALANCE) {
+      toast.error('You have no balance. Please make a deposit to start trading.', {
+        description: `Minimum required balance: $${MIN_SELL_BALANCE}.`,
+      });
+      return;
+    }
+
+    const amount = parseFloat(sellAmount);
+    if (!amount || amount < order.min_amount || amount > order.max_amount) {
+      setErrorOrderId(order.id);
+      setErrorMessage(`Enter amount between ${order.min_amount} – ${order.max_amount} USDT`);
+      return;
+    }
+
+    if (amount > balance) {
+      setErrorOrderId(order.id);
+      setErrorMessage('Insufficient balance. Please add funds by making a deposit.');
+      return;
+    }
+
+    setErrorOrderId(null);
+    setErrorMessage('');
+    setPendingSell({ order, amount });
+    setShowSellConfirmModal(true);
+  };
+
+  const handleConfirmSell = async () => {
+    if (!pendingSell) return;
+    setSellSubmitting(true);
+    try {
+      const { error } = await supabase.rpc('p2p_sell_usdt' as never, {
+        _order_id: pendingSell.order.id,
+        _amount: pendingSell.amount,
+      } as never);
+      if (error) {
+        const msg = (error as { message?: string }).message || '';
+        if (msg.includes('MIN_BALANCE')) {
+          toast.error('You have no balance. Please make a deposit to start trading.', {
+            description: `Minimum required balance: $${MIN_SELL_BALANCE}.`,
+          });
+        } else if (msg.includes('INSUFFICIENT_BALANCE')) {
+          toast.error('Insufficient balance. Please add funds by making a deposit.');
+        } else {
+          toast.error(msg || 'Failed to submit sell order');
+        }
+        return;
+      }
+      toast.success('Sell order submitted!', {
+        description: `${pendingSell.amount} USDT sold to ${pendingSell.order.seller_name}`,
+      });
+      setShowSellConfirmModal(false);
+      setPendingSell(null);
+      setSellAmount('');
+      await refetchBalance();
+    } finally {
+      setSellSubmitting(false);
+    }
   };
 
   const handleConfirmTrade = () => {
@@ -137,21 +218,41 @@ export const P2POrders = () => {
     return <P2POrdersSkeleton />;
   }
 
-  if (orders.length === 0) {
-    return (
-      <div className="text-center py-16">
-        <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center mx-auto mb-4">
-          <ShieldCheck className="w-8 h-8 text-muted-foreground" />
-        </div>
-        <p className="text-lg font-medium text-muted-foreground">No ads available</p>
-        <p className="text-sm text-muted-foreground/70 mt-1">Check back later for new P2P orders</p>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-3 max-w-2xl mx-auto">
-      {orders.map((order) => (
+      {/* Buy / Sell Tabs */}
+      <div className="flex rounded-lg border border-border overflow-hidden bg-card/50">
+        <button
+          onClick={() => { setTab('buy'); setErrorOrderId(null); setErrorMessage(''); }}
+          className={`flex-1 py-2.5 text-sm font-medium transition-colors ${tab === 'buy' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+        >
+          Buy USDT
+        </button>
+        <button
+          onClick={() => { setTab('sell'); setErrorOrderId(null); setErrorMessage(''); }}
+          className={`flex-1 py-2.5 text-sm font-medium transition-colors ${tab === 'sell' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+        >
+          Sell USDT
+        </button>
+      </div>
+
+      {tab === 'sell' && user && (
+        <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/30 px-3 py-2">
+          <Wallet className="w-4 h-4 text-muted-foreground" />
+          <span className="text-xs text-muted-foreground">Available:</span>
+          <span className="text-sm font-semibold">{balance.toLocaleString('en-US', { maximumFractionDigits: 2 })} USDT</span>
+        </div>
+      )}
+
+      {visibleOrders.length === 0 ? (
+        <div className="text-center py-16">
+          <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center mx-auto mb-4">
+            <ShieldCheck className="w-8 h-8 text-muted-foreground" />
+          </div>
+          <p className="text-lg font-medium text-muted-foreground">No {tab} ads available</p>
+          <p className="text-sm text-muted-foreground/70 mt-1">Check back later for new P2P orders</p>
+        </div>
+      ) : visibleOrders.map((order) => (
         <div
           key={order.id}
           className="glass-card rounded-xl border border-border hover:border-primary/40 transition-all duration-300 p-4 sm:p-5"
@@ -196,7 +297,7 @@ export const P2POrders = () => {
             <div>
               <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Amount Range</p>
               <p className="font-display font-bold text-sm whitespace-nowrap">
-                ${order.min_amount.toLocaleString()} – ${order.max_amount.toLocaleString()}
+                {tab === 'sell' ? '' : '$'}{order.min_amount.toLocaleString()} – {tab === 'sell' ? '' : '$'}{order.max_amount.toLocaleString()}{tab === 'sell' ? ' USDT' : ''}
               </p>
             </div>
             <div>
@@ -212,49 +313,91 @@ export const P2POrders = () => {
             </div>
           </div>
 
-          {/* Buy Section */}
-          <div className="space-y-1.5">
-            <div className="flex items-center gap-2">
-              <div className="relative flex-1">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
-                <input
-                  type="number"
-                  placeholder={`${order.min_amount} – ${order.max_amount}`}
-                  className={`w-full h-10 pl-7 pr-3 rounded-lg border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 ${errorOrderId === order.id ? 'border-destructive ring-1 ring-destructive/30' : 'border-border'}`}
-                  min={order.min_amount}
-                  max={order.max_amount}
-                  onChange={(e) => {
-                    setBuyAmount(e.target.value);
+          {/* Action Section */}
+          {tab === 'buy' ? (
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
+                  <input
+                    type="number"
+                    placeholder={`${order.min_amount} – ${order.max_amount}`}
+                    className={`w-full h-10 pl-7 pr-3 rounded-lg border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 ${errorOrderId === order.id ? 'border-destructive ring-1 ring-destructive/30' : 'border-border'}`}
+                    min={order.min_amount}
+                    max={order.max_amount}
+                    onChange={(e) => {
+                      setBuyAmount(e.target.value);
+                      setSelectedOrder(order);
+                      if (errorOrderId === order.id) {
+                        setErrorOrderId(null);
+                        setErrorMessage('');
+                      }
+                    }}
+                    onFocus={() => setSelectedOrder(order)}
+                  />
+                </div>
+                <Button
+                  size="sm"
+                  onClick={() => {
                     setSelectedOrder(order);
-                    if (errorOrderId === order.id) {
-                      setErrorOrderId(null);
-                      setErrorMessage('');
-                    }
+                    handleBuyNow(order);
                   }}
-                  onFocus={() => setSelectedOrder(order)}
-                />
+                  className="shrink-0"
+                >
+                  Buy USDT
+                </Button>
               </div>
-              <Button
-                size="sm"
-                onClick={() => {
-                  setSelectedOrder(order);
-                  handleBuyNow(order);
-                }}
-                className="shrink-0"
-              >
-                Buy USDT
-              </Button>
+              {errorOrderId === order.id && (
+                <p className="text-[11px] text-destructive font-medium pl-1 animate-in fade-in slide-in-from-top-1 duration-200">
+                  {errorMessage}
+                </p>
+              )}
             </div>
-            {errorOrderId === order.id && (
-              <p className="text-[11px] text-destructive font-medium pl-1 animate-in fade-in slide-in-from-top-1 duration-200">
-                {errorMessage}
-              </p>
-            )}
-          </div>
+          ) : (
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1">
+                  <input
+                    type="number"
+                    placeholder={`${order.min_amount} – ${order.max_amount} USDT`}
+                    className={`w-full h-10 px-3 pr-14 rounded-lg border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 ${errorOrderId === order.id ? 'border-destructive ring-1 ring-destructive/30' : 'border-border'}`}
+                    min={order.min_amount}
+                    max={order.max_amount}
+                    onChange={(e) => {
+                      setSellAmount(e.target.value);
+                      setSelectedOrder(order);
+                      if (errorOrderId === order.id) {
+                        setErrorOrderId(null);
+                        setErrorMessage('');
+                      }
+                    }}
+                    onFocus={() => setSelectedOrder(order)}
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-xs font-medium">USDT</span>
+                </div>
+                <Button
+                  size="sm"
+                  variant="default"
+                  onClick={() => {
+                    setSelectedOrder(order);
+                    handleSellNow(order);
+                  }}
+                  className="shrink-0"
+                >
+                  Sell USDT
+                </Button>
+              </div>
+              {errorOrderId === order.id && (
+                <p className="text-[11px] text-destructive font-medium pl-1 animate-in fade-in slide-in-from-top-1 duration-200">
+                  {errorMessage}
+                </p>
+              )}
+            </div>
+          )}
         </div>
       ))}
 
-      {/* Trade Confirmation Modal */}
+      {/* Buy Trade Confirmation Modal */}
       <Dialog open={showConfirmModal} onOpenChange={setShowConfirmModal}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
@@ -295,7 +438,6 @@ export const P2POrders = () => {
                 </div>
               </div>
 
-              {/* Escrow notice */}
               <div className="flex items-start gap-2.5 rounded-lg border border-success/20 bg-success/5 p-3">
                 <Lock className="w-4 h-4 text-success shrink-0 mt-0.5" />
                 <div>
@@ -314,6 +456,61 @@ export const P2POrders = () => {
           <DialogFooter className="gap-2">
             <Button variant="outline" size="sm" onClick={() => setShowConfirmModal(false)}>Cancel</Button>
             <Button size="sm" onClick={handleConfirmTrade}>Confirm Trade</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Sell Confirmation Modal */}
+      <Dialog open={showSellConfirmModal} onOpenChange={(o) => !sellSubmitting && setShowSellConfirmModal(o)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-base">Confirm Sell Order</DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground">
+              Review your sell order before proceeding.
+            </DialogDescription>
+          </DialogHeader>
+          {pendingSell && (
+            <div className="space-y-3 py-2">
+              <div className="flex items-center gap-3">
+                <Avatar className="h-8 w-8">
+                  {pendingSell.order.seller_avatar_url ? (
+                    <AvatarImage src={pendingSell.order.seller_avatar_url} />
+                  ) : null}
+                  <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                    {pendingSell.order.seller_name.slice(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="text-sm font-medium">{pendingSell.order.seller_name}</p>
+                  <p className="text-[11px] text-muted-foreground">{pendingSell.order.trades_count} trades · {pendingSell.order.likes_count} likes</p>
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">You sell</span>
+                  <span className="font-semibold">{pendingSell.amount.toLocaleString()} USDT</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Wallet balance</span>
+                  <span className="font-semibold">{balance.toLocaleString('en-US', { maximumFractionDigits: 2 })} USDT</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Payment window</span>
+                  <span className="font-semibold">{pendingSell.order.payment_window_minutes} min</span>
+                </div>
+              </div>
+
+              <p className="text-[11px] text-muted-foreground leading-relaxed">
+                By confirming, the USDT will be deducted from your wallet and sent to the buyer.
+              </p>
+            </div>
+          )}
+          <DialogFooter className="gap-2">
+            <Button variant="outline" size="sm" disabled={sellSubmitting} onClick={() => setShowSellConfirmModal(false)}>Cancel</Button>
+            <Button size="sm" disabled={sellSubmitting} onClick={handleConfirmSell}>
+              {sellSubmitting ? 'Submitting...' : 'Confirm Sell'}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

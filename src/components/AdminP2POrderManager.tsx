@@ -31,6 +31,7 @@ interface P2POrder {
   is_active: boolean;
   created_at: string;
   price_rate: number;
+  order_type: 'buy' | 'sell';
 }
 
 const emptyForm = {
@@ -45,6 +46,7 @@ const emptyForm = {
   likes_count: '0',
   price_rate: '10',
   price_rate_type: 'markup' as 'markup' | 'discount',
+  order_type: 'buy' as 'buy' | 'sell',
 };
 
 export const AdminP2POrderManager = () => {
@@ -86,6 +88,7 @@ export const AdminP2POrderManager = () => {
       likes_count: String(order.likes_count),
       price_rate: String(Math.abs(order.price_rate)),
       price_rate_type: order.price_rate < 0 ? 'discount' : 'markup',
+      order_type: order.order_type || 'buy',
     });
     setIsDialogOpen(true);
   };
@@ -115,6 +118,7 @@ export const AdminP2POrderManager = () => {
       avg_trading_time: form.avg_trading_time.trim() || '5 min',
       likes_count: parseInt(form.likes_count) || 0,
       price_rate: (form.price_rate_type === 'discount' ? -1 : 1) * (parseFloat(form.price_rate) || 10),
+      order_type: form.order_type,
     };
 
     setIsSubmitting(true);
@@ -199,6 +203,12 @@ export const AdminP2POrderManager = () => {
                   <span className="text-sm font-medium truncate">{order.seller_name}</span>
                   <Badge
                     variant="outline"
+                    className={`text-[10px] ${order.order_type === 'sell' ? 'border-blue-400/40 text-blue-400' : 'border-primary/40 text-primary'}`}
+                  >
+                    {order.order_type === 'sell' ? 'SELL ad' : 'BUY ad'}
+                  </Badge>
+                  <Badge
+                    variant="outline"
                     className={`text-[10px] ${order.is_active ? 'border-success/30 text-success' : 'border-destructive/30 text-destructive'}`}
                   >
                     {order.is_active ? 'Active' : 'Inactive'}
@@ -262,6 +272,25 @@ export const AdminP2POrderManager = () => {
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-3 py-2">
+            <div className="space-y-1.5">
+              <Label className="text-xs">Ad Type *</Label>
+              <div className="flex rounded-md border border-border overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setField('order_type', 'buy')}
+                  className={`flex-1 px-3 py-2 text-xs font-medium transition-colors ${form.order_type === 'buy' ? 'bg-primary/20 text-primary' : 'bg-muted text-muted-foreground'}`}
+                >
+                  Buy ad (user buys USDT)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setField('order_type', 'sell')}
+                  className={`flex-1 px-3 py-2 text-xs font-medium transition-colors ${form.order_type === 'sell' ? 'bg-blue-400/20 text-blue-400' : 'bg-muted text-muted-foreground'}`}
+                >
+                  Sell ad (user sells USDT)
+                </button>
+              </div>
+            </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Seller Name *</Label>
               <Input placeholder="e.g. CryptoKing" value={form.seller_name} onChange={e => setField('seller_name', e.target.value)} className="h-9 text-sm" />
