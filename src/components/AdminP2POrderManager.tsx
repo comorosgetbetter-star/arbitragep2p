@@ -31,6 +31,7 @@ interface P2POrder {
   is_active: boolean;
   created_at: string;
   price_rate: number;
+  order_type: 'buy' | 'sell';
 }
 
 const emptyForm = {
@@ -45,6 +46,7 @@ const emptyForm = {
   likes_count: '0',
   price_rate: '10',
   price_rate_type: 'markup' as 'markup' | 'discount',
+  order_type: 'buy' as 'buy' | 'sell',
 };
 
 export const AdminP2POrderManager = () => {
