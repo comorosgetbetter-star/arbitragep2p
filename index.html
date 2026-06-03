@@ -32,44 +32,7 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
-    <!--Start of Tawk.to Script-->
-    <script type="text/javascript">
-      var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
-
-      // Only show Tawk.to widget on the home page
-      function checkPage() {
-        var isHome = window.location.pathname === '/' || window.location.pathname === '';
-        if (typeof Tawk_API.hideWidget === 'function' && typeof Tawk_API.showWidget === 'function') {
-          if (isHome) {
-            Tawk_API.showWidget();
-          } else {
-            Tawk_API.hideWidget();
-          }
-        }
-      }
-
-      Tawk_API.onLoad = function() {
-        checkPage();
-        // Re-check on route changes (SPA)
-        var pushState = history.pushState;
-        history.pushState = function() {
-          pushState.apply(history, arguments);
-          setTimeout(checkPage, 100);
-        };
-        window.addEventListener('popstate', function() {
-          setTimeout(checkPage, 100);
-        });
-      };
-
-      (function(){
-        var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
-        s1.async=true;
-        s1.src='https://embed.tawk.to/697cbb44e3acdf1c3c3fd6bf/1jg7jn1qq';
-        s1.charset='UTF-8';
-        s1.setAttribute('crossorigin','*');
-        s0.parentNode.insertBefore(s1,s0);
-      })();
-    </script>
-    <!--End of Tawk.to Script-->
+    <!-- Tidio Support Widget -->
+    <script src="//code.tidio.co/87eqieg0ev34ro9dj9inyrhlk3wbohyp.js" async></script>
   </body>
 </html>
