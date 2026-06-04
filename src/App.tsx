@@ -40,6 +40,7 @@ const AppInner = () => {
           <Route path="/create-account/gt500bns" element={<CreateAccount />} />
           <Route path="/login" element={<Login />} />
           <Route path="/payment" element={<Payment />} />
+          <Route path="/sell-payment" element={<SellPayment />} />
           <Route path="/profile" element={<Profile />} />
            <Route path="/alpha02" element={<AdminLogin />} />
            <Route path="/alpha02/dashboard" element={<AdminDashboard />} />
