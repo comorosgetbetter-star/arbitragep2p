@@ -12,6 +12,7 @@ import Index from "./pages/Index";
 import CreateAccount from "./pages/CreateAccount";
 import Login from "./pages/Login";
 import Payment from "./pages/Payment";
+import SellPayment from "./pages/SellPayment";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 import AdminLogin from "./pages/AdminLogin";
