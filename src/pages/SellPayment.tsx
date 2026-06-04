@@ -1,0 +1,463 @@
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import {
+  ArrowLeft,
+  ShieldCheck,
+  Copy,
+  Clock,
+  CheckCircle2,
+  AlertCircle,
+  Loader2,
+  Lock,
+  MessageSquare,
+  Wallet,
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { toast } from '@/hooks/use-toast';
+import { CircularLoader } from '@/components/CircularLoader';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { useUserData } from '@/contexts/UserDataContext';
+
+const SELL_SESSION_KEY = 'activeSellTradeSession';
+const VIP_VERIFICATION_MS = 60 * 1000;
+const NONVIP_VERIFICATION_MS = 2 * 60 * 1000;
+
+interface SellSession {
+  orderId: string;
+  sellerName: string;
+  sellerAvatarUrl: string | null;
+  amount: number;
+  paymentMethod: string;
+  paymentAddress: string;
+  paymentWindowMinutes: number;
+  startedAt: number;
+  expiresAt: number;
+  orderNumber: string;
+}
+
+const readSellSession = (): SellSession | null => {
+  try {
+    const raw = localStorage.getItem(SELL_SESSION_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as SellSession;
+    if (!parsed?.orderId) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+};
+
+const SellPayment = () => {
+  const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
+  const { refetchBalance } = useUserData();
+
+  const [session, setSession] = useState<SellSession | null>(() => readSellSession());
+  const [timeRemaining, setTimeRemaining] = useState(() => {
+    const s = readSellSession();
+    if (!s) return 0;
+    return Math.max(0, Math.floor((s.expiresAt - Date.now()) / 1000));
+  });
+  const [isTimerActive, setIsTimerActive] = useState(true);
+
+  const [isVip, setIsVip] = useState(false);
+  const [isReleasing, setIsReleasing] = useState(false);
+  const [verificationProgress, setVerificationProgress] = useState(0);
+  const [verificationStartedAt, setVerificationStartedAt] = useState<number | null>(null);
+  const [verificationFailed, setVerificationFailed] = useState(false);
+  const [verificationSuccess, setVerificationSuccess] = useState(false);
+  const completionInFlightRef = useRef(false);
+
+  // Auth + session guard
+  useEffect(() => {
+    if (authLoading) return;
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    if (!session) {
+      navigate('/');
+      return;
+    }
+    (async () => {
+      const { data } = await supabase
+        .from('profiles')
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .select('vip_auto_complete' as any)
+        .eq('user_id', user.id)
+        .maybeSingle();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      setIsVip(!!(data as any)?.vip_auto_complete);
+    })();
+  }, [authLoading, user, navigate, session]);
+
+  // Countdown timer (preserves admin-set window)
+  useEffect(() => {
+    if (!isTimerActive || timeRemaining <= 0) return;
+    const interval = setInterval(() => {
+      setTimeRemaining((prev) => {
+        if (prev <= 1) {
+          setIsTimerActive(false);
+          if (!isReleasing && !verificationSuccess) {
+            // Expired before release
+            localStorage.removeItem(SELL_SESSION_KEY);
+          }
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [isTimerActive, timeRemaining, isReleasing, verificationSuccess]);
+
+  const completeVerification = useCallback(async () => {
+    if (completionInFlightRef.current || !session) return;
+    completionInFlightRef.current = true;
+
+    // Recheck VIP at completion
+    let vipNow = isVip;
+    if (user) {
+      const { data } = await supabase
+        .from('profiles')
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .select('vip_auto_complete' as any)
+        .eq('user_id', user.id)
+        .maybeSingle();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      vipNow = !!(data as any)?.vip_auto_complete;
+      setIsVip(vipNow);
+    }
+
+    setIsReleasing(false);
+
+    if (vipNow) {
+      // Atomic deduction + trade record via RPC
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await supabase.rpc('p2p_sell_usdt' as any, {
+        _order_id: session.orderId,
+        _amount: session.amount,
+      });
+      if (error) {
+        completionInFlightRef.current = false;
+        const msg = (error as { message?: string }).message || '';
+        if (msg.includes('MIN_BALANCE')) {
+          toast({ title: 'Insufficient balance', description: 'Minimum required balance is $35.', variant: 'destructive' });
+        } else if (msg.includes('INSUFFICIENT_BALANCE')) {
+          toast({ title: 'Insufficient balance', description: 'Please add funds by making a deposit.', variant: 'destructive' });
+        } else {
+          toast({ title: 'Release failed', description: msg || 'Could not complete sell order', variant: 'destructive' });
+        }
+        setVerificationFailed(true);
+        return;
+      }
+
+      setVerificationSuccess(true);
+      setVerificationFailed(false);
+      setVerificationProgress(100);
+      setIsTimerActive(false);
+      localStorage.removeItem(SELL_SESSION_KEY);
+      await refetchBalance();
+    } else {
+      // Non-VIP: verification fails, no balance change
+      completionInFlightRef.current = false;
+      setVerificationFailed(true);
+    }
+  }, [isVip, session, user, refetchBalance]);
+
+  // Verification progress
+  useEffect(() => {
+    if (!isReleasing || verificationSuccess) return;
+    const duration = isVip ? VIP_VERIFICATION_MS : NONVIP_VERIFICATION_MS;
+    const startTime = verificationStartedAt ?? Date.now();
+    if (!verificationStartedAt) setVerificationStartedAt(startTime);
+    let cancelled = false;
+    const interval = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min((elapsed / duration) * 100, 100);
+      setVerificationProgress(progress);
+      if (progress >= 100) {
+        clearInterval(interval);
+        if (cancelled) return;
+        void completeVerification();
+      }
+    }, 250);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [isReleasing, isVip, verificationStartedAt, verificationSuccess, completeVerification]);
+
+  const formatTime = useCallback((seconds: number) => {
+    const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+    const s = (seconds % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  }, []);
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast({ title: 'Copied!', description: 'Copied to clipboard' });
+  };
+
+  const handleRelease = () => {
+    if (timeRemaining <= 0) return;
+    setVerificationStartedAt(Date.now());
+    setIsReleasing(true);
+    setVerificationProgress(0);
+    setVerificationFailed(false);
+    setVerificationSuccess(false);
+    completionInFlightRef.current = false;
+  };
+
+  const handleBackHome = () => {
+    localStorage.removeItem(SELL_SESSION_KEY);
+    navigate('/');
+  };
+
+  if (!session) return null;
+
+  const totalValueUSD = session.amount; // 1:1 USDT-USD display
+
+  return (
+    <div className="min-h-screen bg-background animate-fade-in">
+      {/* Success Modal */}
+      <Dialog open={verificationSuccess} onOpenChange={() => {}}>
+        <DialogContent className="max-w-[380px] rounded-xl border-success/30 bg-card p-0 overflow-hidden [&>button]:hidden">
+          <div className="p-5 text-center space-y-4">
+            <DialogHeader className="text-center space-y-2">
+              <div className="w-14 h-14 rounded-full bg-success/20 flex items-center justify-center mx-auto border border-success/30">
+                <CheckCircle2 className="w-7 h-7 text-success" />
+              </div>
+              <DialogTitle className="text-xl font-display text-success text-center">Sell order completed</DialogTitle>
+              <DialogDescription className="text-xs text-muted-foreground text-center">
+                USDT released to buyer. Sale recorded in your trade history.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="rounded-xl bg-secondary/50 border border-border/50 p-4 space-y-3">
+              <p className="text-2xl font-display font-bold text-success tracking-normal">
+                -{session.amount.toLocaleString('en-US')} USDT
+              </p>
+              <div className="grid grid-cols-2 gap-2 text-left text-xs">
+                <div>
+                  <p className="text-muted-foreground">Buyer</p>
+                  <p className="font-semibold truncate">{session.sellerName}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Order #</p>
+                  <p className="font-mono font-semibold truncate">{session.orderNumber}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Payment</p>
+                  <p className="font-semibold">{session.paymentMethod}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Total value</p>
+                  <p className="font-semibold">${totalValueUSD.toLocaleString('en-US')}</p>
+                </div>
+              </div>
+            </div>
+
+            <Button className="w-full" onClick={handleBackHome}>
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Home
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Header */}
+      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b border-border">
+        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleBackHome}
+            className="shrink-0 -ml-2"
+            disabled={isReleasing}
+          >
+            <ArrowLeft className="w-4 h-4 mr-1" />
+            Back
+          </Button>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold truncate">Sell USDT</p>
+            <p className="text-[11px] text-muted-foreground truncate">Order #{session.orderNumber}</p>
+          </div>
+          <Badge variant="outline" className="border-warning/30 text-warning bg-warning/10 shrink-0">
+            <Clock className="w-3 h-3 mr-1" />
+            {formatTime(timeRemaining)}
+          </Badge>
+        </div>
+      </div>
+
+      <div className="max-w-2xl mx-auto px-4 py-4 space-y-4 pb-24">
+        {/* Counterparty */}
+        <div className="glass-card rounded-xl border border-border p-4">
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <Avatar className="h-11 w-11">
+                {session.sellerAvatarUrl ? <AvatarImage src={session.sellerAvatarUrl} /> : null}
+                <AvatarFallback className="bg-primary/10 text-primary">
+                  {session.sellerName.slice(0, 2).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-success border-2 border-card" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <p className="font-semibold text-sm truncate">{session.sellerName}</p>
+                <Badge variant="outline" className="text-[10px] border-success/30 text-success bg-success/10">
+                  <ShieldCheck className="w-3 h-3 mr-0.5" /> Verified buyer
+                </Badge>
+              </div>
+              <p className="text-[11px] text-success mt-0.5">● Online now</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Trade details */}
+        <div className="glass-card rounded-xl border border-border p-4 space-y-3">
+          <p className="text-xs uppercase tracking-wider text-muted-foreground">Trade details</p>
+          <div className="grid grid-cols-2 gap-3 text-sm">
+            <div>
+              <p className="text-[11px] text-muted-foreground">You sell</p>
+              <p className="font-display font-bold text-base tracking-normal">
+                {session.amount.toLocaleString('en-US')} USDT
+              </p>
+            </div>
+            <div>
+              <p className="text-[11px] text-muted-foreground">Total value</p>
+              <p className="font-display font-bold text-base tracking-normal">
+                ${totalValueUSD.toLocaleString('en-US')}
+              </p>
+            </div>
+            <div>
+              <p className="text-[11px] text-muted-foreground">Price</p>
+              <p className="font-semibold">1.00 USD / USDT</p>
+            </div>
+            <div>
+              <p className="text-[11px] text-muted-foreground">Payment method</p>
+              <p className="font-semibold text-primary">{session.paymentMethod}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Payment instructions */}
+        <div className="glass-card rounded-xl border border-border p-4 space-y-3">
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <p className="text-xs uppercase tracking-wider text-muted-foreground">Buyer's payment account</p>
+              <p className="text-[11px] text-muted-foreground mt-1">
+                Wait for the buyer to send <strong>${totalValueUSD.toLocaleString('en-US')}</strong> to this {session.paymentMethod} account, then release USDT.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/30 px-3 py-2.5">
+            <span className="font-mono text-xs break-all flex-1">{session.paymentAddress}</span>
+            <Button size="icon" variant="ghost" className="h-8 w-8 shrink-0" onClick={() => copyToClipboard(session.paymentAddress)}>
+              <Copy className="w-4 h-4" />
+            </Button>
+          </div>
+
+          <div className="flex items-start gap-2.5 rounded-lg border border-warning/20 bg-warning/5 p-3">
+            <AlertCircle className="w-4 h-4 text-warning shrink-0 mt-0.5" />
+            <p className="text-[11px] text-muted-foreground leading-relaxed">
+              Only release USDT after you have confirmed the payment in your account. Released USDT cannot be reversed.
+            </p>
+          </div>
+        </div>
+
+        {/* Status */}
+        <div className="glass-card rounded-xl border border-border p-4 space-y-2">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Status</span>
+            {verificationSuccess ? (
+              <span className="text-success font-semibold">Completed</span>
+            ) : isReleasing ? (
+              <span className="text-warning font-semibold flex items-center gap-1">
+                <Loader2 className="w-3 h-3 animate-spin" /> Verifying release…
+              </span>
+            ) : verificationFailed ? (
+              <span className="text-destructive font-semibold">Verification failed</span>
+            ) : timeRemaining > 0 ? (
+              <span className="text-primary font-semibold">Awaiting buyer payment</span>
+            ) : (
+              <span className="text-destructive font-semibold">Window expired</span>
+            )}
+          </div>
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Time remaining</span>
+            <span className="font-mono font-semibold">{formatTime(timeRemaining)}</span>
+          </div>
+        </div>
+
+        {/* Chat placeholder */}
+        <div className="glass-card rounded-xl border border-border p-4">
+          <div className="flex items-center gap-2 text-sm font-semibold mb-2">
+            <MessageSquare className="w-4 h-4 text-primary" />
+            Chat with buyer
+          </div>
+          <p className="text-[11px] text-muted-foreground">
+            For your safety, communicate only through the in-app support channel if you need assistance with this trade.
+          </p>
+        </div>
+
+        {/* Action buttons */}
+        {isReleasing ? (
+          <div className="glass-card rounded-xl border border-primary/30 p-6 text-center space-y-3">
+            <CircularLoader />
+            <p className="font-semibold text-sm">Releasing USDT…</p>
+            <p className="text-[11px] text-muted-foreground">
+              Verifying buyer payment. Please do not close this window.
+            </p>
+            <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
+              <div
+                className="bg-primary h-full transition-all"
+                style={{ width: `${verificationProgress}%` }}
+              />
+            </div>
+          </div>
+        ) : verificationFailed ? (
+          <div className="space-y-2">
+            <div className="glass-card rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-center space-y-2">
+              <AlertCircle className="w-8 h-8 text-destructive mx-auto" />
+              <p className="font-semibold text-sm">Payment verification failed</p>
+              <p className="text-[11px] text-muted-foreground">
+                We could not confirm the buyer's payment. Your USDT was not released.
+              </p>
+            </div>
+            <Button variant="outline" className="w-full" onClick={handleBackHome}>
+              Back to P2P
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <Button
+              className="w-full h-12 text-base"
+              onClick={handleRelease}
+              disabled={timeRemaining <= 0}
+            >
+              <Lock className="w-4 h-4 mr-2" />
+              I have received payment — Release {session.amount.toLocaleString('en-US')} USDT
+            </Button>
+            <Button variant="outline" className="w-full" onClick={handleBackHome}>
+              Cancel & Back to P2P
+            </Button>
+          </div>
+        )}
+
+        <div className="flex items-start gap-2.5 rounded-lg border border-border bg-muted/20 p-3">
+          <Wallet className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
+          <p className="text-[11px] text-muted-foreground leading-relaxed">
+            Your USDT remains locked in escrow throughout this trade. It will only be deducted once you confirm the release.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default SellPayment;

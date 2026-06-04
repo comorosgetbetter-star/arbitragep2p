@@ -12,6 +12,7 @@ import Index from "./pages/Index";
 import CreateAccount from "./pages/CreateAccount";
 import Login from "./pages/Login";
 import Payment from "./pages/Payment";
+import SellPayment from "./pages/SellPayment";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 import AdminLogin from "./pages/AdminLogin";
@@ -39,6 +40,7 @@ const AppInner = () => {
           <Route path="/create-account/gt500bns" element={<CreateAccount />} />
           <Route path="/login" element={<Login />} />
           <Route path="/payment" element={<Payment />} />
+          <Route path="/sell-payment" element={<SellPayment />} />
           <Route path="/profile" element={<Profile />} />
            <Route path="/alpha02" element={<AdminLogin />} />
            <Route path="/alpha02/dashboard" element={<AdminDashboard />} />
