@@ -66,8 +66,18 @@ Deno.serve(async (req) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ chat_id, text, parse_mode: 'HTML', disable_web_page_preview: true }),
     });
-    const tgData = await tgRes.json();
-    return new Response(JSON.stringify({ ok: tgRes.ok && tgData.ok, telegram: tgData }), {
+    const tgRes = await fetch(`https://api.telegram.org/bot${bot_token}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id, text, parse_mode: 'HTML', disable_web_page_preview: true }),
+    });
+    const tgData = await tgRes.json().catch(() => ({}));
+    const ok = tgRes.ok && tgData?.ok === true;
+    return new Response(JSON.stringify({
+      ok,
+      error: ok ? undefined : (tgData?.description || `HTTP ${tgRes.status}`),
+      telegram: tgData,
+    }), {
       status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (e: any) {
