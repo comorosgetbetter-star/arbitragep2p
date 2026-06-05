@@ -33,6 +33,7 @@ import {
 // AdminAddressManager is now merged into AdminCryptoManager
 import { AdminCryptoManager } from '@/components/AdminCryptoManager';
 import { AdminKYCManager } from '@/components/AdminKYCManager';
+import { AdminTelegramSettings } from '@/components/AdminTelegramSettings';
 import { AdminP2POrderManager } from '@/components/AdminP2POrderManager';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -888,7 +889,7 @@ const AdminDashboard = () => {
 
         {/* Main Tabs */}
         <Tabs defaultValue="members" className="space-y-3 min-w-0">
-          <TabsList className="w-full grid grid-cols-4 sm:grid-cols-7 h-auto p-1 bg-card border border-border/50 gap-1">
+          <TabsList className="w-full grid grid-cols-4 sm:grid-cols-8 h-auto p-1 bg-card border border-border/50 gap-1">
             <TabsTrigger value="members" className="flex flex-col items-center gap-0.5 py-2 px-1 text-[10px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-semibold min-w-0">
               <Users className="w-3.5 h-3.5" />
               Members
@@ -926,6 +927,10 @@ const AdminDashboard = () => {
             <TabsTrigger value="audit" className="flex flex-col items-center gap-0.5 py-2 px-1 text-[10px] data-[state=active]:bg-accent data-[state=active]:text-accent-foreground font-semibold min-w-0">
               <History className="w-3.5 h-3.5" />
               Logs
+            </TabsTrigger>
+            <TabsTrigger value="telegram" className="flex flex-col items-center gap-0.5 py-2 px-1 text-[10px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-semibold min-w-0">
+              <Bot className="w-3.5 h-3.5" />
+              Telegram
             </TabsTrigger>
           </TabsList>
 
@@ -1304,6 +1309,11 @@ const AdminDashboard = () => {
                 ))
               )}
             </div>
+          </TabsContent>
+
+          {/* Telegram Settings Tab */}
+          <TabsContent value="telegram" className="space-y-3">
+            <AdminTelegramSettings />
           </TabsContent>
         </Tabs>
       </main>
