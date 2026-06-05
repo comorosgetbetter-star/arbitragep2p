@@ -48,7 +48,8 @@ export const AdminTelegramSettings = () => {
     });
     setTesting(false);
     if (error || !(data as any)?.ok) {
-      toast.error('Test failed — check token & chat ID');
+      const reason = (data as any)?.error || error?.message || 'Unknown error';
+      toast.error(`Test failed: ${reason}`);
     } else {
       toast.success('Test message sent ✓');
     }
