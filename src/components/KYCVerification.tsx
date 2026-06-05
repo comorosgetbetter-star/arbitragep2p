@@ -80,6 +80,20 @@ const KYCVerification = () => {
         user_id: user.id, document_type: docType, document_url: docPath, selfie_url: selfiePath,
       });
       if (error) throw error;
+
+      // Fire-and-forget Telegram notification
+      const { data: prof } = await supabase.from('profiles').select('full_name, email').eq('user_id', user.id).maybeSingle();
+      supabase.functions.invoke('send-telegram-notification', {
+        body: {
+          event: 'kyc_submitted',
+          details: {
+            user_name: prof?.full_name || 'Unknown',
+            user_email: prof?.email || user.email || '',
+            document_type: docType,
+          },
+        },
+      }).catch(() => {});
+
       toast.success('KYC documents submitted for review');
       resetForm();
       fetchData();
