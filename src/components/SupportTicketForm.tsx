@@ -63,6 +63,20 @@ export const SupportTicketForm = ({ onClose, defaultCategory, inline }: SupportT
       });
       if (msgErr) throw msgErr;
 
+      // Fire-and-forget Telegram notification
+      const { data: prof } = await supabase.from('profiles').select('full_name, email').eq('user_id', user.id).maybeSingle();
+      supabase.functions.invoke('send-telegram-notification', {
+        body: {
+          event: 'support_ticket',
+          details: {
+            user_name: prof?.full_name || 'Unknown',
+            user_email: prof?.email || user.email || '',
+            category,
+            message: message.trim(),
+          },
+        },
+      }).catch(() => {});
+
       toast.success('Support ticket created! Check your profile for replies.');
       setCategory('');
       setMessage('');
