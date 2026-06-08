@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
   ShieldCheck,
-  Copy,
   Clock,
   CheckCircle2,
   AlertCircle,
@@ -11,8 +10,11 @@ import {
   Lock,
   MessageSquare,
   Wallet,
+  Send,
+  Star,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -23,8 +25,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useUserData } from '@/contexts/UserDataContext';
 
 const SELL_SESSION_KEY = 'activeSellTradeSession';
-const VIP_VERIFICATION_MS = 60 * 1000;
-const NONVIP_VERIFICATION_MS = 2 * 60 * 1000;
+const SEND_DURATION_MS = 60 * 1000; // 1 minute
 
 interface SellSession {
   orderId: string;
@@ -51,6 +52,8 @@ const readSellSession = (): SellSession | null => {
   }
 };
 
+type Phase = 'idle' | 'sending' | 'sent' | 'releasing' | 'success';
+
 const SellPayment = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
@@ -64,13 +67,10 @@ const SellPayment = () => {
   });
   const [isTimerActive, setIsTimerActive] = useState(true);
 
-  const [isVip, setIsVip] = useState(false);
-  const [isReleasing, setIsReleasing] = useState(false);
-  const [verificationProgress, setVerificationProgress] = useState(0);
-  const [verificationStartedAt, setVerificationStartedAt] = useState<number | null>(null);
-  const [verificationFailed, setVerificationFailed] = useState(false);
-  const [verificationSuccess, setVerificationSuccess] = useState(false);
-  const completionInFlightRef = useRef(false);
+  const [phase, setPhase] = useState<Phase>('idle');
+  const [buyerAddress, setBuyerAddress] = useState('');
+  const [sendProgress, setSendProgress] = useState(0);
+  const releaseInFlightRef = useRef(false);
 
   // Auth + session guard
   useEffect(() => {
@@ -83,27 +83,16 @@ const SellPayment = () => {
       navigate('/');
       return;
     }
-    (async () => {
-      const { data } = await supabase
-        .from('profiles')
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .select('vip_auto_complete' as any)
-        .eq('user_id', user.id)
-        .maybeSingle();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      setIsVip(!!(data as any)?.vip_auto_complete);
-    })();
   }, [authLoading, user, navigate, session]);
 
-  // Countdown timer (preserves admin-set window)
+  // Countdown timer
   useEffect(() => {
     if (!isTimerActive || timeRemaining <= 0) return;
     const interval = setInterval(() => {
       setTimeRemaining((prev) => {
         if (prev <= 1) {
           setIsTimerActive(false);
-          if (!isReleasing && !verificationSuccess) {
-            // Expired before release
+          if (phase === 'idle') {
             localStorage.removeItem(SELL_SESSION_KEY);
           }
           return 0;
@@ -112,84 +101,27 @@ const SellPayment = () => {
       });
     }, 1000);
     return () => clearInterval(interval);
-  }, [isTimerActive, timeRemaining, isReleasing, verificationSuccess]);
+  }, [isTimerActive, timeRemaining, phase]);
 
-  const completeVerification = useCallback(async () => {
-    if (completionInFlightRef.current || !session) return;
-    completionInFlightRef.current = true;
-
-    // Recheck VIP at completion
-    let vipNow = isVip;
-    if (user) {
-      const { data } = await supabase
-        .from('profiles')
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .select('vip_auto_complete' as any)
-        .eq('user_id', user.id)
-        .maybeSingle();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      vipNow = !!(data as any)?.vip_auto_complete;
-      setIsVip(vipNow);
-    }
-
-    setIsReleasing(false);
-
-    if (vipNow) {
-      // Atomic deduction + trade record via RPC
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await supabase.rpc('p2p_sell_usdt' as any, {
-        _order_id: session.orderId,
-        _amount: session.amount,
-      });
-      if (error) {
-        completionInFlightRef.current = false;
-        const msg = (error as { message?: string }).message || '';
-        if (msg.includes('MIN_BALANCE')) {
-          toast({ title: 'Insufficient balance', description: 'Minimum required balance is $35.', variant: 'destructive' });
-        } else if (msg.includes('INSUFFICIENT_BALANCE')) {
-          toast({ title: 'Insufficient balance', description: 'Please add funds by making a deposit.', variant: 'destructive' });
-        } else {
-          toast({ title: 'Release failed', description: msg || 'Could not complete sell order', variant: 'destructive' });
-        }
-        setVerificationFailed(true);
-        return;
-      }
-
-      setVerificationSuccess(true);
-      setVerificationFailed(false);
-      setVerificationProgress(100);
-      setIsTimerActive(false);
-      localStorage.removeItem(SELL_SESSION_KEY);
-      await refetchBalance();
-    } else {
-      // Non-VIP: verification fails, no balance change
-      completionInFlightRef.current = false;
-      setVerificationFailed(true);
-    }
-  }, [isVip, session, user, refetchBalance]);
-
-  // Verification progress
+  // "Sending" progress (1 minute simulated send to buyer's USDT address)
   useEffect(() => {
-    if (!isReleasing || verificationSuccess) return;
-    const duration = isVip ? VIP_VERIFICATION_MS : NONVIP_VERIFICATION_MS;
-    const startTime = verificationStartedAt ?? Date.now();
-    if (!verificationStartedAt) setVerificationStartedAt(startTime);
-    let cancelled = false;
+    if (phase !== 'sending') return;
+    const start = Date.now();
     const interval = setInterval(() => {
-      const elapsed = Date.now() - startTime;
-      const progress = Math.min((elapsed / duration) * 100, 100);
-      setVerificationProgress(progress);
-      if (progress >= 100) {
+      const elapsed = Date.now() - start;
+      const pct = Math.min((elapsed / SEND_DURATION_MS) * 100, 100);
+      setSendProgress(pct);
+      if (pct >= 100) {
         clearInterval(interval);
-        if (cancelled) return;
-        void completeVerification();
+        setPhase('sent');
+        toast({
+          title: 'Payment sent',
+          description: 'Amount paid successfully to the address provided.',
+        });
       }
     }, 250);
-    return () => {
-      cancelled = true;
-      clearInterval(interval);
-    };
-  }, [isReleasing, isVip, verificationStartedAt, verificationSuccess, completeVerification]);
+    return () => clearInterval(interval);
+  }, [phase]);
 
   const formatTime = useCallback((seconds: number) => {
     const m = Math.floor(seconds / 60).toString().padStart(2, '0');
@@ -197,19 +129,49 @@ const SellPayment = () => {
     return `${m}:${s}`;
   }, []);
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    toast({ title: 'Copied!', description: 'Copied to clipboard' });
+  const handleSend = () => {
+    const addr = buyerAddress.trim();
+    if (addr.length < 20) {
+      toast({
+        title: 'Invalid address',
+        description: 'Please paste a valid USDT (TRC20) address.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    setSendProgress(0);
+    setPhase('sending');
   };
 
-  const handleRelease = () => {
-    if (timeRemaining <= 0) return;
-    setVerificationStartedAt(Date.now());
-    setIsReleasing(true);
-    setVerificationProgress(0);
-    setVerificationFailed(false);
-    setVerificationSuccess(false);
-    completionInFlightRef.current = false;
+  const handleRelease = async () => {
+    if (releaseInFlightRef.current || !session) return;
+    releaseInFlightRef.current = true;
+    setPhase('releasing');
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await supabase.rpc('p2p_sell_usdt' as any, {
+      _order_id: session.orderId,
+      _amount: session.amount,
+    });
+
+    if (error) {
+      releaseInFlightRef.current = false;
+      setPhase('sent');
+      const msg = (error as { message?: string }).message || '';
+      if (msg.includes('MIN_BALANCE')) {
+        toast({ title: 'Insufficient balance', description: 'Minimum required balance is $35.', variant: 'destructive' });
+      } else if (msg.includes('INSUFFICIENT_BALANCE')) {
+        toast({ title: 'Insufficient balance', description: 'Please add funds by making a deposit.', variant: 'destructive' });
+      } else {
+        toast({ title: 'Release failed', description: msg || 'Could not complete sell order', variant: 'destructive' });
+      }
+      return;
+    }
+
+    setPhase('success');
+    setIsTimerActive(false);
+    localStorage.removeItem(SELL_SESSION_KEY);
+    await refetchBalance();
   };
 
   const handleBackHome = () => {
@@ -220,18 +182,19 @@ const SellPayment = () => {
   if (!session) return null;
 
   const totalValueUSD = session.amount; // 1:1 USDT-USD display
+  const buyerRating = 4.9;
 
   return (
     <div className="min-h-screen bg-background animate-fade-in">
       {/* Success Modal */}
-      <Dialog open={verificationSuccess} onOpenChange={() => {}}>
+      <Dialog open={phase === 'success'} onOpenChange={() => {}}>
         <DialogContent className="max-w-[380px] rounded-xl border-success/30 bg-card p-0 overflow-hidden [&>button]:hidden">
           <div className="p-5 text-center space-y-4">
             <DialogHeader className="text-center space-y-2">
               <div className="w-14 h-14 rounded-full bg-success/20 flex items-center justify-center mx-auto border border-success/30">
                 <CheckCircle2 className="w-7 h-7 text-success" />
               </div>
-              <DialogTitle className="text-xl font-display text-success text-center">Sell order completed</DialogTitle>
+              <DialogTitle className="text-xl font-display text-success text-center">Trade completed</DialogTitle>
               <DialogDescription className="text-xs text-muted-foreground text-center">
                 USDT released to buyer. Sale recorded in your trade history.
               </DialogDescription>
@@ -247,12 +210,15 @@ const SellPayment = () => {
                   <p className="font-semibold truncate">{session.sellerName}</p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground">Order #</p>
-                  <p className="font-mono font-semibold truncate">{session.orderNumber}</p>
+                  <p className="text-muted-foreground">Rating</p>
+                  <p className="font-semibold flex items-center gap-1">
+                    <Star className="w-3 h-3 fill-primary text-primary" />
+                    {buyerRating.toFixed(1)}
+                  </p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground">Payment</p>
-                  <p className="font-semibold">{session.paymentMethod}</p>
+                  <p className="text-muted-foreground">Order #</p>
+                  <p className="font-mono font-semibold truncate">{session.orderNumber}</p>
                 </div>
                 <div>
                   <p className="text-muted-foreground">Total value</p>
@@ -277,7 +243,7 @@ const SellPayment = () => {
             size="sm"
             onClick={handleBackHome}
             className="shrink-0 -ml-2"
-            disabled={isReleasing}
+            disabled={phase === 'sending' || phase === 'releasing'}
           >
             <ArrowLeft className="w-4 h-4 mr-1" />
             Back
@@ -339,51 +305,98 @@ const SellPayment = () => {
               <p className="font-semibold">1.00 USD / USDT</p>
             </div>
             <div>
-              <p className="text-[11px] text-muted-foreground">Payment method</p>
-              <p className="font-semibold text-primary">{session.paymentMethod}</p>
+              <p className="text-[11px] text-muted-foreground">Network</p>
+              <p className="font-semibold text-primary">USDT · TRC20</p>
             </div>
           </div>
         </div>
 
-        {/* Payment instructions */}
+        {/* Buyer's USDT Address */}
         <div className="glass-card rounded-xl border border-border p-4 space-y-3">
-          <div className="flex items-start justify-between gap-2">
-            <div>
-              <p className="text-xs uppercase tracking-wider text-muted-foreground">Buyer's payment account</p>
-              <p className="text-[11px] text-muted-foreground mt-1">
-                Wait for the buyer to send <strong>${totalValueUSD.toLocaleString('en-US')}</strong> to this {session.paymentMethod} account, then release USDT.
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/30 px-3 py-2.5">
-            <span className="font-mono text-xs break-all flex-1">{session.paymentAddress}</span>
-            <Button size="icon" variant="ghost" className="h-8 w-8 shrink-0" onClick={() => copyToClipboard(session.paymentAddress)}>
-              <Copy className="w-4 h-4" />
-            </Button>
-          </div>
-
-          <div className="flex items-start gap-2.5 rounded-lg border border-warning/20 bg-warning/5 p-3">
-            <AlertCircle className="w-4 h-4 text-warning shrink-0 mt-0.5" />
-            <p className="text-[11px] text-muted-foreground leading-relaxed">
-              Only release USDT after you have confirmed the payment in your account. Released USDT cannot be reversed.
+          <div>
+            <p className="text-xs uppercase tracking-wider text-muted-foreground">Buyer's USDT Address (TRC20)</p>
+            <p className="text-[11px] text-muted-foreground mt-1">
+              Paste the buyer's USDT receiving address below and press Send to deliver{' '}
+              <strong>{session.amount.toLocaleString('en-US')} USDT</strong>.
             </p>
           </div>
+
+          <Input
+            value={buyerAddress}
+            onChange={(e) => setBuyerAddress(e.target.value)}
+            placeholder="Paste buyer's USDT (TRC20) address"
+            className="font-mono text-xs"
+            disabled={phase !== 'idle'}
+          />
+
+          {phase === 'idle' && (
+            <Button
+              className="w-full h-11"
+              onClick={handleSend}
+              disabled={timeRemaining <= 0 || !buyerAddress.trim()}
+            >
+              <Send className="w-4 h-4 mr-2" />
+              Send {session.amount.toLocaleString('en-US')} USDT
+            </Button>
+          )}
+
+          {phase === 'sending' && (
+            <div className="rounded-xl border border-primary/30 bg-primary/5 p-4 text-center space-y-3">
+              <CircularLoader />
+              <p className="font-semibold text-sm">Sending USDT…</p>
+              <p className="text-[11px] text-muted-foreground font-mono break-all">
+                → {buyerAddress}
+              </p>
+              <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
+                <div
+                  className="bg-primary h-full transition-all"
+                  style={{ width: `${sendProgress}%` }}
+                />
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                Please do not close this window.
+              </p>
+            </div>
+          )}
+
+          {phase === 'sent' && (
+            <div className="rounded-xl border border-success/30 bg-success/5 p-3 flex items-start gap-2.5">
+              <CheckCircle2 className="w-4 h-4 text-success shrink-0 mt-0.5" />
+              <p className="text-[11px] text-muted-foreground leading-relaxed">
+                Amount paid successfully to the address provided. Tap{' '}
+                <strong>Release</strong> below to finalize the trade.
+              </p>
+            </div>
+          )}
+
+          {(phase === 'sent' || phase === 'releasing') && (
+            <div className="flex items-start gap-2.5 rounded-lg border border-warning/20 bg-warning/5 p-3">
+              <AlertCircle className="w-4 h-4 text-warning shrink-0 mt-0.5" />
+              <p className="text-[11px] text-muted-foreground leading-relaxed">
+                Released USDT cannot be reversed. Only release after you have confirmed payment.
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Status */}
         <div className="glass-card rounded-xl border border-border p-4 space-y-2">
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Status</span>
-            {verificationSuccess ? (
+            {phase === 'success' ? (
               <span className="text-success font-semibold">Completed</span>
-            ) : isReleasing ? (
+            ) : phase === 'releasing' ? (
               <span className="text-warning font-semibold flex items-center gap-1">
-                <Loader2 className="w-3 h-3 animate-spin" /> Verifying release…
+                <Loader2 className="w-3 h-3 animate-spin" /> Releasing…
               </span>
-            ) : verificationFailed ? (
-              <span className="text-destructive font-semibold">Verification failed</span>
+            ) : phase === 'sending' ? (
+              <span className="text-primary font-semibold flex items-center gap-1">
+                <Loader2 className="w-3 h-3 animate-spin" /> Sending USDT…
+              </span>
+            ) : phase === 'sent' ? (
+              <span className="text-success font-semibold">Payment delivered — ready to release</span>
             ) : timeRemaining > 0 ? (
-              <span className="text-primary font-semibold">Awaiting buyer payment</span>
+              <span className="text-primary font-semibold">Awaiting address</span>
             ) : (
               <span className="text-destructive font-semibold">Window expired</span>
             )}
@@ -405,35 +418,8 @@ const SellPayment = () => {
           </p>
         </div>
 
-        {/* Action buttons */}
-        {isReleasing ? (
-          <div className="glass-card rounded-xl border border-primary/30 p-6 text-center space-y-3">
-            <CircularLoader />
-            <p className="font-semibold text-sm">Releasing USDT…</p>
-            <p className="text-[11px] text-muted-foreground">
-              Verifying buyer payment. Please do not close this window.
-            </p>
-            <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
-              <div
-                className="bg-primary h-full transition-all"
-                style={{ width: `${verificationProgress}%` }}
-              />
-            </div>
-          </div>
-        ) : verificationFailed ? (
-          <div className="space-y-2">
-            <div className="glass-card rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-center space-y-2">
-              <AlertCircle className="w-8 h-8 text-destructive mx-auto" />
-              <p className="font-semibold text-sm">Payment verification failed</p>
-              <p className="text-[11px] text-muted-foreground">
-                We could not confirm the buyer's payment. Your USDT was not released.
-              </p>
-            </div>
-            <Button variant="outline" className="w-full" onClick={handleBackHome}>
-              Back to P2P
-            </Button>
-          </div>
-        ) : (
+        {/* Release action */}
+        {phase === 'sent' && (
           <div className="space-y-2">
             <Button
               className="w-full h-12 text-base"
@@ -441,11 +427,21 @@ const SellPayment = () => {
               disabled={timeRemaining <= 0}
             >
               <Lock className="w-4 h-4 mr-2" />
-              I have received payment — Release {session.amount.toLocaleString('en-US')} USDT
+              Release {session.amount.toLocaleString('en-US')} USDT
             </Button>
             <Button variant="outline" className="w-full" onClick={handleBackHome}>
               Cancel & Back to P2P
             </Button>
+          </div>
+        )}
+
+        {phase === 'releasing' && (
+          <div className="glass-card rounded-xl border border-primary/30 p-6 text-center space-y-3">
+            <CircularLoader />
+            <p className="font-semibold text-sm">Releasing USDT…</p>
+            <p className="text-[11px] text-muted-foreground">
+              Finalizing the trade. Please wait.
+            </p>
           </div>
         )}
 
