@@ -97,7 +97,7 @@ export const TradeConfirmationModal = ({
                 </div>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <CheckCircle2 className="h-4 w-4 text-primary" />
-                  <span>Profit rate locked at current market price</span>
+                  <span>Rate locked at current market price</span>
                 </div>
               </>
             ) : (

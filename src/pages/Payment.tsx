@@ -575,11 +575,6 @@ const Payment = () => {
                 <p className="text-[11px] text-muted-foreground uppercase tracking-wide mb-0.5">You Receive</p>
                 <p className="font-display font-bold text-base text-primary">{packageData.usdt.toLocaleString()} USDT</p>
               </div>
-              <div className="text-muted-foreground text-lg">·</div>
-              <div className="text-center flex-1">
-                <p className="text-[11px] text-muted-foreground uppercase tracking-wide mb-0.5">Profit</p>
-                <p className="font-display font-bold text-base text-success">+{(packageData.usdt - packageData.usd).toLocaleString()} USDT</p>
-              </div>
             </div>
           </div>
 
