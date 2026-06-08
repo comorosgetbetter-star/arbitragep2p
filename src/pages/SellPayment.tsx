@@ -69,7 +69,7 @@ const SellPayment = () => {
 
   const [phase, setPhase] = useState<Phase>('idle');
   const [buyerAddress, setBuyerAddress] = useState('');
-  const [sendProgress, setSendProgress] = useState(0);
+  const [processProgress, setProcessProgress] = useState(0);
   const releaseInFlightRef = useRef(false);
 
   // Auth + session guard
@@ -103,21 +103,17 @@ const SellPayment = () => {
     return () => clearInterval(interval);
   }, [isTimerActive, timeRemaining, phase]);
 
-  // "Sending" progress (1 minute simulated send to buyer's USDT address)
+  // 30s "Making payment…" simulation after seller presses Release
   useEffect(() => {
-    if (phase !== 'sending') return;
+    if (phase !== 'processing') return;
     const start = Date.now();
     const interval = setInterval(() => {
       const elapsed = Date.now() - start;
-      const pct = Math.min((elapsed / SEND_DURATION_MS) * 100, 100);
-      setSendProgress(pct);
+      const pct = Math.min((elapsed / PROCESSING_DURATION_MS) * 100, 100);
+      setProcessProgress(pct);
       if (pct >= 100) {
         clearInterval(interval);
-        setPhase('sent');
-        toast({
-          title: 'Payment sent',
-          description: 'Amount paid successfully to the address provided.',
-        });
+        setPhase('confirm');
       }
     }, 250);
     return () => clearInterval(interval);
@@ -129,7 +125,7 @@ const SellPayment = () => {
     return `${m}:${s}`;
   }, []);
 
-  const handleSend = () => {
+  const handleSubmitAddress = () => {
     const addr = buyerAddress.trim();
     if (addr.length < 20) {
       toast({
@@ -139,11 +135,19 @@ const SellPayment = () => {
       });
       return;
     }
-    setSendProgress(0);
-    setPhase('sending');
+    setPhase('submitted');
+    toast({
+      title: 'Payment address submitted',
+      description: 'Once the buyer sends payment to your account, press Release.',
+    });
   };
 
-  const handleRelease = async () => {
+  const handleReleaseStart = () => {
+    setProcessProgress(0);
+    setPhase('processing');
+  };
+
+  const handleConfirmPaid = async () => {
     if (releaseInFlightRef.current || !session) return;
     releaseInFlightRef.current = true;
     setPhase('releasing');
@@ -156,7 +160,7 @@ const SellPayment = () => {
 
     if (error) {
       releaseInFlightRef.current = false;
-      setPhase('sent');
+      setPhase('confirm');
       const msg = (error as { message?: string }).message || '';
       if (msg.includes('MIN_BALANCE')) {
         toast({ title: 'Insufficient balance', description: 'Minimum required balance is $35.', variant: 'destructive' });
