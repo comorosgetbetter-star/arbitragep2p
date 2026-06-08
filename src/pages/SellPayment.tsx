@@ -315,12 +315,13 @@ const SellPayment = () => {
           </div>
         </div>
 
-        {/* Buyer's USDT Address */}
+        {/* Seller's Payment Receiving Address */}
         <div className="glass-card rounded-xl border border-border p-4 space-y-3">
           <div>
-            <p className="text-xs uppercase tracking-wider text-muted-foreground">Buyer's USDT Address (TRC20)</p>
+            <p className="text-xs uppercase tracking-wider text-muted-foreground">Your payment receiving address</p>
             <p className="text-[11px] text-muted-foreground mt-1">
-              Paste the buyer's USDT receiving address below and press Send to deliver{' '}
+              Submit your USDT (TRC20) address where the buyer should send the{' '}
+              <strong>${totalValueUSD.toLocaleString('en-US')}</strong> payment for{' '}
               <strong>{session.amount.toLocaleString('en-US')} USDT</strong>.
             </p>
           </div>
@@ -328,7 +329,7 @@ const SellPayment = () => {
           <Input
             value={buyerAddress}
             onChange={(e) => setBuyerAddress(e.target.value)}
-            placeholder="Paste buyer's USDT (TRC20) address"
+            placeholder="Paste your USDT (TRC20) receiving address"
             className="font-mono text-xs"
             disabled={phase !== 'idle'}
           />
@@ -336,25 +337,35 @@ const SellPayment = () => {
           {phase === 'idle' && (
             <Button
               className="w-full h-11"
-              onClick={handleSend}
+              onClick={handleSubmitAddress}
               disabled={timeRemaining <= 0 || !buyerAddress.trim()}
             >
               <Send className="w-4 h-4 mr-2" />
-              Send {session.amount.toLocaleString('en-US')} USDT
+              Submit payment address
             </Button>
           )}
 
-          {phase === 'sending' && (
+          {phase === 'submitted' && (
+            <div className="rounded-xl border border-success/30 bg-success/5 p-3 flex items-start gap-2.5">
+              <CheckCircle2 className="w-4 h-4 text-success shrink-0 mt-0.5" />
+              <p className="text-[11px] text-muted-foreground leading-relaxed">
+                Address submitted. Once the buyer sends the payment to your account, tap{' '}
+                <strong>Release</strong> to begin verification.
+              </p>
+            </div>
+          )}
+
+          {phase === 'processing' && (
             <div className="rounded-xl border border-primary/30 bg-primary/5 p-4 text-center space-y-3">
               <CircularLoader />
-              <p className="font-semibold text-sm">Sending USDT…</p>
+              <p className="font-semibold text-sm">Making payment…</p>
               <p className="text-[11px] text-muted-foreground font-mono break-all">
                 → {buyerAddress}
               </p>
               <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
                 <div
                   className="bg-primary h-full transition-all"
-                  style={{ width: `${sendProgress}%` }}
+                  style={{ width: `${processProgress}%` }}
                 />
               </div>
               <p className="text-[11px] text-muted-foreground">
@@ -363,21 +374,12 @@ const SellPayment = () => {
             </div>
           )}
 
-          {phase === 'sent' && (
-            <div className="rounded-xl border border-success/30 bg-success/5 p-3 flex items-start gap-2.5">
-              <CheckCircle2 className="w-4 h-4 text-success shrink-0 mt-0.5" />
-              <p className="text-[11px] text-muted-foreground leading-relaxed">
-                Amount paid successfully to the address provided. Tap{' '}
-                <strong>Release</strong> below to finalize the trade.
-              </p>
-            </div>
-          )}
-
-          {(phase === 'sent' || phase === 'releasing') && (
-            <div className="flex items-start gap-2.5 rounded-lg border border-warning/20 bg-warning/5 p-3">
+          {phase === 'confirm' && (
+            <div className="rounded-xl border border-warning/30 bg-warning/5 p-3 flex items-start gap-2.5">
               <AlertCircle className="w-4 h-4 text-warning shrink-0 mt-0.5" />
               <p className="text-[11px] text-muted-foreground leading-relaxed">
-                Released USDT cannot be reversed. Only release after you have confirmed payment.
+                Confirm the buyer's payment has arrived in your account, then tap{' '}
+                <strong>Mark as paid & Release</strong> to deduct the USDT from your balance.
               </p>
             </div>
           )}
@@ -393,12 +395,14 @@ const SellPayment = () => {
               <span className="text-warning font-semibold flex items-center gap-1">
                 <Loader2 className="w-3 h-3 animate-spin" /> Releasing…
               </span>
-            ) : phase === 'sending' ? (
+            ) : phase === 'processing' ? (
               <span className="text-primary font-semibold flex items-center gap-1">
-                <Loader2 className="w-3 h-3 animate-spin" /> Sending USDT…
+                <Loader2 className="w-3 h-3 animate-spin" /> Making payment…
               </span>
-            ) : phase === 'sent' ? (
-              <span className="text-success font-semibold">Payment delivered — ready to release</span>
+            ) : phase === 'confirm' ? (
+              <span className="text-success font-semibold">Awaiting your confirmation</span>
+            ) : phase === 'submitted' ? (
+              <span className="text-primary font-semibold">Awaiting buyer payment</span>
             ) : timeRemaining > 0 ? (
               <span className="text-primary font-semibold">Awaiting address</span>
             ) : (
@@ -422,19 +426,36 @@ const SellPayment = () => {
           </p>
         </div>
 
-        {/* Release action */}
-        {phase === 'sent' && (
+        {/* Release (start processing) */}
+        {phase === 'submitted' && (
           <div className="space-y-2">
             <Button
               className="w-full h-12 text-base"
-              onClick={handleRelease}
+              onClick={handleReleaseStart}
               disabled={timeRemaining <= 0}
             >
               <Lock className="w-4 h-4 mr-2" />
-              Release {session.amount.toLocaleString('en-US')} USDT
+              Release
             </Button>
             <Button variant="outline" className="w-full" onClick={handleBackHome}>
               Cancel & Back to P2P
+            </Button>
+          </div>
+        )}
+
+        {/* Confirm payment & release (deducts balance) */}
+        {phase === 'confirm' && (
+          <div className="space-y-2">
+            <Button
+              className="w-full h-12 text-base"
+              onClick={handleConfirmPaid}
+              disabled={timeRemaining <= 0}
+            >
+              <CheckCircle2 className="w-4 h-4 mr-2" />
+              Mark as paid & Release {session.amount.toLocaleString('en-US')} USDT
+            </Button>
+            <Button variant="outline" className="w-full" onClick={handleBackHome}>
+              Back
             </Button>
           </div>
         )}
