@@ -247,7 +247,7 @@ const SellPayment = () => {
             size="sm"
             onClick={handleBackHome}
             className="shrink-0 -ml-2"
-            disabled={phase === 'sending' || phase === 'releasing'}
+            disabled={phase === 'processing' || phase === 'releasing'}
           >
             <ArrowLeft className="w-4 h-4 mr-1" />
             Back
