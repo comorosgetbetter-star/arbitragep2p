@@ -25,7 +25,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useUserData } from '@/contexts/UserDataContext';
 
 const SELL_SESSION_KEY = 'activeSellTradeSession';
-const SEND_DURATION_MS = 60 * 1000; // 1 minute
+const PROCESSING_DURATION_MS = 30 * 1000; // 30 seconds "Making payment…"
 
 interface SellSession {
   orderId: string;
