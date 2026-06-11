@@ -135,16 +135,12 @@ const SellPayment = () => {
       });
       return;
     }
-    setPhase('submitted');
-    toast({
-      title: 'Payment address submitted',
-      description: 'Once the buyer sends payment to your account, press Release.',
-    });
-  };
-
-  const handleReleaseStart = () => {
     setProcessProgress(0);
     setPhase('processing');
+    toast({
+      title: 'Payment address received',
+      description: 'Sending USDT to the address provided…',
+    });
   };
 
   const handleConfirmPaid = async () => {
