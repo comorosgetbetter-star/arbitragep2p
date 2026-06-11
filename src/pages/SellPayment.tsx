@@ -413,22 +413,6 @@ const SellPayment = () => {
           </p>
         </div>
 
-        {/* Release (start processing) */}
-        {phase === 'submitted' && (
-          <div className="space-y-2">
-            <Button
-              className="w-full h-12 text-base"
-              onClick={handleReleaseStart}
-              disabled={timeRemaining <= 0}
-            >
-              <Lock className="w-4 h-4 mr-2" />
-              Release
-            </Button>
-            <Button variant="outline" className="w-full" onClick={handleBackHome}>
-              Cancel & Back to P2P
-            </Button>
-          </div>
-        )}
 
         {/* Confirm payment & release (deducts balance) */}
         {phase === 'confirm' && (
