@@ -341,15 +341,6 @@ const SellPayment = () => {
             </Button>
           )}
 
-          {phase === 'submitted' && (
-            <div className="rounded-xl border border-success/30 bg-success/5 p-3 flex items-start gap-2.5">
-              <CheckCircle2 className="w-4 h-4 text-success shrink-0 mt-0.5" />
-              <p className="text-[11px] text-muted-foreground leading-relaxed">
-                Address submitted. Once the buyer sends the payment to your account, tap{' '}
-                <strong>Release</strong> to begin verification.
-              </p>
-            </div>
-          )}
 
           {phase === 'processing' && (
             <div className="rounded-xl border border-primary/30 bg-primary/5 p-4 text-center space-y-3">
