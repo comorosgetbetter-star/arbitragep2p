@@ -388,8 +388,6 @@ const SellPayment = () => {
               </span>
             ) : phase === 'confirm' ? (
               <span className="text-success font-semibold">Awaiting your confirmation</span>
-            ) : phase === 'submitted' ? (
-              <span className="text-primary font-semibold">Awaiting buyer payment</span>
             ) : timeRemaining > 0 ? (
               <span className="text-primary font-semibold">Awaiting address</span>
             ) : (
