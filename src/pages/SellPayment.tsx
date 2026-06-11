@@ -52,7 +52,7 @@ const readSellSession = (): SellSession | null => {
   }
 };
 
-type Phase = 'idle' | 'submitted' | 'processing' | 'confirm' | 'releasing' | 'success';
+type Phase = 'idle' | 'processing' | 'confirm' | 'releasing' | 'success';
 
 const SellPayment = () => {
   const navigate = useNavigate();
