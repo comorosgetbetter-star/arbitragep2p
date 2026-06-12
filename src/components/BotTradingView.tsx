@@ -1,8 +1,10 @@
 import { useState, useMemo } from 'react';
-import { ArrowLeft, ChevronDown, Info, ExternalLink } from 'lucide-react';
+import { ArrowLeft, ChevronDown, Info, ExternalLink, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
+import { Badge } from '@/components/ui/badge';
+import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserData } from '@/contexts/UserDataContext';
 import { useCryptoPrices } from '@/hooks/useCryptoPrices';
@@ -88,6 +90,7 @@ export const BotTradingView = ({ botName, botId, onBack }: BotTradingViewProps) 
   const [selectedPair, setSelectedPair] = useState('BTCUSD');
   const [timeframe, setTimeframe] = useState('1D');
   const [strategyTab, setStrategyTab] = useState<StrategyTab>('manual');
+  const [tradeMode, setTradeMode] = useState<'demo' | 'real'>('demo');
   const [positionType, setPositionType] = useState<PositionType>('long');
   const [lowerPrice, setLowerPrice] = useState('');
   const [upperPrice, setUpperPrice] = useState('');
@@ -96,6 +99,8 @@ export const BotTradingView = ({ botName, botId, onBack }: BotTradingViewProps) 
   const [marginAmount, setMarginAmount] = useState('');
   const [marginSlider, setMarginSlider] = useState([0]);
   const [autoReserve, setAutoReserve] = useState(true);
+  const [demoRunning, setDemoRunning] = useState(false);
+  const [demoPnl, setDemoPnl] = useState<number | null>(null);
 
   const currentPrice = prices?.find(p => p.symbol === selectedPair.replace('USD', ''))?.price || 0;
   const priceChange = prices?.find(p => p.symbol === selectedPair.replace('USD', ''))?.change24h || 0;
@@ -115,8 +120,39 @@ export const BotTradingView = ({ botName, botId, onBack }: BotTradingViewProps) 
     hedging: 'Hedging',
   };
 
-  const ctaLabel = positionType === 'long' ? 'Create (Long)' : positionType === 'short' ? 'Create (Short)' : positionType === 'neutral' ? 'Create (Neutral)' : 'Create (Hedging)';
+  const modePrefix = tradeMode === 'demo' ? 'Demo ' : '';
+  const ctaLabel = `${modePrefix}${positionType === 'long' ? 'Create (Long)' : positionType === 'short' ? 'Create (Short)' : positionType === 'neutral' ? 'Create (Neutral)' : 'Create (Hedging)'}`;
   const ctaColor = positionType === 'long' ? 'bg-success hover:bg-success/90 text-success-foreground' : positionType === 'short' ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground' : 'bg-primary hover:bg-primary/90 text-primary-foreground';
+
+  const handleCreate = () => {
+    if (tradeMode === 'demo') {
+      setDemoRunning(true);
+      setDemoPnl(null);
+      const principal = parseFloat(marginAmount) || 100;
+      const lev = parseInt(leverage.replace('x', '')) || 1;
+      // Simulated PnL: positive bias for long when priceUp, etc.
+      const bias = positionType === 'long' ? (priceUp ? 1 : -1) : positionType === 'short' ? (priceUp ? -1 : 1) : 0.4;
+      const pct = (Math.random() * 0.04 + 0.01) * bias; // -5% to +5%
+      const pnl = principal * lev * pct;
+      toast({
+        title: 'Demo trade started',
+        description: `Simulating ${positionLabels[positionType]} on ${selectedPair} with ${leverage} leverage…`,
+      });
+      setTimeout(() => {
+        setDemoPnl(pnl);
+        setDemoRunning(false);
+        toast({
+          title: pnl >= 0 ? 'Demo trade closed in profit' : 'Demo trade closed in loss',
+          description: `Simulated P/L: ${pnl >= 0 ? '+' : ''}${pnl.toFixed(2)} USDT (paper trade, no funds used)`,
+        });
+      }, 6000);
+      return;
+    }
+    toast({
+      title: 'Real trading',
+      description: 'Real bot execution is processed by the trading engine.',
+    });
+  };
 
   // Profit margin per grid calculation (simple placeholder)
   const profitMargin = lowerPrice && upperPrice && quantity
@@ -133,6 +169,34 @@ export const BotTradingView = ({ botName, botId, onBack }: BotTradingViewProps) 
         </button>
         <span className="text-xs text-muted-foreground font-medium">{botName}</span>
       </div>
+
+      {/* Demo / Real mode toggle */}
+      <div className="bg-secondary/50 rounded-xl p-1 flex relative">
+        <button
+          onClick={() => setTradeMode('demo')}
+          className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 ${
+            tradeMode === 'demo' ? 'bg-primary/15 text-primary border border-primary/30' : 'text-muted-foreground'
+          }`}
+        >
+          <Sparkles className="h-3.5 w-3.5" />
+          Demo
+        </button>
+        <button
+          onClick={() => setTradeMode('real')}
+          className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all ${
+            tradeMode === 'real' ? 'bg-card text-foreground shadow-sm border border-border' : 'text-muted-foreground'
+          }`}
+        >
+          Real
+        </button>
+      </div>
+      {tradeMode === 'demo' && (
+        <div className="flex items-start gap-2 text-[11px] text-muted-foreground bg-primary/5 border border-primary/20 rounded-lg p-2.5">
+          <Info className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
+          <span>Demo mode uses simulated funds. Practise strategies without risking real USDT.</span>
+        </div>
+      )}
+
 
       {/* Pair selector + price */}
       <div className="flex items-center justify-between">
@@ -314,16 +378,37 @@ export const BotTradingView = ({ botName, botId, onBack }: BotTradingViewProps) 
         <span className="text-sm text-foreground">Auto-reserve margin</span>
       </label>
 
+      {/* Demo result */}
+      {tradeMode === 'demo' && (demoRunning || demoPnl !== null) && (
+        <div className="rounded-xl border border-primary/30 bg-primary/5 p-3 space-y-1">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-muted-foreground">Demo trade</span>
+            <Badge variant="outline" className="text-[10px] border-primary/30 text-primary bg-primary/10">
+              {demoRunning ? 'Running…' : 'Closed'}
+            </Badge>
+          </div>
+          {demoPnl !== null && (
+            <p className={`text-base font-bold tracking-normal ${demoPnl >= 0 ? 'text-success' : 'text-destructive'}`}>
+              Simulated P/L: {demoPnl >= 0 ? '+' : ''}{demoPnl.toFixed(2)} USDT
+            </p>
+          )}
+          {demoRunning && (
+            <p className="text-[11px] text-muted-foreground">Simulating execution on live market data…</p>
+          )}
+        </div>
+      )}
+
       {/* CTA */}
       <Button
+        onClick={handleCreate}
         className={`w-full h-12 rounded-xl text-base font-bold ${ctaColor}`}
-        disabled={!user}
+        disabled={(tradeMode === 'real' && !user) || demoRunning}
       >
-        {ctaLabel}
+        {demoRunning ? 'Running demo…' : ctaLabel}
       </Button>
 
-      {!user && (
-        <p className="text-xs text-muted-foreground text-center">Sign in to start a bot</p>
+      {tradeMode === 'real' && !user && (
+        <p className="text-xs text-muted-foreground text-center">Sign in to start a real bot</p>
       )}
     </div>
   );
