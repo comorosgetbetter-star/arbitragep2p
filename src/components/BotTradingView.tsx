@@ -378,16 +378,37 @@ export const BotTradingView = ({ botName, botId, onBack }: BotTradingViewProps) 
         <span className="text-sm text-foreground">Auto-reserve margin</span>
       </label>
 
+      {/* Demo result */}
+      {tradeMode === 'demo' && (demoRunning || demoPnl !== null) && (
+        <div className="rounded-xl border border-primary/30 bg-primary/5 p-3 space-y-1">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-muted-foreground">Demo trade</span>
+            <Badge variant="outline" className="text-[10px] border-primary/30 text-primary bg-primary/10">
+              {demoRunning ? 'Running…' : 'Closed'}
+            </Badge>
+          </div>
+          {demoPnl !== null && (
+            <p className={`text-base font-bold tracking-normal ${demoPnl >= 0 ? 'text-success' : 'text-destructive'}`}>
+              Simulated P/L: {demoPnl >= 0 ? '+' : ''}{demoPnl.toFixed(2)} USDT
+            </p>
+          )}
+          {demoRunning && (
+            <p className="text-[11px] text-muted-foreground">Simulating execution on live market data…</p>
+          )}
+        </div>
+      )}
+
       {/* CTA */}
       <Button
+        onClick={handleCreate}
         className={`w-full h-12 rounded-xl text-base font-bold ${ctaColor}`}
-        disabled={!user}
+        disabled={(tradeMode === 'real' && !user) || demoRunning}
       >
-        {ctaLabel}
+        {demoRunning ? 'Running demo…' : ctaLabel}
       </Button>
 
-      {!user && (
-        <p className="text-xs text-muted-foreground text-center">Sign in to start a bot</p>
+      {tradeMode === 'real' && !user && (
+        <p className="text-xs text-muted-foreground text-center">Sign in to start a real bot</p>
       )}
     </div>
   );
