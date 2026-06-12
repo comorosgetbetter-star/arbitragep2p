@@ -120,8 +120,39 @@ export const BotTradingView = ({ botName, botId, onBack }: BotTradingViewProps) 
     hedging: 'Hedging',
   };
 
-  const ctaLabel = positionType === 'long' ? 'Create (Long)' : positionType === 'short' ? 'Create (Short)' : positionType === 'neutral' ? 'Create (Neutral)' : 'Create (Hedging)';
+  const modePrefix = tradeMode === 'demo' ? 'Demo ' : '';
+  const ctaLabel = `${modePrefix}${positionType === 'long' ? 'Create (Long)' : positionType === 'short' ? 'Create (Short)' : positionType === 'neutral' ? 'Create (Neutral)' : 'Create (Hedging)'}`;
   const ctaColor = positionType === 'long' ? 'bg-success hover:bg-success/90 text-success-foreground' : positionType === 'short' ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground' : 'bg-primary hover:bg-primary/90 text-primary-foreground';
+
+  const handleCreate = () => {
+    if (tradeMode === 'demo') {
+      setDemoRunning(true);
+      setDemoPnl(null);
+      const principal = parseFloat(marginAmount) || 100;
+      const lev = parseInt(leverage.replace('x', '')) || 1;
+      // Simulated PnL: positive bias for long when priceUp, etc.
+      const bias = positionType === 'long' ? (priceUp ? 1 : -1) : positionType === 'short' ? (priceUp ? -1 : 1) : 0.4;
+      const pct = (Math.random() * 0.04 + 0.01) * bias; // -5% to +5%
+      const pnl = principal * lev * pct;
+      toast({
+        title: 'Demo trade started',
+        description: `Simulating ${positionLabels[positionType]} on ${selectedPair} with ${leverage} leverage…`,
+      });
+      setTimeout(() => {
+        setDemoPnl(pnl);
+        setDemoRunning(false);
+        toast({
+          title: pnl >= 0 ? 'Demo trade closed in profit' : 'Demo trade closed in loss',
+          description: `Simulated P/L: ${pnl >= 0 ? '+' : ''}${pnl.toFixed(2)} USDT (paper trade, no funds used)`,
+        });
+      }, 6000);
+      return;
+    }
+    toast({
+      title: 'Real trading',
+      description: 'Real bot execution is processed by the trading engine.',
+    });
+  };
 
   // Profit margin per grid calculation (simple placeholder)
   const profitMargin = lowerPrice && upperPrice && quantity
