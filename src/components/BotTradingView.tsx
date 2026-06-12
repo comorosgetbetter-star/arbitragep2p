@@ -90,6 +90,7 @@ export const BotTradingView = ({ botName, botId, onBack }: BotTradingViewProps) 
   const [selectedPair, setSelectedPair] = useState('BTCUSD');
   const [timeframe, setTimeframe] = useState('1D');
   const [strategyTab, setStrategyTab] = useState<StrategyTab>('manual');
+  const [tradeMode, setTradeMode] = useState<'demo' | 'real'>('demo');
   const [positionType, setPositionType] = useState<PositionType>('long');
   const [lowerPrice, setLowerPrice] = useState('');
   const [upperPrice, setUpperPrice] = useState('');
@@ -98,6 +99,8 @@ export const BotTradingView = ({ botName, botId, onBack }: BotTradingViewProps) 
   const [marginAmount, setMarginAmount] = useState('');
   const [marginSlider, setMarginSlider] = useState([0]);
   const [autoReserve, setAutoReserve] = useState(true);
+  const [demoRunning, setDemoRunning] = useState(false);
+  const [demoPnl, setDemoPnl] = useState<number | null>(null);
 
   const currentPrice = prices?.find(p => p.symbol === selectedPair.replace('USD', ''))?.price || 0;
   const priceChange = prices?.find(p => p.symbol === selectedPair.replace('USD', ''))?.change24h || 0;
