@@ -170,6 +170,34 @@ export const BotTradingView = ({ botName, botId, onBack }: BotTradingViewProps) 
         <span className="text-xs text-muted-foreground font-medium">{botName}</span>
       </div>
 
+      {/* Demo / Real mode toggle */}
+      <div className="bg-secondary/50 rounded-xl p-1 flex relative">
+        <button
+          onClick={() => setTradeMode('demo')}
+          className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 ${
+            tradeMode === 'demo' ? 'bg-primary/15 text-primary border border-primary/30' : 'text-muted-foreground'
+          }`}
+        >
+          <Sparkles className="h-3.5 w-3.5" />
+          Demo
+        </button>
+        <button
+          onClick={() => setTradeMode('real')}
+          className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all ${
+            tradeMode === 'real' ? 'bg-card text-foreground shadow-sm border border-border' : 'text-muted-foreground'
+          }`}
+        >
+          Real
+        </button>
+      </div>
+      {tradeMode === 'demo' && (
+        <div className="flex items-start gap-2 text-[11px] text-muted-foreground bg-primary/5 border border-primary/20 rounded-lg p-2.5">
+          <Info className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
+          <span>Demo mode uses simulated funds. Practise strategies without risking real USDT.</span>
+        </div>
+      )}
+
+
       {/* Pair selector + price */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
