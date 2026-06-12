@@ -1,8 +1,10 @@
 import { useState, useMemo } from 'react';
-import { ArrowLeft, ChevronDown, Info, ExternalLink } from 'lucide-react';
+import { ArrowLeft, ChevronDown, Info, ExternalLink, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
+import { Badge } from '@/components/ui/badge';
+import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserData } from '@/contexts/UserDataContext';
 import { useCryptoPrices } from '@/hooks/useCryptoPrices';
