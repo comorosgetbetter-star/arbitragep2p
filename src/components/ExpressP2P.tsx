@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Zap, TrendingUp, ArrowRight } from 'lucide-react';
+import { Zap } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { WhyUsdt } from './WhyUsdt';
 import { TradeConflictModal } from './TradeConflictModal';
@@ -8,30 +8,16 @@ import { CryptoCalculator } from './CryptoCalculator';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTradeSession, TradeSession } from '@/hooks/useTradeSession';
 import { toast } from '@/components/ui/sonner';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 
-// Profit rates: tiered system where larger amounts get slightly better rates
-const packages = [
-  { usd: 50, usdt: 55 },
-  { usd: 100, usdt: 121 },
-  { usd: 150, usdt: 182 },
-  { usd: 500, usdt: 609 },
-  { usd: 1000, usdt: 1219 },
-  { usd: 5000, usdt: 6097 },
-  { usd: 7000, usdt: 8540 },
-  { usd: 10000, usdt: 12200 },
-];
 
 export const ExpressP2P = () => {
-  const [selectedPackage, setSelectedPackage] = useState<number | null>(null);
   const [showConflictModal, setShowConflictModal] = useState(false);
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const [pendingPackage, setPendingPackage] = useState<{ usd: number; usdt: number } | null>(null);
   const [existingSession, setExistingSession] = useState<TradeSession | null>(null);
-  const { user, loading } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
-  const { startSession, clearSession, getStoredSession } = useTradeSession();
+  const { startSession, clearSession } = useTradeSession();
 
   // Check for pending trade after login
   useEffect(() => {
@@ -58,34 +44,6 @@ export const ExpressP2P = () => {
     navigate('/payment');
   };
 
-  const handleSelectPackage = (usd: number, usdt: number) => {
-    if (loading) return;
-    if (!user) {
-      toast.info('Please sign in to start a trade');
-      navigate('/login');
-      return;
-    }
-
-    setSelectedPackage(usd);
-    setPendingPackage({ usd, usdt });
-    
-    // Check for existing active session
-    const existing = getStoredSession();
-
-    // Safety: if an old session exists but is tied to a different user, purge it.
-    if (existing?.userId && existing.userId !== user.id) {
-      clearSession();
-      setShowConfirmationModal(true);
-      return;
-    }
-    
-    if (existing) {
-      setExistingSession(existing);
-      setShowConflictModal(true);
-    } else {
-      setShowConfirmationModal(true);
-    }
-  };
 
   const handleConfirmTrade = () => {
     if (pendingPackage) {
@@ -118,94 +76,15 @@ export const ExpressP2P = () => {
           Buy <span className="gradient-text">USDT</span> Instantly
         </h2>
         <p className="text-muted-foreground max-w-2xl mx-auto">
-          Select a package below to purchase USDT at competitive rates. 
-          Fast, secure, and direct to your wallet.
+          Enter any amount and buy USDT instantly at competitive rates.
         </p>
+
       </div>
 
-      {/* Crypto Calculator - right below the header */}
+      {/* Crypto Calculator */}
       <div className="mb-10">
         <CryptoCalculator />
       </div>
-
-      <div className="flex flex-col gap-3 max-w-2xl mx-auto">
-          {packages.map((pkg, index) => {
-            const profit = pkg.usdt - pkg.usd;
-            const roi = ((profit / pkg.usd) * 100).toFixed(1);
-            const isPopular = pkg.usd === 1000;
-
-            return (
-              <button
-                key={pkg.usd}
-                onClick={() => handleSelectPackage(pkg.usd, pkg.usdt)}
-                className={`relative glass-card rounded-xl transition-all duration-300 group animate-slide-in-left cursor-pointer border hover:scale-[1.01] active:scale-[0.99] ${
-                  isPopular
-                    ? 'border-primary bg-primary/5 ring-2 ring-primary/30 py-5 px-5 sm:px-6'
-                    : selectedPackage === pkg.usd
-                      ? 'border-primary bg-primary/10'
-                      : 'border-border hover:border-primary/40'
-                } ${isPopular ? '' : 'py-4 px-5 sm:px-6'}`}
-                style={{ animationDelay: `${index * 80}ms`, opacity: 0 }}
-              >
-                {isPopular && (
-                  <Badge className="absolute -top-2.5 left-4 bg-primary text-primary-foreground text-[10px] px-2 py-0.5">
-                    Most Popular
-                  </Badge>
-                )}
-
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
-                  {/* Left: Pay & Receive */}
-                  <div className="flex items-center gap-4 sm:gap-6 min-w-0">
-                    <div className="text-left min-w-[70px]">
-                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">You Trade</p>
-                      <p className={`font-display font-bold ${isPopular ? 'text-lg' : 'text-base'}`}>
-                        ${pkg.usd.toLocaleString()}
-                      </p>
-                    </div>
-
-                    <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 hidden sm:block" />
-
-                    <div className="text-left min-w-[90px]">
-                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Receive</p>
-                      <p className={`font-display font-bold text-primary ${isPopular ? 'text-lg' : 'text-base'}`}>
-                        {pkg.usdt.toLocaleString()} USDT
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Middle: Profit & ROI */}
-                  <div className="flex items-center gap-3 sm:gap-4">
-                    <div className="text-left">
-                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Profit</p>
-                      <p className="font-display font-semibold text-success text-sm">
-                        +{profit} USDT
-                      </p>
-                    </div>
-
-                    <Badge variant="outline" className="text-success border-success/30 bg-success/10 text-xs whitespace-nowrap">
-                      <TrendingUp className="h-3 w-3 mr-1" />
-                      {roi}% ROI
-                    </Badge>
-                  </div>
-
-                  {/* Right: Buy button */}
-                  <Button
-                    size="sm"
-                    variant={isPopular ? 'default' : 'secondary'}
-                    className={`shrink-0 w-full sm:w-auto ${isPopular ? 'shadow-md' : ''}`}
-                    tabIndex={-1}
-                  >
-                    Buy
-                  </Button>
-                </div>
-              </button>
-            );
-          })}
-      </div>
-
-      <p className="text-xs text-muted-foreground text-center mt-6">
-        Profit rates applied • Larger amounts receive better rates
-      </p>
 
       {/* Why USDT Accordion */}
       <WhyUsdt />
@@ -215,8 +94,8 @@ export const ExpressP2P = () => {
         isOpen={showConfirmationModal}
         onClose={() => {
           setShowConfirmationModal(false);
-          setSelectedPackage(null);
         }}
+
         onConfirm={handleConfirmTrade}
         usd={pendingPackage?.usd || 0}
         usdt={pendingPackage?.usdt || 0}
