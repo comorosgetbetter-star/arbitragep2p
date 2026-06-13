@@ -123,89 +123,10 @@ export const ExpressP2P = () => {
         </p>
       </div>
 
-      {/* Crypto Calculator - right below the header */}
+      {/* Crypto Calculator */}
       <div className="mb-10">
         <CryptoCalculator />
       </div>
-
-      <div className="flex flex-col gap-3 max-w-2xl mx-auto">
-          {packages.map((pkg, index) => {
-            const profit = pkg.usdt - pkg.usd;
-            const roi = ((profit / pkg.usd) * 100).toFixed(1);
-            const isPopular = pkg.usd === 1000;
-
-            return (
-              <button
-                key={pkg.usd}
-                onClick={() => handleSelectPackage(pkg.usd, pkg.usdt)}
-                className={`relative glass-card rounded-xl transition-all duration-300 group animate-slide-in-left cursor-pointer border hover:scale-[1.01] active:scale-[0.99] ${
-                  isPopular
-                    ? 'border-primary bg-primary/5 ring-2 ring-primary/30 py-5 px-5 sm:px-6'
-                    : selectedPackage === pkg.usd
-                      ? 'border-primary bg-primary/10'
-                      : 'border-border hover:border-primary/40'
-                } ${isPopular ? '' : 'py-4 px-5 sm:px-6'}`}
-                style={{ animationDelay: `${index * 80}ms`, opacity: 0 }}
-              >
-                {isPopular && (
-                  <Badge className="absolute -top-2.5 left-4 bg-primary text-primary-foreground text-[10px] px-2 py-0.5">
-                    Most Popular
-                  </Badge>
-                )}
-
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
-                  {/* Left: Pay & Receive */}
-                  <div className="flex items-center gap-4 sm:gap-6 min-w-0">
-                    <div className="text-left min-w-[70px]">
-                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">You Trade</p>
-                      <p className={`font-display font-bold ${isPopular ? 'text-lg' : 'text-base'}`}>
-                        ${pkg.usd.toLocaleString()}
-                      </p>
-                    </div>
-
-                    <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 hidden sm:block" />
-
-                    <div className="text-left min-w-[90px]">
-                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Receive</p>
-                      <p className={`font-display font-bold text-primary ${isPopular ? 'text-lg' : 'text-base'}`}>
-                        {pkg.usdt.toLocaleString()} USDT
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Middle: Profit & ROI */}
-                  <div className="flex items-center gap-3 sm:gap-4">
-                    <div className="text-left">
-                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Profit</p>
-                      <p className="font-display font-semibold text-success text-sm">
-                        +{profit} USDT
-                      </p>
-                    </div>
-
-                    <Badge variant="outline" className="text-success border-success/30 bg-success/10 text-xs whitespace-nowrap">
-                      <TrendingUp className="h-3 w-3 mr-1" />
-                      {roi}% ROI
-                    </Badge>
-                  </div>
-
-                  {/* Right: Buy button */}
-                  <Button
-                    size="sm"
-                    variant={isPopular ? 'default' : 'secondary'}
-                    className={`shrink-0 w-full sm:w-auto ${isPopular ? 'shadow-md' : ''}`}
-                    tabIndex={-1}
-                  >
-                    Buy
-                  </Button>
-                </div>
-              </button>
-            );
-          })}
-      </div>
-
-      <p className="text-xs text-muted-foreground text-center mt-6">
-        Profit rates applied • Larger amounts receive better rates
-      </p>
 
       {/* Why USDT Accordion */}
       <WhyUsdt />
