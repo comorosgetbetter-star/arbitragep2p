@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Zap, TrendingUp, ArrowRight } from 'lucide-react';
+import { Zap } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { WhyUsdt } from './WhyUsdt';
 import { TradeConflictModal } from './TradeConflictModal';
@@ -8,20 +8,7 @@ import { CryptoCalculator } from './CryptoCalculator';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTradeSession, TradeSession } from '@/hooks/useTradeSession';
 import { toast } from '@/components/ui/sonner';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 
-// Profit rates: tiered system where larger amounts get slightly better rates
-const packages = [
-  { usd: 50, usdt: 55 },
-  { usd: 100, usdt: 121 },
-  { usd: 150, usdt: 182 },
-  { usd: 500, usdt: 609 },
-  { usd: 1000, usdt: 1219 },
-  { usd: 5000, usdt: 6097 },
-  { usd: 7000, usdt: 8540 },
-  { usd: 10000, usdt: 12200 },
-];
 
 export const ExpressP2P = () => {
   const [selectedPackage, setSelectedPackage] = useState<number | null>(null);
