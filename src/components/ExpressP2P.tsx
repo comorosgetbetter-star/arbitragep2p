@@ -76,9 +76,9 @@ export const ExpressP2P = () => {
           Buy <span className="gradient-text">USDT</span> Instantly
         </h2>
         <p className="text-muted-foreground max-w-2xl mx-auto">
-          Select a package below to purchase USDT at competitive rates. 
-          Fast, secure, and direct to your wallet.
+          Enter any amount and buy USDT instantly at competitive rates.
         </p>
+
       </div>
 
       {/* Crypto Calculator */}
