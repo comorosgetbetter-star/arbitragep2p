@@ -94,8 +94,8 @@ export const ExpressP2P = () => {
         isOpen={showConfirmationModal}
         onClose={() => {
           setShowConfirmationModal(false);
-          setSelectedPackage(null);
         }}
+
         onConfirm={handleConfirmTrade}
         usd={pendingPackage?.usd || 0}
         usdt={pendingPackage?.usdt || 0}
