@@ -11,14 +11,13 @@ import { toast } from '@/components/ui/sonner';
 
 
 export const ExpressP2P = () => {
-  const [selectedPackage, setSelectedPackage] = useState<number | null>(null);
   const [showConflictModal, setShowConflictModal] = useState(false);
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const [pendingPackage, setPendingPackage] = useState<{ usd: number; usdt: number } | null>(null);
   const [existingSession, setExistingSession] = useState<TradeSession | null>(null);
-  const { user, loading } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
-  const { startSession, clearSession, getStoredSession } = useTradeSession();
+  const { startSession, clearSession } = useTradeSession();
 
   // Check for pending trade after login
   useEffect(() => {
@@ -45,34 +44,6 @@ export const ExpressP2P = () => {
     navigate('/payment');
   };
 
-  const handleSelectPackage = (usd: number, usdt: number) => {
-    if (loading) return;
-    if (!user) {
-      toast.info('Please sign in to start a trade');
-      navigate('/login');
-      return;
-    }
-
-    setSelectedPackage(usd);
-    setPendingPackage({ usd, usdt });
-    
-    // Check for existing active session
-    const existing = getStoredSession();
-
-    // Safety: if an old session exists but is tied to a different user, purge it.
-    if (existing?.userId && existing.userId !== user.id) {
-      clearSession();
-      setShowConfirmationModal(true);
-      return;
-    }
-    
-    if (existing) {
-      setExistingSession(existing);
-      setShowConflictModal(true);
-    } else {
-      setShowConfirmationModal(true);
-    }
-  };
 
   const handleConfirmTrade = () => {
     if (pendingPackage) {
