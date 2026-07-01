@@ -34,7 +34,7 @@ const calculateUsdtReceived = (usdAmount: number): number => {
   return usdAmount * applicableRate;
 };
 
-const QUICK_AMOUNTS = [20, 100, 500, 1000];
+const QUICK_AMOUNTS = [100, 250, 500, 1000];
 
 export const CryptoCalculator = () => {
   const [mode, setMode] = useState<'buy' | 'sell'>('buy');
