@@ -37,5 +37,13 @@
     <script type="module" src="/src/main.tsx"></script>
     <!-- Tidio Support Widget -->
     <script src="//code.tidio.co/87eqieg0ev34ro9dj9inyrhlk3wbohyp.js" async></script>
+    <style>
+      /* Lift Tidio launcher above the mobile bottom nav so nav can be evenly spaced */
+      @media (max-width: 767px) {
+        #tidio-chat iframe#tidio-chat-iframe {
+          bottom: 72px !important;
+        }
+      }
+    </style>
   </body>
 </html>
