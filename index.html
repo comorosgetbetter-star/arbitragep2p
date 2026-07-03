@@ -38,9 +38,12 @@
     <!-- Tidio Support Widget -->
     <script src="//code.tidio.co/87eqieg0ev34ro9dj9inyrhlk3wbohyp.js" async></script>
     <style>
-      /* Lift Tidio launcher above the mobile bottom nav so nav can be evenly spaced */
+      /* Lift the Tidio launcher above the mobile bottom nav (h-14 = 56px + safe area) */
       @media (max-width: 767px) {
-        #tidio-chat iframe#tidio-chat-iframe {
+        #tidio-chat,
+        #tidio-chat iframe,
+        iframe[title*="tidio" i],
+        iframe[id*="tidio" i] {
           bottom: 72px !important;
         }
       }
