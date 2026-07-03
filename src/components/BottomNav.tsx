@@ -19,7 +19,7 @@ const tabs: { id: BottomNavTab; label: string; icon: React.ElementType }[] = [
 export const BottomNav = ({ activeTab, onTabChange }: BottomNavProps) => {
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-[9999] bg-card border-t border-border/40 safe-area-bottom md:hidden">
-      <div className="flex items-center justify-around h-14 max-w-lg mx-auto pl-2 pr-20">
+      <div className="flex items-center justify-around h-14 max-w-lg mx-auto px-2">
         {tabs.map(({ id, label, icon: Icon }) => {
           const isActive = activeTab === id;
           return (
