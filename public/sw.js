@@ -1,54 +1,30 @@
-// PeerBitX Service Worker — minimal, network-first for HTML, cache-first for static assets.
-const VERSION = 'pbx-v1';
-const STATIC_CACHE = `static-${VERSION}`;
-const RUNTIME_CACHE = `runtime-${VERSION}`;
-const PRECACHE = ['/', '/manifest.json', '/logo.png', '/icon-192.png', '/icon-512.png', '/apple-touch-icon.png'];
+// Kill-switch service worker — replaces the previous PeerBitX SW.
+// Purpose: evict stale caches that were serving old index.html referencing
+// hashed JS chunks that no longer exist after redeploys (causing white pages
+// in in-app browsers like Nicegram / Telegram webviews).
+//
+// This worker takes over the /sw.js scope, wipes its own caches, claims all
+// clients, reloads open tabs, then unregisters itself. After one visit,
+// affected users no longer have any service worker registered.
 
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(STATIC_CACHE).then((c) => c.addAll(PRECACHE)).then(() => self.skipWaiting())
-  );
+self.addEventListener('install', () => self.skipWaiting());
+
+self.addEventListener('fetch', () => {
+  // Do nothing — fall through to the network for every request.
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => ![STATIC_CACHE, RUNTIME_CACHE].includes(k)).map((k) => caches.delete(k)))
-    ).then(() => self.clients.claim())
+    (async () => {
+      try {
+        const cacheNames = await caches.keys();
+        await Promise.allSettled(cacheNames.map((name) => caches.delete(name)));
+        await self.clients.claim();
+        const windowClients = await self.clients.matchAll({ type: 'window' });
+        await Promise.allSettled(windowClients.map((client) => client.navigate(client.url)));
+      } finally {
+        await self.registration.unregister();
+      }
+    })(),
   );
-});
-
-self.addEventListener('fetch', (event) => {
-  const req = event.request;
-  if (req.method !== 'GET') return;
-  const url = new URL(req.url);
-  if (url.origin !== self.location.origin) return;
-
-  // Never cache supabase, auth, or dynamic API calls
-  if (url.pathname.startsWith('/auth') || url.pathname.startsWith('/api') || url.pathname.startsWith('/__l5e')) return;
-
-  // HTML navigations: network-first, fall back to cached shell
-  if (req.mode === 'navigate') {
-    event.respondWith(
-      fetch(req).then((resp) => {
-        const copy = resp.clone();
-        caches.open(RUNTIME_CACHE).then((c) => c.put(req, copy));
-        return resp;
-      }).catch(() => caches.match(req).then((r) => r || caches.match('/')))
-    );
-    return;
-  }
-
-  // Static assets: cache-first
-  if (/\.(?:js|css|woff2?|ttf|png|jpg|jpeg|svg|webp|ico)$/.test(url.pathname)) {
-    event.respondWith(
-      caches.match(req).then((cached) =>
-        cached || fetch(req).then((resp) => {
-          const copy = resp.clone();
-          caches.open(RUNTIME_CACHE).then((c) => c.put(req, copy));
-          return resp;
-        }).catch(() => cached)
-      )
-    );
-  }
 });
