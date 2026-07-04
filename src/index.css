@@ -205,3 +205,14 @@
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
 }
+
+/* Lift the Tidio chat launcher above the mobile bottom navigation so it
+   doesn't overlap Home / Markets / Trade / Explore / Assets. Tidio renders
+   inside #tidio-chat-iframe (launcher) and #tidio-chat (open panel). */
+@media (max-width: 767px) {
+  #tidio-chat-iframe,
+  iframe[id^="tidio-chat"] {
+    bottom: 76px !important;
+  }
+}
+
