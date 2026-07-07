@@ -27,7 +27,7 @@ export const Header = ({ isDark, toggleTheme, activeTab = 'home', onTabChange }:
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-sm border-b border-border/40">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-card border-b border-border/40">
       <div className="container mx-auto px-4 h-12 md:h-14 flex items-center justify-between">
         {/* Logo */}
         <div className="flex items-center gap-2 cursor-pointer shrink-0 mr-6" onClick={() => { onTabChange?.('home'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
