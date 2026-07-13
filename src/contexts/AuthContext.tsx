@@ -69,7 +69,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         clearSensitiveClientState(true);
       }
 
-      applyUser(session?.user ?? null);
+      const nextUser = session?.user ?? null;
+      // Preserve identity across TOKEN_REFRESHED / USER_UPDATED so downstream
+      // effects (useMemberAccess, page effects) don't remount forms and lose
+      // state when the tab returns from background on mobile / PWA.
+      setUser((prev) => {
+        if (prev && nextUser && prev.id === nextUser.id) return prev;
+        return nextUser;
+      });
+      setLoading(false);
     });
 
     void initializeSession();
