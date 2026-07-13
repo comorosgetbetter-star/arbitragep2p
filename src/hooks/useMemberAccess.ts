@@ -21,8 +21,14 @@ export const useMemberAccess = () => {
         return;
       }
 
+      // Already resolved for this user — don't flip loading back on and
+      // unmount downstream views (e.g. AssetsView withdraw/convert forms).
+      if (checkedUserId === user.id) {
+        setRoleLoading(false);
+        return;
+      }
+
       setRoleLoading(true);
-      setCheckedUserId(null);
 
       const { data, error } = await supabase
         .from('user_roles')
