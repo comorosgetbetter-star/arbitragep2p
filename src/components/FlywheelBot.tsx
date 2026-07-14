@@ -70,14 +70,16 @@ const getFlywheelPlanByName = (planName: string) =>
 const calculateSessionAccruedProfit = (session: FlywheelSession, nowMs: number) => {
   const startedAtMs = new Date(session.started_at).getTime();
   const endsAtMs = new Date(session.ends_at).getTime();
-  const elapsedSeconds = Math.max(0, (Math.min(nowMs, endsAtMs) - startedAtMs) / 1000);
+  const totalMs = Math.max(1, endsAtMs - startedAtMs);
+  const elapsedMs = Math.max(0, Math.min(nowMs, endsAtMs) - startedAtMs);
+  const elapsedSeconds = elapsedMs / 1000;
+  const elapsedRatio = Math.min(1, elapsedMs / totalMs);
+  const variance = session.profit_variance ?? 0;
 
   if (isFlywheelPlan(session.plan_name)) {
     const elapsedMinutes = elapsedSeconds / 60;
-    return Math.max(
-      0,
-      session.staked_amount * (session.daily_return_pct / 100) * (elapsedMinutes / FLYWHEEL_PACKAGE_MINUTE_DIVISOR),
-    );
+    const base = session.staked_amount * (session.daily_return_pct / 100) * (elapsedMinutes / FLYWHEEL_PACKAGE_MINUTE_DIVISOR);
+    return Math.max(0, base + variance * elapsedRatio);
   }
 
   const elapsedDays = elapsedSeconds / 86400;
@@ -88,13 +90,12 @@ const calculateSessionEstimatedProfit = (session: FlywheelSession) => {
   const startedAtMs = new Date(session.started_at).getTime();
   const endsAtMs = new Date(session.ends_at).getTime();
   const elapsedSeconds = Math.max(0, (endsAtMs - startedAtMs) / 1000);
+  const variance = session.profit_variance ?? 0;
 
   if (isFlywheelPlan(session.plan_name)) {
     const elapsedMinutes = elapsedSeconds / 60;
-    return Math.max(
-      0,
-      session.staked_amount * (session.daily_return_pct / 100) * (elapsedMinutes / FLYWHEEL_PACKAGE_MINUTE_DIVISOR),
-    );
+    const base = session.staked_amount * (session.daily_return_pct / 100) * (elapsedMinutes / FLYWHEEL_PACKAGE_MINUTE_DIVISOR);
+    return Math.max(0, base + variance);
   }
 
   const elapsedDays = elapsedSeconds / 86400;
