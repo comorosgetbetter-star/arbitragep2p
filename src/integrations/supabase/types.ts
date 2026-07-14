@@ -401,6 +401,7 @@ export type Database = {
           id: string
           lock_days: number
           plan_name: string
+          profit_variance: number
           staked_amount: number
           started_at: string
           status: string
@@ -414,6 +415,7 @@ export type Database = {
           id?: string
           lock_days: number
           plan_name: string
+          profit_variance?: number
           staked_amount: number
           started_at?: string
           status?: string
@@ -427,6 +429,7 @@ export type Database = {
           id?: string
           lock_days?: number
           plan_name?: string
+          profit_variance?: number
           staked_amount?: number
           started_at?: string
           status?: string

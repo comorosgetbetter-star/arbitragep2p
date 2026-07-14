@@ -27,6 +27,7 @@ interface FlywheelSession {
   started_at: string;
   ends_at: string;
   status: string;
+  profit_variance?: number;
 }
 
 interface TradeRound {
@@ -69,14 +70,16 @@ const getFlywheelPlanByName = (planName: string) =>
 const calculateSessionAccruedProfit = (session: FlywheelSession, nowMs: number) => {
   const startedAtMs = new Date(session.started_at).getTime();
   const endsAtMs = new Date(session.ends_at).getTime();
-  const elapsedSeconds = Math.max(0, (Math.min(nowMs, endsAtMs) - startedAtMs) / 1000);
+  const totalMs = Math.max(1, endsAtMs - startedAtMs);
+  const elapsedMs = Math.max(0, Math.min(nowMs, endsAtMs) - startedAtMs);
+  const elapsedSeconds = elapsedMs / 1000;
+  const elapsedRatio = Math.min(1, elapsedMs / totalMs);
+  const variance = session.profit_variance ?? 0;
 
   if (isFlywheelPlan(session.plan_name)) {
     const elapsedMinutes = elapsedSeconds / 60;
-    return Math.max(
-      0,
-      session.staked_amount * (session.daily_return_pct / 100) * (elapsedMinutes / FLYWHEEL_PACKAGE_MINUTE_DIVISOR),
-    );
+    const base = session.staked_amount * (session.daily_return_pct / 100) * (elapsedMinutes / FLYWHEEL_PACKAGE_MINUTE_DIVISOR);
+    return Math.max(0, base + variance * elapsedRatio);
   }
 
   const elapsedDays = elapsedSeconds / 86400;
@@ -87,13 +90,12 @@ const calculateSessionEstimatedProfit = (session: FlywheelSession) => {
   const startedAtMs = new Date(session.started_at).getTime();
   const endsAtMs = new Date(session.ends_at).getTime();
   const elapsedSeconds = Math.max(0, (endsAtMs - startedAtMs) / 1000);
+  const variance = session.profit_variance ?? 0;
 
   if (isFlywheelPlan(session.plan_name)) {
     const elapsedMinutes = elapsedSeconds / 60;
-    return Math.max(
-      0,
-      session.staked_amount * (session.daily_return_pct / 100) * (elapsedMinutes / FLYWHEEL_PACKAGE_MINUTE_DIVISOR),
-    );
+    const base = session.staked_amount * (session.daily_return_pct / 100) * (elapsedMinutes / FLYWHEEL_PACKAGE_MINUTE_DIVISOR);
+    return Math.max(0, base + variance);
   }
 
   const elapsedDays = elapsedSeconds / 86400;
@@ -616,7 +618,7 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
     if (!user) return;
     const { data } = await supabase
       .from('staking_sessions')
-      .select('id, plan_name, staked_amount, daily_return_pct, lock_days, started_at, ends_at, status')
+      .select('id, plan_name, staked_amount, daily_return_pct, lock_days, started_at, ends_at, status, profit_variance')
       .eq('user_id', user.id)
       .eq('status', 'active')
       .like('plan_name', 'Turbo%')
@@ -625,7 +627,7 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
 
     const { data: completed } = await supabase
       .from('staking_sessions')
-      .select('id, plan_name, staked_amount, daily_return_pct, lock_days, started_at, ends_at, status')
+      .select('id, plan_name, staked_amount, daily_return_pct, lock_days, started_at, ends_at, status, profit_variance')
       .eq('user_id', user.id)
       .eq('status', 'cancelled')
       .like('plan_name', 'Turbo%')
