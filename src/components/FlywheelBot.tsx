@@ -27,6 +27,7 @@ interface FlywheelSession {
   started_at: string;
   ends_at: string;
   status: string;
+  profit_variance?: number;
 }
 
 interface TradeRound {
