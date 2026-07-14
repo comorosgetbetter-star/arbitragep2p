@@ -618,7 +618,7 @@ export const FlywheelBot = ({ onBack }: FlywheelBotProps) => {
     if (!user) return;
     const { data } = await supabase
       .from('staking_sessions')
-      .select('id, plan_name, staked_amount, daily_return_pct, lock_days, started_at, ends_at, status')
+      .select('id, plan_name, staked_amount, daily_return_pct, lock_days, started_at, ends_at, status, profit_variance')
       .eq('user_id', user.id)
       .eq('status', 'active')
       .like('plan_name', 'Turbo%')
