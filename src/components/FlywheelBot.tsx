@@ -246,9 +246,13 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
 
         roundIdRef.current += 1;
         const newTrade: TradeRound = { id: roundIdRef.current, isWin, amount, timestamp: Date.now() };
-        setTrades(prev => [newTrade, ...prev]);
+        setLiveTrade(newTrade);
         setLastResult(newTrade);
 
+        setTimeout(() => {
+          setTrades(prev => [newTrade, ...prev]);
+          setLiveTrade(null);
+        }, 1100);
         setTimeout(() => setLastResult(null), 2500);
       }, tradeDuration);
     };
