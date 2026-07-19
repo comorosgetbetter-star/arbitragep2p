@@ -118,6 +118,7 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [now, setNow] = useState(Date.now());
   const [trades, setTrades] = useState<TradeRound[]>(initialState?.trades ?? []);
+  const [liveTrade, setLiveTrade] = useState<TradeRound | null>(null);
   const [isTrading, setIsTrading] = useState(false);
   const [tradingCountdown, setTradingCountdown] = useState(0);
   const [lastResult, setLastResult] = useState<TradeRound | null>(null);
