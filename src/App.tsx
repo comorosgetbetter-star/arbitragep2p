@@ -21,6 +21,16 @@ import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import EmailConfirmed from "./pages/EmailConfirmed";
 import ForgotPassword from "./pages/ForgotPassword";
+import About from "./pages/About";
+import Contact from "./pages/Contact";
+import Team from "./pages/Team";
+import CookiePolicy from "./pages/legal/CookiePolicy";
+import AMLPolicy from "./pages/legal/AMLPolicy";
+import KYCPolicy from "./pages/legal/KYCPolicy";
+import RiskDisclosure from "./pages/legal/RiskDisclosure";
+import AcceptableUse from "./pages/legal/AcceptableUse";
+import Compliance from "./pages/legal/Compliance";
+import Disclaimer from "./pages/legal/Disclaimer";
 
 const queryClient = new QueryClient();
 
