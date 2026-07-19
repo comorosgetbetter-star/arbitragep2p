@@ -58,6 +58,16 @@ const AppInner = () => {
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/auth/confirm" element={<EmailConfirmed />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/team" element={<Team />} />
+          <Route path="/cookies" element={<CookiePolicy />} />
+          <Route path="/aml" element={<AMLPolicy />} />
+          <Route path="/kyc" element={<KYCPolicy />} />
+          <Route path="/risk" element={<RiskDisclosure />} />
+          <Route path="/acceptable-use" element={<AcceptableUse />} />
+          <Route path="/compliance" element={<Compliance />} />
+          <Route path="/disclaimer" element={<Disclaimer />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
