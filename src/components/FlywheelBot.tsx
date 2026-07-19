@@ -246,7 +246,7 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
 
         roundIdRef.current += 1;
         const newTrade: TradeRound = { id: roundIdRef.current, isWin, amount, timestamp: Date.now() };
-        setTrades(prev => [...prev, newTrade]);
+        setTrades(prev => [newTrade, ...prev]);
         setLastResult(newTrade);
 
         setTimeout(() => setLastResult(null), 2500);
@@ -314,7 +314,7 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
         cumulativeNetRef.current += isWin ? amount : -amount;
       }
 
-      setTrades(prev => [...prev, ...syntheticTrades]);
+      setTrades(prev => [...syntheticTrades.slice().reverse(), ...prev]);
       setNow(Date.now());
     };
 
@@ -323,7 +323,7 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
   }, [session.status, session.started_at, session.ends_at, session.staked_amount, session.daily_return_pct, session.plan_name]);
 
   useEffect(() => {
-    tradesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    tradesEndRef.current?.scrollTo?.({ top: 0, behavior: 'smooth' });
   }, [trades.length]);
 
   const handleConfirmCancel = useCallback(async () => {
@@ -470,7 +470,7 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
         {/* Trade history */}
         <div className="space-y-1.5">
           <p className="text-xs text-muted-foreground uppercase tracking-widest font-medium">Trades</p>
-          <ScrollArea className="h-[200px] rounded-lg border border-border/20 bg-card/50">
+          <div ref={tradesEndRef as any} className="h-[200px] overflow-y-auto rounded-lg border border-border/20 bg-card/50">
             <div className="p-2 space-y-1">
               {trades.length === 0 && !isTrading && (
                 <p className="text-sm text-muted-foreground text-center py-8">Waiting…</p>
@@ -478,9 +478,9 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
               {trades.map((trade, idx) => (
                 <div
                   key={trade.id}
-                  className={`flex items-center justify-between px-3 py-2 rounded text-sm animate-fade-in ${
-                    trade.isWin ? 'bg-success/5' : 'bg-destructive/5'
-                  }`}
+                  className={`flex items-center justify-between px-3 py-2 rounded text-sm ${
+                    idx === 0 ? 'animate-trade-slide-down' : ''
+                  } ${trade.isWin ? 'bg-success/5' : 'bg-destructive/5'}`}
                 >
                   <div className="flex items-center gap-2">
                     {trade.isWin ? (
@@ -488,16 +488,15 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
                     ) : (
                       <XCircle className="h-4 w-4 text-destructive" />
                     )}
-                    <span className="text-muted-foreground font-mono text-xs">#{idx + 1}</span>
+                    <span className="text-muted-foreground font-mono text-xs">#{trades.length - idx}</span>
                   </div>
                   <span className={`font-bold font-mono text-sm ${trade.isWin ? 'text-success' : 'text-destructive'}`}>
                     {trade.isWin ? '+' : '-'}${fmt(trade.amount)}
                   </span>
                 </div>
               ))}
-              <div ref={tradesEndRef} />
             </div>
-          </ScrollArea>
+          </div>
         </div>
       </div>
 
