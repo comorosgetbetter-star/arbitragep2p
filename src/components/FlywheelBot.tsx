@@ -118,6 +118,7 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [now, setNow] = useState(Date.now());
   const [trades, setTrades] = useState<TradeRound[]>(initialState?.trades ?? []);
+  const [liveTrade, setLiveTrade] = useState<TradeRound | null>(null);
   const [isTrading, setIsTrading] = useState(false);
   const [tradingCountdown, setTradingCountdown] = useState(0);
   const [lastResult, setLastResult] = useState<TradeRound | null>(null);
@@ -246,9 +247,13 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
 
         roundIdRef.current += 1;
         const newTrade: TradeRound = { id: roundIdRef.current, isWin, amount, timestamp: Date.now() };
-        setTrades(prev => [newTrade, ...prev]);
+        setLiveTrade(newTrade);
         setLastResult(newTrade);
 
+        setTimeout(() => {
+          setTrades(prev => [newTrade, ...prev]);
+          setLiveTrade(null);
+        }, 1100);
         setTimeout(() => setLastResult(null), 2500);
       }, tradeDuration);
     };
@@ -469,7 +474,56 @@ const ActiveBotView = ({ session, onCancelled, onBack }: { session: FlywheelSess
 
         {/* Trade history */}
         <div className="space-y-1.5">
-          <p className="text-xs text-muted-foreground uppercase tracking-widest font-medium">Trades</p>
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-muted-foreground uppercase tracking-widest font-medium">Live Trades</p>
+            <span className="flex items-center gap-1.5 text-[10px] text-muted-foreground uppercase tracking-widest font-medium">
+              <span className={`h-1.5 w-1.5 rounded-full ${liveTrade ? 'bg-primary' : 'bg-success animate-pulse'}`} />
+              {liveTrade ? 'Executing' : 'Live'}
+            </span>
+          </div>
+
+          {/* Live Trade Bar */}
+          <div
+            className={`relative overflow-hidden rounded-lg border h-12 flex items-center px-3 transition-colors duration-300 ${
+              liveTrade
+                ? liveTrade.isWin
+                  ? 'border-success/40 bg-success/10'
+                  : 'border-destructive/40 bg-destructive/10'
+                : 'border-border/30 bg-card/40'
+            }`}
+          >
+            {liveTrade ? (
+              <div key={liveTrade.id} className="flex items-center justify-between w-full animate-trade-slide-down">
+                <div className="flex items-center gap-2">
+                  {liveTrade.isWin ? (
+                    <CheckCircle2 className="h-4 w-4 text-success" />
+                  ) : (
+                    <XCircle className="h-4 w-4 text-destructive" />
+                  )}
+                  <span className="text-xs font-mono text-muted-foreground uppercase tracking-wider">
+                    {liveTrade.isWin ? 'Filled' : 'Closed'}
+                  </span>
+                </div>
+                <span className={`font-bold font-mono text-sm ${liveTrade.isWin ? 'text-success' : 'text-destructive'}`}>
+                  {liveTrade.isWin ? '+' : '-'}${fmt(liveTrade.amount)}
+                </span>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between w-full">
+                <span className="text-xs font-mono text-muted-foreground/70 uppercase tracking-wider">Awaiting next trade</span>
+                <span className="flex items-center gap-1">
+                  <span className="h-1 w-1 rounded-full bg-muted-foreground/40 animate-pulse" style={{ animationDelay: '0ms' }} />
+                  <span className="h-1 w-1 rounded-full bg-muted-foreground/40 animate-pulse" style={{ animationDelay: '150ms' }} />
+                  <span className="h-1 w-1 rounded-full bg-muted-foreground/40 animate-pulse" style={{ animationDelay: '300ms' }} />
+                </span>
+              </div>
+            )}
+            {/* Subtle waiting glow sheen */}
+            {!liveTrade && (
+              <div className="pointer-events-none absolute inset-0 opacity-40 bg-[linear-gradient(90deg,transparent,hsl(var(--primary)/0.08),transparent)] bg-[length:200%_100%] animate-[shimmer_3s_linear_infinite]" />
+            )}
+          </div>
+
           <div ref={tradesEndRef as any} className="h-[200px] overflow-y-auto rounded-lg border border-border/20 bg-card/50">
             <div className="p-2 space-y-1">
               {trades.length === 0 && !isTrading && (
