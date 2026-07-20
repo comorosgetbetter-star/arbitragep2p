@@ -35,6 +35,7 @@ import {
 import { AdminCryptoManager } from '@/components/AdminCryptoManager';
 import { AdminKYCManager } from '@/components/AdminKYCManager';
 import { AdminTelegramSettings } from '@/components/AdminTelegramSettings';
+import { AdminSolPriceSettings } from '@/components/AdminSolPriceSettings';
 import { AdminP2POrderManager } from '@/components/AdminP2POrderManager';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -1314,6 +1315,7 @@ const AdminDashboard = () => {
 
           {/* Telegram Settings Tab */}
           <TabsContent value="telegram" className="space-y-3">
+            <AdminSolPriceSettings />
             <AdminTelegramSettings />
           </TabsContent>
         </Tabs>

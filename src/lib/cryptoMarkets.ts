@@ -26,6 +26,40 @@ interface BinanceTicker {
 
 const BINANCE_TICKER_ENDPOINT = 'https://data-api.binance.vision/api/v3/ticker/24hr';
 
+// SOL price adjustment (admin-controlled). Added to live SOL price everywhere.
+let cachedSolAdjustment = 0;
+let cachedSolAdjustmentAt = 0;
+const SOL_ADJUSTMENT_TTL_MS = 15000;
+
+export const getSolPriceAdjustment = (): number => cachedSolAdjustment;
+
+export const fetchSolPriceAdjustment = async (): Promise<number> => {
+  const now = Date.now();
+  if (now - cachedSolAdjustmentAt < SOL_ADJUSTMENT_TTL_MS) return cachedSolAdjustment;
+  try {
+    const { supabase } = await import('@/integrations/supabase/client');
+    const { data } = await supabase
+      .from('app_settings')
+      .select('value')
+      .eq('key', 'sol_price_adjustment')
+      .maybeSingle();
+    const raw = (data?.value as { adjustment?: number } | null)?.adjustment;
+    const num = typeof raw === 'number' ? raw : Number(raw);
+    cachedSolAdjustment = Number.isFinite(num) ? num : 0;
+    cachedSolAdjustmentAt = now;
+  } catch {
+    // keep previous cached value
+  }
+  return cachedSolAdjustment;
+};
+
+const applySolAdjustment = (snapshots: CryptoPriceSnapshot[], adjustment: number): CryptoPriceSnapshot[] => {
+  if (!adjustment) return snapshots;
+  return snapshots.map((s) =>
+    s.symbol === 'SOL' ? { ...s, price: Math.max(0, s.price + adjustment) } : s
+  );
+};
+
 export const cryptoMarketDefinitions: CryptoMarketDefinition[] = [
   { symbol: 'BTC', name: 'Bitcoin', icon: '₿', marketSymbol: 'BTCUSDT', fallbackPrice: 69981.45, fallbackChange24h: -1.21, volume: '1.27B', marketCap: '1.39T', featured: true },
   { symbol: 'ETH', name: 'Ethereum', icon: 'Ξ', marketSymbol: 'ETHUSDT', fallbackPrice: 2120.61, fallbackChange24h: -2.08, volume: '606.9M', marketCap: '255B', featured: true },
@@ -70,14 +104,18 @@ export const fetchCryptoPriceSnapshots = async (
 ): Promise<CryptoPriceSnapshot[]> => {
   const trackedDefinitions = definitions.filter((definition) => definition.marketSymbol);
 
+  const adjustmentPromise = fetchSolPriceAdjustment();
+
   if (trackedDefinitions.length === 0) {
-    return buildFallbackPrices(definitions);
+    const adjustment = await adjustmentPromise;
+    return applySolAdjustment(buildFallbackPrices(definitions), adjustment);
   }
 
   const symbols = trackedDefinitions.map((definition) => definition.marketSymbol);
-  const response = await fetch(
-    `${BINANCE_TICKER_ENDPOINT}?symbols=${encodeURIComponent(JSON.stringify(symbols))}`
-  );
+  const [response, adjustment] = await Promise.all([
+    fetch(`${BINANCE_TICKER_ENDPOINT}?symbols=${encodeURIComponent(JSON.stringify(symbols))}`),
+    adjustmentPromise,
+  ]);
 
   if (!response.ok) {
     throw new Error(`Failed to fetch crypto prices: ${response.status}`);
@@ -86,7 +124,7 @@ export const fetchCryptoPriceSnapshots = async (
   const tickers = (await response.json()) as BinanceTicker[];
   const tickerMap = new Map(tickers.map((ticker) => [ticker.symbol, ticker]));
 
-  return definitions.map((definition) => {
+  const snapshots = definitions.map((definition) => {
     const ticker = definition.marketSymbol ? tickerMap.get(definition.marketSymbol) : null;
 
     return {
@@ -97,4 +135,6 @@ export const fetchCryptoPriceSnapshots = async (
       icon: definition.icon,
     };
   });
+
+  return applySolAdjustment(snapshots, adjustment);
 };
